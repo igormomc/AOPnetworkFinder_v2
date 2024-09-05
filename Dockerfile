@@ -15,16 +15,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libjpeg-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Create and activate virtual environment
-RUN python3 -m venv env
+# Create and activate virtual environment inside a named volume path
+RUN python3 -m venv /venv
 
 # Upgrade pip and setuptools to secure versions
-RUN /app/env/bin/python -m pip install --upgrade pip "setuptools>=65.5.1"
+RUN /venv/bin/python -m pip install --upgrade pip "setuptools>=65.5.1"
 
 # Install Python dependencies
 COPY requirements.txt .
-RUN /app/env/bin/python -m pip install --no-cache-dir -r requirements.txt
-##RUN /app/env/bin/python -m pip install --no-cache-dir gunicorn
+RUN /venv/bin/python -m pip install --no-cache-dir -r requirements.txt
 
 # Add a non-root user and switch to it
 RUN useradd -m myuser
@@ -36,5 +35,5 @@ COPY . .
 # Make port 8000 available to the world outside this container
 EXPOSE 8000
 
-# Command to run the app using Gunicorn
-CMD ["/app/env/bin/gunicorn", "-w", "4", "-b", ":8000", "run:app"]
+# Command to run the app using Gunicorn with the --reload option
+CMD ["/venv/bin/gunicorn", "--reload", "-w", "4", "-b", ":8000", "run:app"]

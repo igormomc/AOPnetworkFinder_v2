@@ -1,6 +1,6 @@
-![alt text|80](/images/AOP-networkFinder_for_paper.jpg) 
-Graphic mark of "AOP-networkFinder. Green represent Molecular Initiation Events (MIEs) in the Adverse Outcome Pathway (AOP). Orange represents adherent Key Events (KEs). Red triangles represent Adverse Outcomes (AOs), at the end of the path. 
-The arrows illustrate the direction of Key Events Relationships (KERs). Blue circles represent genes connected to KEs. 
+![alt text|80](/images/AOP-networkFinder_for_paper.jpg)
+Graphic mark of "AOP-networkFinder. Green represent Molecular Initiation Events (MIEs) in the Adverse Outcome Pathway (AOP). Orange represents adherent Key Events (KEs). Red triangles represent Adverse Outcomes (AOs), at the end of the path.
+The arrows illustrate the direction of Key Events Relationships (KERs). Blue circles represent genes connected to KEs.
 Notice that this representation is in form a Directed Acyclic Graph (DAG) with no directed cycles.
 
 
@@ -22,7 +22,7 @@ https://zenodo.org/records/11068434
 
 The Current GUI of the AOP_Visualizer webpage:
 
- ![main window](/images/Figures_AOP-network-finder_02032024-Figure1_Jan.jpg)
+![main window](/images/Figures_AOP-network-finder_02032024-Figure1_Jan.jpg)
 
 
 2. How to run the application locally using Docker
@@ -30,18 +30,19 @@ The Current GUI of the AOP_Visualizer webpage:
 ## Prerequisites
 Docker installed on your system.
 
-## Building the Docker Image
-To build the Docker image, use the following command:
+## Running the project locally
+1. Clone the repository
+2. Navigate to the project directory
+3. Run the following command to build the Docker image:
 ```
-docker build --platform=linux/amd64 -t aop-networkfinder:v1 .
+ docker-compose up --build     
+ ```
+4. The application should be running on port 8000. If you change something in the the code should reload automatically. Just refresh the page in your browser and it should be updated.
+5. To stop the application, run the following command:
+```
+docker-compose down
 ```
 
-3. Running the Application
-
-To run the Docker Container:
-```
-docker run --platform=linux/amd64 -d -p 8000:8000 -e aop-networkfinder:v1
-```
 
 To access the application locally:
 http://localhost:8000
