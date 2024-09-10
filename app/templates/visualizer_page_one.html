@@ -139,7 +139,6 @@
         <div id="nodeInfo"></div>
     </div>
 
-
     <!-- Cytoscape.js CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.19.0/cytoscape.min.js"></script>
 
@@ -149,7 +148,9 @@
     <!-- Custom Cytoscape Script -->
     <script src="{{ url_for('static', filename='javascript/visualizer_script.js') }}"></script>
 
-    <!-- Custom Validator Script
+    <script src="{{ url_for('static', filename='javascript/scripts/fetchAliasSymbols.js') }}"></script>
+
+ <!-- Custom Validator Script
     <script src="{{ url_for('static', filename='javascript/input_validator_script.js') }}"></script>-->
 
 {% endblock %}

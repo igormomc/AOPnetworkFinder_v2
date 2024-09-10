@@ -1,4 +1,6 @@
+
 //Global variable for storing the graph strucutr
+
 let globalGraphJson = [];
 let globalMergeJson = [];
 let globalUserActionsLog = [];
@@ -200,27 +202,40 @@ function render_graph(url_string, formData) {
         createMergeButtons(globalMergeJson);
 
         cy.on('click', 'node', function(evt) {
-            const currentTime = new Date().getTime();
-            if (currentTime - lastClickTime <= doubleClickThreshold) {
-                const node = evt.target;
-                let keTypeColor = getColorByType(node.data().ke_type);
-                let contentHtml = `<strong>Node Data: (<span style="color: ${keTypeColor};">${node.data().ke_type}</span>)</strong><br><div><table>`;
+    console.log("Node clicked: ", evt.target);
+    const currentTime = new Date().getTime();
+    if (currentTime - lastClickTime <= doubleClickThreshold) {
+        const node = evt.target;
+        let keTypeColor = getColorByType(node.data().ke_type);
+        let contentHtml = `<strong>Node Data: (<span style="color: ${keTypeColor};">${node.data().ke_type}</span>)</strong><br><div><table>`;
 
-                if (node.data().ke_type === 'genes') {
-                    // For Gene nodes
-                    let connectedKEs = node.connectedEdges().map(edge => {
-                        // Check connected nodes
-                        const connectedNode = edge.source().id() === node.id() ? edge.target() : edge.source();
-                        if (connectedNode.data().ke_type !== 'genes') {
-                            // Format as clickable link
-                            let keId = connectedNode.data('ke_identifier').split('/').pop();
-                            return `<a href="${connectedNode.data('ke_identifier')}" target="_blank">${keId}</a>`;
-                        }
-                    }).filter(ke => ke !== undefined).join(', '); // Filter out undefined and join
+        if (node.data().ke_type === 'genes') {
+            // For Gene nodes
+            let geneSymbol = node.data('name'); // Assuming the gene name is stored in the 'name' attribute
 
-                    contentHtml += `<tr><td>Name:</td><td> ${node.data('name') || 'N/A'}</td></tr>`;
-                    contentHtml += `<tr><td>Connected KE:</td><td>${connectedKEs || 'N/A'}</td></tr>`;
-                } else {
+            // Fetch alias symbols for the clicked gene
+            fetchAliasSymbols(geneSymbol).then(aliasSymbols => {
+                let connectedKEs = node.connectedEdges().map(edge => {
+                    // Check connected nodes
+                    const connectedNode = edge.source().id() === node.id() ? edge.target() : edge.source();
+                    if (connectedNode.data().ke_type !== 'genes') {
+                        // Format as clickable link
+                        let keId = connectedNode.data('ke_identifier').split('/').pop();
+                        return `<a href="${connectedNode.data('ke_identifier')}" target="_blank">${keId}</a>`;
+                    }
+                }).filter(ke => ke !== undefined).join(', '); // Filter out undefined and join
+
+                // Correctly format the table rows and cells for each piece of data
+               let contentHtml = `<strong>Node Data: (<span style="color: ${keTypeColor};">${node.data().ke_type}</span>)</strong><br><div><table>`;
+                contentHtml +=  `<tr><td>Name:</td><td> ${node.data('name') || 'N/A'}</td></tr>`;
+                contentHtml += `<tr><td><strong>Alias Symbols:</strong></td><td>${aliasSymbols.join(', ') || 'N/A'}</td></tr>`;
+                contentHtml += `<tr><td><strong>Connected KE:</strong></td><td>${connectedKEs || 'N/A'}</td></tr>`;
+                contentHtml += `</table></div>`;
+
+                // Set the HTML content for the node information display
+                document.getElementById('nodeInfo').innerHTML = contentHtml;
+            }).catch(error => console.error('Error fetching alias symbols:', error));
+        } else {
 
                     let upstreamKEs = [];
                     let downstreamKEs = [];
