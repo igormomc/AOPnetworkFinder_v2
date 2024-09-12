@@ -25,9 +25,10 @@ def page_two():
     return render_template('data_displayer_page_two.html')
 
 
-#@app.route("/page2")
-#def page_three():
-#    return render_template('text_mining_page_three.html')
+@app.route("/page2")
+def page_three():
+    return render_template('part2.html')
+
 
 
 # Post requests
@@ -146,7 +147,6 @@ def search_aops():
 def extract_from_aop_wiki():
 
     form = AopKeFormDataExtractionValidation(formdata=request.form)
-
     if form.validate_on_submit():
         aop_input = form.searchFieldAOPs.data
         ke_input = form.searchFieldKEs.data
