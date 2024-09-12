@@ -68,6 +68,34 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+async function displayNodeInfo(geneSymbol, node, keTypeColor) {
+    try {
+        const aliasSymbols = (await fetchAliasSymbols(geneSymbol)).flat().filter(symb => symb !== undefined);
+        console.log('Alias symbols:', aliasSymbols);
+        let connectedKEs = node.connectedEdges().map(edge => {
+            // Check connected nodes
+            const connectedNode = edge.source().id() === node.id() ? edge.target() : edge.source();
+            if (connectedNode.data().ke_type !== 'genes') {
+                // Format as clickable link
+                let keId = connectedNode.data('ke_identifier').split('/').pop();
+                return `<a href="${connectedNode.data('ke_identifier')}" target="_blank">${keId}</a>`;
+            }
+        }).filter(ke => ke !== undefined).join(', '); // Filter out undefined and join
+
+        // Correctly format the table rows and cells for each piece of data
+        let contentHtml = `<strong>Node Data: (<span style="color: ${keTypeColor};">${node.data().ke_type}</span>)</strong><br><div><table>`;
+        contentHtml += `<tr><td>Name:</td><td> ${node.data('name') || 'N/A'}</td></tr>`;
+        contentHtml += `<tr><td><strong>Alias and previous Symbols:</strong></td><td>${aliasSymbols.join(', ') || 'N/A'}</td></tr>`;
+        contentHtml += `<tr><td><strong>Connected KE:</strong></td><td>${connectedKEs || 'N/A'}</td></tr>`;
+        contentHtml += `</table></div>`;
+
+        // Set the HTML content for the node information display
+        document.getElementById('nodeInfo').innerHTML = contentHtml;
+    } catch (error) {
+        console.error('Error fetching alias symbols:', error);
+    }
+}
+
 //render AOP/AOP-network given user_input
 function render_graph(url_string, formData) {
     fetch(url_string, {
@@ -213,28 +241,8 @@ function render_graph(url_string, formData) {
             // For Gene nodes
             let geneSymbol = node.data('name'); // Assuming the gene name is stored in the 'name' attribute
 
-            // Fetch alias symbols for the clicked gene
-            fetchAliasSymbols(geneSymbol).then(aliasSymbols => {
-                let connectedKEs = node.connectedEdges().map(edge => {
-                    // Check connected nodes
-                    const connectedNode = edge.source().id() === node.id() ? edge.target() : edge.source();
-                    if (connectedNode.data().ke_type !== 'genes') {
-                        // Format as clickable link
-                        let keId = connectedNode.data('ke_identifier').split('/').pop();
-                        return `<a href="${connectedNode.data('ke_identifier')}" target="_blank">${keId}</a>`;
-                    }
-                }).filter(ke => ke !== undefined).join(', '); // Filter out undefined and join
-
-                // Correctly format the table rows and cells for each piece of data
-               let contentHtml = `<strong>Node Data: (<span style="color: ${keTypeColor};">${node.data().ke_type}</span>)</strong><br><div><table>`;
-                contentHtml +=  `<tr><td>Name:</td><td> ${node.data('name') || 'N/A'}</td></tr>`;
-                contentHtml += `<tr><td><strong>Alias Symbols:</strong></td><td>${aliasSymbols.join(', ') || 'N/A'}</td></tr>`;
-                contentHtml += `<tr><td><strong>Connected KE:</strong></td><td>${connectedKEs || 'N/A'}</td></tr>`;
-                contentHtml += `</table></div>`;
-
-                // Set the HTML content for the node information display
-                document.getElementById('nodeInfo').innerHTML = contentHtml;
-            }).catch(error => console.error('Error fetching alias symbols:', error));
+            // Fetch alias and prev symbols for the clicked gene
+            displayNodeInfo(geneSymbol, node, keTypeColor);
         } else {
 
                     let upstreamKEs = [];

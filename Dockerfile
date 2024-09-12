@@ -25,6 +25,9 @@ RUN /venv/bin/python -m pip install --upgrade pip "setuptools>=65.5.1"
 COPY requirements.txt .
 RUN /venv/bin/python -m pip install --no-cache-dir -r requirements.txt
 
+# Install watchdog
+RUN /venv/bin/python -m pip install watchdog
+
 # Add a non-root user and switch to it
 RUN useradd -m myuser
 USER myuser
@@ -35,5 +38,5 @@ COPY . .
 # Make port 8000 available to the world outside this container
 EXPOSE 8000
 
-# Command to run the app using Gunicorn with the --reload option
-CMD ["/venv/bin/gunicorn", "--reload", "-w", "4", "-b", ":8000", "run:app"]
+# Command to run the app using watchmedo
+CMD ["/venv/bin/watchmedo", "auto-restart", "--directory=.", "--pattern=*.py", "--recursive", "--", "/venv/bin/gunicorn", "--reload", "-w", "4", "-b", ":8000", "run:app"]
