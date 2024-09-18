@@ -25,6 +25,7 @@ const colorBlindColors = {
 let lastClickTime = 0;
 const doubleClickThreshold = 300; // Milliseconds
 
+
 //sending the user inputted values to the backend for processing
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById("searchButtonAOP").addEventListener("click", function(event) {
@@ -67,6 +68,32 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// Function to check each gene and update its color
+async function updateGeneColors() {
+    // Loop through all nodes
+    for (const node of cy.nodes()) {
+        // Check if the node is a "gene"
+        if (node.data('ke_type') === 'genes') {
+            const geneName = node.data('name'); // Assuming 'name' contains the gene symbol
+
+            try {
+                // Call the testApi function to check if the gene meets the condition
+                const isTestPassed = await testApi(geneName);
+
+                // If testApi returns true, change the node's color to red
+                if (isTestPassed) {
+                    node.style('background-color', '#FF0000'); // Red color
+                } else {
+                    // You can leave the color unchanged, or apply a default if necessary
+                    // node.style('background-color', node.style('background-color'));
+                }
+            } catch (error) {
+                console.error(`Error checking gene ${geneName}:`, error);
+            }
+        }
+    }
+}
 
 async function displayNodeInfo(geneSymbol, node, keTypeColor) {
     try {
@@ -207,19 +234,47 @@ function render_graph(url_string, formData) {
             }
         });
         //edges between genes set to opacity 50%
-        cy.ready(function() {
-            // Iterate over all edges
-            cy.edges().forEach(function(edge) {
-                // Check if either the source or target node has 'ke_type' equal to 'genes'
-                var sourceNode = edge.source();
-                var targetNode = edge.target();
+       cy.ready(function() {
+    // Iterate over all edges and adjust opacity if either source or target is a 'genes' node
+    cy.edges().forEach(function(edge) {
+        var sourceNode = edge.source();
+        var targetNode = edge.target();
 
-                if (sourceNode.data('ke_type') === 'genes' || targetNode.data('ke_type') === 'genes') {
-                    // Update the edge more translucent
-                    edge.style('opacity', 0.5);
+        if (sourceNode.data('ke_type') === 'genes' || targetNode.data('ke_type') === 'genes') {
+            // Update the edge to be more translucent
+            edge.style('opacity', 0.5);
+        }
+    });
+
+    // Function to check each gene and update its color
+    async function updateGeneColors() {
+        // Loop through all nodes
+        for (const node of cy.nodes()) {
+            // Check if the node is a "gene"
+            if (node.data('ke_type') === 'genes') {
+                const geneName = node.data('name'); // Assuming 'name' contains the gene symbol
+
+                try {
+                    // Call the testApi function to check if the gene meets the condition
+                    const isTestPassed = await testApi(geneName);
+
+                    // If testApi returns true, change the node's color to red
+                    if (isTestPassed) {
+                        node.style('background-color', '#5aff00'); // Red color for true
+                    } else {
+                        // Optionally leave it unchanged or apply a fallback color if needed
+                        // node.style('background-color', '#27AAE1'); // Or keep the existing color
+                    }
+                } catch (error) {
+                    console.error(`Error checking gene ${geneName}:`, error);
                 }
-            });
-        });
+            }
+        }
+    }
+
+    // Call the updateGeneColors function to check gene nodes and update their colors
+    updateGeneColors();
+});
         // Inside render_graph, after cy initialization
         setupEdgeAddition(cy);
         toggleGeneLabels(document.getElementById('toggleLabels').checked);
