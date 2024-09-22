@@ -6,6 +6,7 @@ let globalMergeJson = [];
 let globalUserActionsLog = [];
 let allowHidePopup = false; // Flag to control the hiding of the popup
 var cy;
+let geneHGNCurl = 'https://www.genenames.org/data/gene-symbol-report/#!/symbol/';
 
 let isColorBlindMode = false; // Track the color mode state
 const defaultColors = {
@@ -84,7 +85,10 @@ async function displayNodeInfo(geneSymbol, node, keTypeColor) {
 
         // Correctly format the table rows and cells for each piece of data
         let contentHtml = `<strong>Node Data: (<span style="color: ${keTypeColor};">${node.data().ke_type}</span>)</strong><br><div><table>`;
-        contentHtml += `<tr><td>Name:</td><td> ${node.data('name') || 'N/A'}</td></tr>`;
+        const geneName = node.data('name');
+        const geneNameHtml = geneName && geneName !== 'N/A' ? `<a href="${geneHGNCurl}${geneName}" target="_blank">${geneName}</a>` : 'N/A';
+
+        contentHtml += `<tr><td>Name:</td><td> ${geneNameHtml}</td></tr>`;
         contentHtml += `<tr><td><strong>Alias and previous Symbols:</strong></td><td>${aliasSymbols.join(', ') || 'N/A'}</td></tr>`;
         contentHtml += `<tr><td><strong>Connected KE:</strong></td><td>${connectedKEs || 'N/A'}</td></tr>`;
         contentHtml += `</table></div>`;
