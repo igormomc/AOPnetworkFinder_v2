@@ -1,3 +1,5 @@
+import requests
+
 from app import app
 from flask import render_template, request, jsonify, send_from_directory
 import app.service.aop_visualizer_service as visualizer_sv
@@ -5,6 +7,7 @@ import app.service.aop_wiki_data_extraction_service as data_extraction_sv
 import app.service.ke_degree_reader_service as ke_reader
 import app.security_config.input_validation as input_validation
 import logging
+import os
 from . import cache
 from werkzeug.utils import secure_filename
 
@@ -190,3 +193,24 @@ def download_style_file(filename):
     filename = secure_filename(filename)
     directory = "static/cytoscape_style_template"
     return send_from_directory(directory, filename, as_attachment=True)
+
+
+ASSAY_CACHE = None
+@app.route('/api/bioactivity-assays', methods=['GET'])
+def fetch_bioactivity_assays():
+    global ASSAY_CACHE
+    if ASSAY_CACHE:
+        return jsonify(ASSAY_CACHE)
+    EPA_API_URL = "https://api-ccte.epa.gov/bioactivity/assay/"
+    HEADERS = {
+        'Accept': 'application/hal+json',
+        'x-api-key': os.getenv('EPA_API_KEY')
+    }
+    try:
+        response = requests.get(EPA_API_URL, headers=HEADERS)
+        response.raise_for_status()  # Raise an exception for bad status codes
+        data = response.json()
+        ASSAY_CACHE = data
+        return jsonify(data)  # Serve the data as JSON
+    except requests.exceptions.RequestException as e:
+        return jsonify({'error': str(e)}), 500  # Return error message with 500 status code

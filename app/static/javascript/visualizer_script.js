@@ -23,18 +23,35 @@ const colorBlindColors = {
     "genes": "#708090",
 };
 
+let assayGenesDict = null;
+
 let lastClickTime = 0;
 const doubleClickThreshold = 300; // Milliseconds
 
+function groupAssaysByGeneSymbol(assays) {
+    const geneAssayMap = {};
+
+    assays.forEach(assay => {
+        const geneSymbol = assay?.gene?.geneSymbol;
+        if (!geneAssayMap[geneSymbol]) {
+            geneAssayMap[geneSymbol] = [];
+        }
+        geneAssayMap[geneSymbol].push(assay);
+    });
+
+    return geneAssayMap;
+}
+
 //sending the user inputted values to the backend for processing
+// Add the bioactivity call within the searchButtonAOP click event listener
 document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById("searchButtonAOP").addEventListener("click", function(event) {
+    document.getElementById("searchButtonAOP").addEventListener("click", async function(event) {
         event.preventDefault();
 
-        // Global log file should be reset everytime user generates a new graph. (new session)
+        // Global log file should be reset every time user generates a new graph. (new session)
         globalUserActionsLog = [];
 
-        //Data that will be sent to the backend for processing
+        // Data that will be sent to the backend for processing
         var formData = new FormData();
 
         var searchValueAop = document.getElementById("searchFieldAOP").value;
@@ -47,6 +64,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('#checkbox-filter input[type="checkbox"]').forEach(function(checkbox) {
             formData.append(checkbox.name, checkbox.checked ? "1" : "0");
         });
+        console.log("FormData: ", formData.values());
 
         formData.append("checkboxGene", genesChecked ? "1" : "0");
         formData.append("keDegree", keDegreeSelection);
@@ -56,11 +74,20 @@ document.addEventListener('DOMContentLoaded', function() {
             formData.append("searchFieldAOP", searchValueAop);
             formData.append("searchFieldKE", searchValueKe);
             formData.append("stressorDropdown", searchValueStressor);
+
             // Append the CSRF token to the FormData object
             var csrfToken = document.getElementById('csrf_token').value;
             formData.append('csrf_token', csrfToken);
 
-            logUserInput(formData)
+            logUserInput(formData);
+
+            // Fetch bioactivity assays before rendering the graph
+            const bioactivityAssays = await fetchBioactivityAssays();
+            if (bioactivityAssays) {
+                assayGenesDict = groupAssaysByGeneSymbol(bioactivityAssays);
+                console.log("Assays Data Ready for Use:testtest", assayGenesDict);
+            }
+
             render_graph('/searchAops', formData);
 
         } else {
@@ -74,15 +101,17 @@ async function displayNodeInfo(geneSymbol, node, keTypeColor) {
         const aliasSymbols = (await fetchAliasSymbols(geneSymbol)).flat().filter(symb => symb !== undefined);
         console.log('Alias symbols:', aliasSymbols);
         let connectedKEs = node.connectedEdges().map(edge => {
+            console.log("Edge", edge);
             // Check connected nodes
             const connectedNode = edge.source().id() === node.id() ? edge.target() : edge.source();
             if (connectedNode.data().ke_type !== 'genes') {
+                console.log("Connected Node", connectedNode);
                 // Format as clickable link
                 let keId = connectedNode.data('ke_identifier').split('/').pop();
                 return `<a href="${connectedNode.data('ke_identifier')}" target="_blank">${keId}</a>`;
             }
         }).filter(ke => ke !== undefined).join(', '); // Filter out undefined and join
-
+        console.log("Data", node.data());
         // Correctly format the table rows and cells for each piece of data
         let contentHtml = `<strong>Node Data: (<span style="color: ${keTypeColor};">${node.data().ke_type}</span>)</strong><br><div><table>`;
         const geneName = node.data('name');
@@ -150,11 +179,15 @@ function render_graph(url_string, formData) {
                         'background-color': '#F7941D'  // Orange for 'Key Event'
                     }
                 },
-                {
+                 {
                     selector: 'node[ke_type="genes"]',
                     style: {
                         'label': 'data(id)',
-                        'background-color': '#27AAE1',  // Blue for 'genes'
+                        'background-color': function(ele) {
+                            const geneSymbol = ele.data('name');
+                            // Check if the gene is in the assayGenesDict
+                            return assayGenesDict && assayGenesDict[geneSymbol] ? '#35d135' : '#27AAE1'; // Green if in assayGenesDict, otherwise blue
+                        },
                         'width': 10,
                         'height': 10
                     }

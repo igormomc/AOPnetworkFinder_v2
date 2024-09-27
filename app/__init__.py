@@ -3,7 +3,9 @@ import os
 from flask import Flask
 from flask_caching import Cache
 from flask_wtf.csrf import CSRFProtect
+from dotenv import load_dotenv
 
+load_dotenv()
 app = Flask(__name__, template_folder='templates')
 
 # Set the secret key for CSRF protection and session management

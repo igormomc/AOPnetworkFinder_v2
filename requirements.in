@@ -30,3 +30,5 @@ zipp
 future
 gunicorn
 Flask-WTF>=1.2.1
+requests
+python-dotenv
