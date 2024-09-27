@@ -33,12 +33,17 @@ Docker installed on your system.
 ## Running the project locally
 1. Clone the repository
 2. Navigate to the project directory
-3. Run the following command to build the Docker image:
+3. Create a .env File
+   In the root directory of the project, create a .env file with the following content:
+```
+EPA_API_KEY=****
+```
+4. Run the following command to build the Docker image:
 ```
  docker-compose up --build     
  ```
-4. The application should be running on port 8000. If you change something in the the code should reload automatically. Just refresh the page in your browser and it should be updated.
-5. To stop the application, run the following command:
+5. The application should be running on port 8000. If you change something in the the code should reload automatically. Just refresh the page in your browser and it should be updated.
+6. To stop the application, run the following command:
 ```
 docker-compose down
 ```
