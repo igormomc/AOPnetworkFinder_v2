@@ -28,6 +28,61 @@ let assayGenesDict = null;
 let lastClickTime = 0;
 const doubleClickThreshold = 300; // Milliseconds
 
+// Function to update gene visibility based on checkbox states
+function updateGeneVisibility() {
+    const showGenes = document.getElementById('checkedBoxGene').checked;
+    const showAssayGenesOnly = document.getElementById('checkedAssayGenes').checked;
+
+    if (showAssayGenesOnly) {
+        cy.nodes().filter('[ke_type="genes"]').addClass('hidden');
+        cy.edges().filter(function(edge) {
+            return edge.source().data('ke_type') === 'genes' || edge.target().data('ke_type') === 'genes';
+        }).addClass('hidden');
+
+        cy.nodes().filter(function(node) {
+            return node.data('ke_type') === 'genes' && assayGenesDict && assayGenesDict[node.data('name')];
+        }).removeClass('hidden');
+
+        cy.edges().filter(function(edge) {
+            const sourceIsAssayGene = edge.source().data('ke_type') === 'genes' && assayGenesDict && assayGenesDict[edge.source().data('name')];
+            const targetIsAssayGene = edge.target().data('ke_type') === 'genes' && assayGenesDict && assayGenesDict[edge.target().data('name')];
+            return sourceIsAssayGene || targetIsAssayGene;
+        }).removeClass('hidden');
+    } else if (showGenes) {
+        cy.nodes().filter('[ke_type="genes"]').removeClass('hidden');
+        cy.edges().filter(function(edge) {
+            return edge.source().data('ke_type') === 'genes' || edge.target().data('ke_type') === 'genes';
+        }).removeClass('hidden');
+    } else {
+        cy.nodes().filter('[ke_type="genes"]').addClass('hidden');
+        cy.edges().filter(function(edge) {
+            return edge.source().data('ke_type') === 'genes' || edge.target().data('ke_type') === 'genes';
+        }).addClass('hidden');
+    }
+
+    cy.style()
+        .selector('.hidden')
+        .style({
+            'display': 'none'
+        })
+        .update();
+}
+
+document.getElementById('checkedBoxGene').addEventListener('change', function() {
+    if (this.checked) {
+        document.getElementById('checkedAssayGenes').checked = false;
+    }
+    updateGeneVisibility();
+});
+
+document.getElementById('checkedAssayGenes').addEventListener('change', function() {
+    if (this.checked) {
+        document.getElementById('checkedBoxGene').checked = false;
+    }
+    updateGeneVisibility();
+});
+
+
 function groupAssaysByGeneSymbol(assays) {
     const geneAssayMap = {};
 
@@ -261,6 +316,7 @@ function render_graph(url_string, formData) {
         setupEdgeAddition(cy);
         toggleGeneLabels(document.getElementById('toggleLabels').checked);
         toggleGenesNode(document.getElementById('checkedBoxGene').checked);
+        updateGeneVisibility();
         if (isColorBlindMode){
             applyColorScheme(colorBlindColors);
         }
@@ -821,7 +877,6 @@ function toggleGeneLabels(showLabels) {
         cy.style().selector('node[ke_type="genes"]').style('label', '').update();
     }
 }
-
 // Handle checkbox change event
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('toggleLabels').addEventListener('change', function(e) {
