@@ -66,6 +66,33 @@ def search_aops():
             stressors = visualizer_sv.get_all_stressors_from_aop_wiki()
             cache.set('get_stressors', stressors, timeout=6000)
 
+
+        cells = cache.get('get_cells')
+        if cells is None:
+            cells = visualizer_sv.get_all_cells_from_aop_wiki()
+            cache.set('get_cells', cells, timeout=6000)
+
+        organs = cache.get('get_organs')
+        if organs is None:
+            organs = visualizer_sv.get_all_organs_from_aop_wiki()
+            cache.set('get_organs', organs, timeout=6000)
+
+        taxonomies = cache.get('get_taxonomies')
+        if taxonomies is None:
+            taxonomies = visualizer_sv.get_all_taxonomies_from_aop_wiki()
+            cache.set('get_taxonomies', taxonomies, timeout=6000)
+
+
+        sexes = cache.get('get_sexes')
+        if sexes is None:
+            sexes = visualizer_sv.get_all_sex_from_aop_wiki()
+            cache.set('get_sexes', taxonomies, timeout=6000)
+
+        lifeStages = cache.get('get_life_stages')
+        if lifeStages is None:
+            lifeStages = visualizer_sv.get_all_life_stage_from_aop_wiki()
+            cache.set('get_life_stages', lifeStages, timeout=6000)
+
         # Check if the submitted stressor is in the list of stressors
         if stressor_query in stressors:
             # valid stressor submition
@@ -187,6 +214,42 @@ def get_stressors():
     stressor_list = visualizer_sv.get_all_stressors_from_aop_wiki()
 
     return jsonify(stressor_list)
+
+@app.route('/get_cells')
+@cache.cached(timeout=6000)
+def get_cells():
+    # Populate data with stressor name
+    cell_list = visualizer_sv.get_all_cells_from_aop_wiki()
+
+    return jsonify(cell_list)
+
+
+@app.route('/get_organs')
+@cache.cached(timeout=6000)
+def get_organs():
+    # Populate data with stressor name
+    organ_list = visualizer_sv.get_all_organs_from_aop_wiki()
+
+    return jsonify(organ_list)
+
+@app.route('/get_taxonomies')
+@cache.cached(timeout=6000)
+def get_taxonomies():
+    taxonomy_list = visualizer_sv.get_all_taxonomies_from_aop_wiki()
+
+    return jsonify(taxonomy_list)
+
+@app.route('/get_sexes')
+@cache.cached(timeout=6000)
+def get_sexes():
+    sex_list = visualizer_sv.get_all_sex_from_aop_wiki()
+    return jsonify(sex_list)
+
+@app.route('/get_life_stages')
+@cache.cached(timeout=6000)
+def get_life_stages():
+    life_stage_list = visualizer_sv.get_all_life_stage_from_aop_wiki()
+    return jsonify(life_stage_list)
 
 @app.route('/download/<filename>')
 def download_style_file(filename):

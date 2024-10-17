@@ -1,3 +1,4 @@
+import logging
 from collections import defaultdict
 import networkx
 import app.SPARQL_QUERIES.visualizer_queries as sq
@@ -41,6 +42,8 @@ def visualize_aop_user_input(aop_ids, checkbox_gene, under_development_chx, endo
 
     # One AOP
     if len(set_of_unique_aops) == 1:
+        logging.error(f"set_of_unique_aops: {sq.aop_dump(next(iter(set_of_unique_aops)))}")
+
         aop_rdf_data = sq.aop_dump(next(iter(set_of_unique_aops)))
         if len(aop_rdf_data['results']['bindings']) != 0:
             tmp_aop = aop.aop(aop_rdf_data, list_of_ke_objects, False)
@@ -223,6 +226,51 @@ def get_all_stressors_from_aop_wiki():
         # append to list_of_stressors
         list_of_stressors.append(x['str_title']['value'])
     return list_of_stressors
+
+def get_all_cells_from_aop_wiki():
+    list_of_cells = []
+    # query
+    cell_dict = sq.cell_dump()
+    print("cell_dict", cell_dict)
+    for x in cell_dict['results']['bindings']:
+        # append to list_of_stressors
+        list_of_cells.append(x['cell_title']['value'])
+    return list_of_cells
+
+def get_all_organs_from_aop_wiki():
+    list_of_organs = []
+    # query
+    organ_dict = sq.organ_dump()
+    for x in organ_dict['results']['bindings']:
+        # append to list_of_stressors
+        list_of_organs.append(x['organ_title']['value'])
+    return list_of_organs
+
+def get_all_taxonomies_from_aop_wiki():
+    list_of_taxonomic = []
+    # query
+    taxonomic_dict = sq.taxonomic_dump()
+    for x in taxonomic_dict['results']['bindings']:
+        # append to list_of_stressors
+        list_of_taxonomic.append(x['tax_title']['value'])
+    return list_of_taxonomic
+
+def get_all_sex_from_aop_wiki():
+    list_of_sex = []
+    # query
+    sex_dict = sq.sex_dump()
+    print(sex_dict)
+    for x in sex_dict['results']['bindings']:
+        list_of_sex.append(x['sexObject']['value'])
+    return list_of_sex
+
+def get_all_life_stage_from_aop_wiki():
+    list_of_life_stage = []
+    # query
+    life_stage_dict = sq.lifeStage_dump()
+    for x in life_stage_dict['results']['bindings']:
+        list_of_life_stage.append(x['lifeStageObject']['value'])
+    return list_of_life_stage
 
 
 def extract_all_aop_id_from_given_stressor_name(stressor_name):

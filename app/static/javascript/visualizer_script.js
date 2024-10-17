@@ -771,6 +771,104 @@ $(document).ready(function() {
     $('#stressorDropdown').val(null).trigger('change');
 });
 
+$(document).ready(function() {
+    fetch('/get_cells')
+        .then(response => response.json())
+        .then(data => {
+            console.log("CELLE DATA", data)
+            const formattedCellData = data.map(cell => ({
+                id: cell,
+                text: cell
+            }));
+            $('#cellsDropdown').select2({
+                placeholder: "Search for a cell",
+                allowClear: true,
+                data: formattedCellData
+            });
+        })
+        .catch(error => console.error('Fetch error:', error));
+    $('#cellsDropdown').val(null).trigger('change');
+});
+
+$(document).ready(function() {
+    fetch('/get_organs')
+        .then(response => response.json())
+        .then(data => {
+            console.log("ORGANS DATA", data)
+            const formattedOrgsData = data.map(organ => ({
+                id: organ,
+                text: organ
+            }));
+            $('#organsDropdown').select2({
+                placeholder: "Search for a Organ",
+                allowClear: true,
+                data: formattedOrgsData
+            });
+        })
+        .catch(error => console.error('Fetch error:', error));
+    $('#organsDropdown').val(null).trigger('change');
+});
+
+$(document).ready(function() {
+    fetch('/get_taxonomies')
+        .then(response => response.json())
+        .then(data => {
+            console.log("TAXO DATA", data)
+            const formattedTaxData = data.map(tax => ({
+                id: tax,
+                text: tax
+            }));
+            $('#taxonomiDropdown').select2({
+                placeholder: "Search for a Tax",
+                allowClear: true,
+                data: formattedTaxData
+            });
+        })
+        .catch(error => console.error('Fetch error:', error));
+    $('#taxonomiDropdown').val(null).trigger('change');
+});
+
+$(document).ready(function() {
+    fetch('/get_sexes')
+        .then(response => response.json())
+        .then(data => {
+            console.log("SEX DATA", data)
+            const formattedSexData = data.map(sex => ({
+                id: sex,
+                text: sex
+            }));
+            $('#sexDropdown').select2({
+                placeholder: "Search for a Sex",
+                allowClear: true,
+                data: formattedSexData
+            });
+        })
+        .catch(error => console.error('Fetch error:', error));
+    $('#sexDropdown').val(null).trigger('change');
+});
+
+$(document).ready(function() {
+    fetch('/get_life_stages')
+        .then(response => response.json())
+        .then(data => {
+            console.log("LIFE DATA", data)
+            const formattedLifeData = data.map(life => ({
+                id: life,
+                text: life
+            }));
+            $('#lifeStageDropdown').select2({
+                placeholder: "Search for a Life",
+                allowClear: true,
+                data: formattedLifeData
+            });
+        })
+        .catch(error => console.error('Fetch error:', error));
+    $('#lifeStageDropdown').val(null).trigger('change');
+});
+
+
+
+
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('saveButtonLog').addEventListener('click', function() {
         if (globalUserActionsLog.length === 0){

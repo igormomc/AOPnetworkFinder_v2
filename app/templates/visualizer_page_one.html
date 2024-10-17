@@ -72,12 +72,55 @@
               </label>
             </form>
 
-            <div class="search-group" id="searchGroupStressor">
-                <label for="stressorDropdown">Stressor:</label>
-                <select id="stressorDropdown">
+            <!-- Container for the dropdowns that need to be side by side -->
+<div class="dropdown-container">
+    <div class="search-group" id="searchGroupStressor">
+        <label for="stressorDropdown">Stressor:</label>
+        <select id="stressorDropdown">
+            <option></option>
+        </select>
+    </div>
+
+    <div class="search-group" id="searchGroupCells">
+        <label for="cellsDropdown">Cells:</label>
+        <select id="cellsDropdown">
+            <option></option>
+        </select>
+    </div>
+</div>
+
+<!-- Another pair of dropdowns -->
+<div class="dropdown-container">
+    <div class="search-group" id="searchGroupOrgans">
+        <label for="organsDropdown">Organs:</label>
+        <select id="organsDropdown">
+            <option></option>
+        </select>
+    </div>
+
+    <div class="search-group" id="searchGroupTaxonomies">
+        <label for="taxonomiDropdown">Taxonomies:</label>
+        <select id="taxonomiDropdown">
+            <option></option>
+        </select>
+    </div>
+</div>
+<!-- Another pair of dropdowns -->
+<div class="dropdown-container">
+     <div class="search-group" id="searchGroupSex">
+                <label for="sexDropdown">Sex:</label>
+                <select id="sexDropdown">
                     <option></option>
                 </select>
             </div>
+
+             <div class="search-group" id="searchGroupLifeStage">
+                <label for="lifeStageDropdown">LifeStage:</label>
+                <select id="lifeStageDropdown">
+                    <option></option>
+                </select>
+            </div>
+</div>
 
             <!-- Checkboxes at the bottom -->
             <div class="checkbox-group" id="checkbox-filter">

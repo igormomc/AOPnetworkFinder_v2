@@ -188,6 +188,7 @@ def stressor_and_AOP_finder(binary_stressor, aop_id):
 # Update also the query in the function multiple_aop_dump
 
 # Dump all AOP data for a given aop, including KE and KER -> query 1 time
+# INFO-IGOR: This is the Querry being run when clicking on "Search AOP" with one AOP ID, with no stressor, etc
 def aop_dump(aop_id):
     # endpoint sparql
     sparql = SPARQLWrapper("https://aopwiki.rdf.bigcat-bioinformatics.org/sparql")
@@ -488,6 +489,133 @@ WHERE
             print(x)'''
         # if needed convert JSON to CSV.
         # TODO: return the dictionary for data manipulation
+        return json_format
+    except Exception as e:
+        print(e)
+
+
+def cell_dump():
+    # endpoint sparql
+    sparql = SPARQLWrapper(
+        "https://aopwiki.rdf.bigcat-bioinformatics.org/sparql"
+    )
+
+    sparql.setReturnFormat(JSON)
+    sparql.setQuery("""
+    SELECT DISTINCT ?cellObject ?cell_title
+    WHERE {
+	  
+    ?ke aopo:CellTypeContext ?cellObject .
+  	?cellObject dc:title ?cell_title
+    }
+                        """)
+
+    try:
+        ret = sparql.query()
+        json_format = ret.convert()
+        for x in json_format['results']['bindings']:
+            print(x)
+        return json_format
+    except Exception as e:
+        print(e)
+
+
+def organ_dump():
+    # endpoint sparql
+    sparql = SPARQLWrapper(
+        "https://aopwiki.rdf.bigcat-bioinformatics.org/sparql"
+    )
+
+    sparql.setReturnFormat(JSON)
+    sparql.setQuery("""
+    SELECT DISTINCT ?organObject ?organ_title
+    WHERE {
+
+    ?ke aopo:OrganContext ?organObject .
+  	?organObject dc:title ?organ_title
+    }
+                        """)
+
+    try:
+        ret = sparql.query()
+        json_format = ret.convert()
+        for x in json_format['results']['bindings']:
+            print(x)
+        return json_format
+    except Exception as e:
+        print(e)
+
+def taxonomic_dump():
+    # endpoint sparql
+    sparql = SPARQLWrapper(
+        "https://aopwiki.rdf.bigcat-bioinformatics.org/sparql"
+    )
+
+    sparql.setReturnFormat(JSON)
+    sparql.setQuery("""
+     SELECT DISTINCT ?taxObject ?tax_title
+    WHERE {
+	  
+    ?ke ncbitaxon:131567 ?taxObject .
+  	?taxObject dc:title ?tax_title
+    }
+                        """)
+
+    try:
+        ret = sparql.query()
+        json_format = ret.convert()
+        for x in json_format['results']['bindings']:
+            print(x)
+        return json_format
+    except Exception as e:
+        print(e)
+
+
+def sex_dump():
+    # endpoint sparql
+    sparql = SPARQLWrapper(
+        "https://aopwiki.rdf.bigcat-bioinformatics.org/sparql"
+    )
+
+    sparql.setReturnFormat(JSON)
+    sparql.setQuery("""
+     SELECT DISTINCT ?sexObject
+    WHERE {
+	  
+    ?ke pato:0000047 ?sexObject .
+    }
+                        """)
+
+    try:
+        ret = sparql.query()
+        json_format = ret.convert()
+        for x in json_format['results']['bindings']:
+            print(x)
+        return json_format
+    except Exception as e:
+        print(e)
+
+
+def lifeStage_dump():
+    # endpoint sparql
+    sparql = SPARQLWrapper(
+        "https://aopwiki.rdf.bigcat-bioinformatics.org/sparql"
+    )
+
+    sparql.setReturnFormat(JSON)
+    sparql.setQuery("""
+     SELECT DISTINCT ?lifeStageObject
+    WHERE {
+	  
+    ?ke aopo:LifeStageContext ?lifeStageObject .
+    }
+                        """)
+
+    try:
+        ret = sparql.query()
+        json_format = ret.convert()
+        for x in json_format['results']['bindings']:
+            print(x)
         return json_format
     except Exception as e:
         print(e)
