@@ -1171,6 +1171,29 @@ document.getElementById('saveStyleIcon').addEventListener('click', function() {
     window.location.href = `/download/${fileName}`;
 });
 
+document.getElementById('emailIcon').addEventListener('click', function() {
+    var searchValueAop = document.getElementById("searchFieldAOP").value;
+   // Split the AOP IDs by commas and trim any extra spaces
+   let aopArray = searchValueAop.split(',').map(id => id.trim());
+
+      // Filter out any invalid or empty IDs
+      let validAopArray = aopArray.filter(aopId => !isNaN(aopId) && aopId !== '');
+
+      // Check if there are any valid AOP IDs
+      if (validAopArray.length > 0) {
+        // Collect URLs for all valid AOP IDs
+        let urls = validAopArray.map(aopId => `https://aopwiki.org/contact_form?aop=${aopId}`);
+
+        // Open each URL in a new tab without relying on index
+        urls.forEach(url => {
+          window.open(url, '_blank');  // Open each link in a new tab
+        });
+      } else {
+        alert('Please enter valid AOP IDs.');
+      }
+   
+});
+
 function updateMergeButtonLabel(mergeCount) {
     const mergeButton = document.getElementById('mergeButtonKeyEvent');
     mergeButton.textContent = `Merge KE: (${mergeCount})`;

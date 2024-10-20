@@ -412,6 +412,15 @@ button:hover {
     margin-right: 2%;
 }
 
+#emailIcon {
+    cursor: pointer;
+    width: 6%;
+    height: auto;
+    margin-right: 4%;
+
+}
+    
+
 .nav-link.active {
     font-weight: bold;
 }
