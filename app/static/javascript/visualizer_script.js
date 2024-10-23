@@ -103,6 +103,13 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById("searchButtonAOP").addEventListener("click", async function(event) {
         event.preventDefault();
 
+        //reset the graph for each new search
+        document.getElementById('cy').innerHTML = '';
+        document.getElementById('dynamicButtons').innerHTML = '';
+        document.getElementById('nodeInfo').innerHTML = '';
+        document.getElementById('nodePopup').style.display = 'none';
+
+
         // Global log file should be reset every time user generates a new graph. (new session)
         globalUserActionsLog = [];
 
@@ -114,6 +121,11 @@ document.addEventListener('DOMContentLoaded', function() {
         var searchValueStressor = document.getElementById("stressorDropdown").value;
         var genesChecked = document.getElementById("checkedBoxGene").checked;
         var keDegreeSelection = document.querySelector('input[name="degree"]:checked').value;
+        var organsDropdown = document.getElementById("organsDropdown").value;
+        var taxonomiDropdown = document.getElementById("taxonomiDropdown").value;
+        var lifeStageDropdown = document.getElementById("lifeStageDropdown").value;
+        var sexDropdown = document.getElementById("sexDropdown").value;
+        var cellsDropdown = document.getElementById("cellsDropdown").value;
 
         // Add the filter checkboxes to formData
         document.querySelectorAll('#checkbox-filter input[type="checkbox"]').forEach(function(checkbox) {
@@ -124,11 +136,16 @@ document.addEventListener('DOMContentLoaded', function() {
         formData.append("checkboxGene", genesChecked ? "1" : "0");
         formData.append("keDegree", keDegreeSelection);
 
-        if (searchValueAop || searchValueKe || searchValueStressor) {
-
+        if (searchValueAop || searchValueKe || searchValueStressor || organsDropdown || taxonomiDropdown || lifeStageDropdown || sexDropdown || cellsDropdown) {
             formData.append("searchFieldAOP", searchValueAop);
             formData.append("searchFieldKE", searchValueKe);
             formData.append("stressorDropdown", searchValueStressor);
+            formData.append("organDropdown", organsDropdown);
+            formData.append("taxValue", taxonomiDropdown);
+            formData.append("lifeStageDropdown", lifeStageDropdown);
+            formData.append("sexDropdown", sexDropdown);
+            formData.append("cellValue", cellsDropdown);
+
 
             // Append the CSRF token to the FormData object
             var csrfToken = document.getElementById('csrf_token').value;
@@ -775,7 +792,6 @@ $(document).ready(function() {
     fetch('/get_cells')
         .then(response => response.json())
         .then(data => {
-            console.log("CELLE DATA", data)
             const formattedCellData = data.map(cell => ({
                 id: cell,
                 text: cell
@@ -794,7 +810,6 @@ $(document).ready(function() {
     fetch('/get_organs')
         .then(response => response.json())
         .then(data => {
-            console.log("ORGANS DATA", data)
             const formattedOrgsData = data.map(organ => ({
                 id: organ,
                 text: organ
@@ -813,7 +828,6 @@ $(document).ready(function() {
     fetch('/get_taxonomies')
         .then(response => response.json())
         .then(data => {
-            console.log("TAXO DATA", data)
             const formattedTaxData = data.map(tax => ({
                 id: tax,
                 text: tax
@@ -832,7 +846,6 @@ $(document).ready(function() {
     fetch('/get_sexes')
         .then(response => response.json())
         .then(data => {
-            console.log("SEX DATA", data)
             const formattedSexData = data.map(sex => ({
                 id: sex,
                 text: sex
@@ -851,7 +864,6 @@ $(document).ready(function() {
     fetch('/get_life_stages')
         .then(response => response.json())
         .then(data => {
-            console.log("LIFE DATA", data)
             const formattedLifeData = data.map(life => ({
                 id: life,
                 text: life

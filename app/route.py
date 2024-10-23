@@ -1,4 +1,5 @@
 import requests
+from numpy.ma.extras import unique
 
 from app import app
 from flask import render_template, request, jsonify, send_from_directory
@@ -37,16 +38,26 @@ def page_three():
 # Post requests
 @app.route("/searchAops", methods=['POST'])
 def search_aops():
-    ##validate the formdata
+
+    unique_ke_set = set()
+    tmp_ke_id_set = set()
+    aop_list = []
+
+    # Validate the form data
     form = AopKeFormValidation(formdata=request.form)
 
     if form.validate_on_submit():
-        #sanitize aop_query and ke_query forms
+        # Sanitize aop_query and ke_query forms
         sanitize_form(form)
         # Retrieve the query from the form
         aop_query = form.searchFieldAOP.data
         ke_query = form.searchFieldKE.data
         stressor_query = form.stressorDropdown.data
+        organ_query = form.organDropdown.data
+        life_stage_query = form.lifeStageDropdown.data
+        sex_query = form.sexDropdown.data
+        cell_query = form.cellValue.data
+        taxonomy_query = form.taxValue.data
 
         gene_checkbox = request.form.get('checkboxGene')
         filter_development_chx = request.form.get('checkboxDevelopment')
@@ -66,7 +77,6 @@ def search_aops():
             stressors = visualizer_sv.get_all_stressors_from_aop_wiki()
             cache.set('get_stressors', stressors, timeout=6000)
 
-
         cells = cache.get('get_cells')
         if cells is None:
             cells = visualizer_sv.get_all_cells_from_aop_wiki()
@@ -82,7 +92,6 @@ def search_aops():
             taxonomies = visualizer_sv.get_all_taxonomies_from_aop_wiki()
             cache.set('get_taxonomies', taxonomies, timeout=6000)
 
-
         sexes = cache.get('get_sexes')
         if sexes is None:
             sexes = visualizer_sv.get_all_sex_from_aop_wiki()
@@ -95,25 +104,53 @@ def search_aops():
 
         # Check if the submitted stressor is in the list of stressors
         if stressor_query in stressors:
-            # valid stressor submition
+            # Valid stressor submission
             stressor_query_validation = True
 
-        # input validation and sanitation
+        if life_stage_query in lifeStages:
+            status = visualizer_sv.check_if_life_stage_exist_in_aop(aop_query, life_stage_query)
+            logging.error(f"LIFE STATUS IS {status}")
+            if status is False:
+                return render_template('visualizer_page_one.html', data=None)
+
+        if sex_query in sexes:
+            status = visualizer_sv.check_if_sex_exist_in_aop(aop_query, sex_query)
+            if status is False:
+                logging.error(f"SEX STATUS IS {status}")
+                return render_template('visualizer_page_one.html', data=None)
+
+        if organ_query in organs:
+            status = visualizer_sv.check_if_organ_exist_in_aop(aop_query, organ_query)
+            if status is False:
+                logging.error(f"ORGAN STATUS IS {status}")
+                return render_template('visualizer_page_one.html', data=None)
+
+        if cell_query in cells:
+            status = visualizer_sv.check_if_cell_exist_in_aop(aop_query, cell_query)
+            if status is False:
+                logging.error(f"CELL STATUS IS {status}")
+                return render_template('visualizer_page_one.html', data=None)
+
+        if taxonomy_query in taxonomies:
+            status = visualizer_sv.check_if_taxonomic_exist_in_aop(aop_query, taxonomy_query)
+            if status is False:
+                logging.error(f"TAX STATUS IS {status}")
+                return render_template('visualizer_page_one.html', data=None)
+
+
+        # Input validation and sanitation
         aop_query_validation = input_validation.validate_aop_ke_inputs(aop_query)
         ke_query_validation = input_validation.validate_aop_ke_inputs(ke_query)
 
         if aop_query_validation is False and ke_query_validation is False and stressor_query_validation is False:
             return render_template('visualizer_page_one.html', data=None)
 
-        # handle if there is no data
+        # Handle if there is no data
         if aop_query is None and ke_query is None and stressor_query is None:
             return render_template('visualizer_page_one.html', data=None)
 
-        unique_ke_set = set()
-        tmp_ke_id_set = set()
-        aop_list = []
         if (ke_degree == '1' or ke_degree == '2') and ke_query != '':
-            #ke_degree is either 1 or 2
+            # ke_degree is either 1 or 2
             list_of_ke_ids = ke_query.split(',')
             unique_ke_set = ke_reader.read_ke_degree(ke_degree, list_of_ke_ids)
             if len(unique_ke_set) > 0:
@@ -139,12 +176,11 @@ def search_aops():
         else:
             aop_list = visualizer_sv.extract_all_aops_given_ke_ids(ke_query)
 
-
         aop_query_list = aop_query.split(',')
         aop_stressor_list = visualizer_sv.extract_all_aop_id_from_given_stressor_name(stressor_query)
         aop_list.extend(aop_query_list)
         aop_list.extend(aop_stressor_list)
-        #remove empty strings
+        # Remove empty strings
         aop_list_filtered = [aop for aop in aop_list if aop != '']
 
         if len(aop_list_filtered) == 0 and len(unique_ke_set) > 0:
@@ -159,7 +195,7 @@ def search_aops():
             # Happens if all the aops the user inputted gets filtered out.
             return render_template('visualizer_page_one.html', data=None)
 
-        #Similarity check
+        # Similarity check
         unique_ke = visualizer_sv.find_all_ke_from_json(aop_cytoscape)
         ke_merge_possiblity = visualizer_sv.merge_activation(unique_ke)
 

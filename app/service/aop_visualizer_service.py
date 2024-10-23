@@ -42,7 +42,7 @@ def visualize_aop_user_input(aop_ids, checkbox_gene, under_development_chx, endo
 
     # One AOP
     if len(set_of_unique_aops) == 1:
-        logging.error(f"set_of_unique_aops: {sq.aop_dump(next(iter(set_of_unique_aops)))}")
+        #logging.error(f"set_of_unique_aops: {sq.aop_dump(next(iter(set_of_unique_aops)))}")
 
         aop_rdf_data = sq.aop_dump(next(iter(set_of_unique_aops)))
         if len(aop_rdf_data['results']['bindings']) != 0:
@@ -231,7 +231,7 @@ def get_all_cells_from_aop_wiki():
     list_of_cells = []
     # query
     cell_dict = sq.cell_dump()
-    print("cell_dict", cell_dict)
+    #print("cell_dict", cell_dict)
     for x in cell_dict['results']['bindings']:
         # append to list_of_stressors
         list_of_cells.append(x['cell_title']['value'])
@@ -259,7 +259,7 @@ def get_all_sex_from_aop_wiki():
     list_of_sex = []
     # query
     sex_dict = sq.sex_dump()
-    print(sex_dict)
+    #print(sex_dict)
     for x in sex_dict['results']['bindings']:
         list_of_sex.append(x['sexObject']['value'])
     return list_of_sex
@@ -290,3 +290,38 @@ def extract_all_aop_id_from_given_stressor_name(stressor_name):
         return aop_ids
 
     return aop_ids
+
+def check_if_life_stage_exist_in_aop(aop_id, life_stage):
+    life_stage_json = sq.life_stage_filter_search(aop_id, life_stage)
+    logging.error(f"life_stage_json: {life_stage_json}, {aop_id}, {life_stage}")
+    if len(life_stage_json['results']['bindings']) >= 1:
+        return True
+    return False
+
+def check_if_sex_exist_in_aop(aop_id, sex):
+    sex_json = sq.sex_filter_search(aop_id, sex)
+    logging.error(f"sex_json_JSON: {sex_json}, {aop_id}, {sex}")
+    if len(sex_json['results']['bindings']) >= 1:
+        return True
+    return False
+
+def check_if_organ_exist_in_aop(aop_id, organ):
+    organ_json = sq.organ_filter_search(aop_id, organ)
+    logging.error(f"organ_json: {organ_json}, {aop_id}, {organ}")
+    if len(organ_json['results']['bindings']) >= 1:
+        return True
+    return False
+
+def check_if_cell_exist_in_aop(aop_id, cell):
+    cell_json = sq.cell_filter_search(aop_id, cell)
+    logging.error(f"cell_json: {cell_json}, {aop_id}, {cell}")
+    if len(cell_json['results']['bindings']) >= 1:
+        return True
+    return False
+
+def check_if_taxonomic_exist_in_aop(aop_id, taxonomic):
+    taxonomic_json = sq.taxonomic_filter_search(aop_id, taxonomic)
+    logging.error(f"taxonomic_json: {taxonomic_json}, {aop_id}, {taxonomic}")
+    if len(taxonomic_json['results']['bindings']) >= 1:
+        return True
+    return False
