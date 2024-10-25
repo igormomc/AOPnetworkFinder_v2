@@ -31,6 +31,10 @@ def visualize_aop_user_input(aop_ids, checkbox_gene, under_development_chx, endo
     set_of_unique_aops = set(aop_ids)
 
     only_valid_aops = filter_aops(under_development_flag, endorsed_flag, under_review_flag, approved_flag)
+    # return None if no aops are valid and some filter has been checked
+    if any([under_development_flag, endorsed_flag, under_review_flag, approved_flag]) and not only_valid_aops:
+        return None, []
+
     if len(only_valid_aops) != 0:
         # Filter the list of aops
         filtered_aop_list = {x for x in set_of_unique_aops if x in only_valid_aops}
