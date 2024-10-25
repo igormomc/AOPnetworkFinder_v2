@@ -102,6 +102,7 @@ function groupAssaysByGeneSymbol(assays) {
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById("searchButtonAOP").addEventListener("click", async function(event) {
         event.preventDefault();
+        document.getElementById("loader").style.display = "flex";
 
         //reset the graph for each new search
         document.getElementById('cy').innerHTML = '';
@@ -423,8 +424,11 @@ function render_graph(url_string, formData) {
             }
             lastClickTime = currentTime;
         });
-
-    })
+      cy.ready(function() {
+            document.getElementById("loader").style.display = "none";
+        });
+    }
+    )
     .catch(error => console.error('Error:', error));
 }
 
