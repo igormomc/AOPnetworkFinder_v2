@@ -429,7 +429,13 @@ function render_graph(url_string, formData) {
         });
     }
     )
-    .catch(error => console.error('Error:', error));
+    .catch(
+        function(error) {
+            console.log('Error:', error);
+            document.getElementById("loader").style.display = "none";
+            alert("Error: Unable to fetch this AOP, please check the AOP ID and try again.");
+        }
+    );
 }
 
 function getColorByType(ke_type) {
