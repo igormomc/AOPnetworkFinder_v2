@@ -109,32 +109,27 @@ def search_aops():
 
         if life_stage_query in lifeStages:
             status = visualizer_sv.check_if_life_stage_exist_in_aop(aop_query, life_stage_query)
-            logging.error(f"LIFE STATUS IS {status}")
             if status is False:
                 return render_template('visualizer_page_one.html', data=None)
 
         if sex_query in sexes:
             status = visualizer_sv.check_if_sex_exist_in_aop(aop_query, sex_query)
             if status is False:
-                logging.error(f"SEX STATUS IS {status}")
                 return render_template('visualizer_page_one.html', data=None)
 
         if organ_query in organs:
             status = visualizer_sv.check_if_organ_exist_in_aop(aop_query, organ_query)
             if status is False:
-                logging.error(f"ORGAN STATUS IS {status}")
                 return render_template('visualizer_page_one.html', data=None)
 
         if cell_query in cells:
             status = visualizer_sv.check_if_cell_exist_in_aop(aop_query, cell_query)
             if status is False:
-                logging.error(f"CELL STATUS IS {status}")
                 return render_template('visualizer_page_one.html', data=None)
 
         if taxonomy_query in taxonomies:
             status = visualizer_sv.check_if_taxonomic_exist_in_aop(aop_query, taxonomy_query)
             if status is False:
-                logging.error(f"TAX STATUS IS {status}")
                 return render_template('visualizer_page_one.html', data=None)
 
 

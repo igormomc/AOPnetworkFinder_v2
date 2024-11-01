@@ -802,14 +802,28 @@ $(document).ready(function() {
     fetch('/get_cells')
         .then(response => response.json())
         .then(data => {
-            const formattedCellData = data.map(cell => ({
+            const formattedCellData = Object.keys(data).map(cell => ({
                 id: cell,
-                text: cell
+                text: cell,
+                synonyms: data[cell]
             }));
+
             $('#cellsDropdown').select2({
-                placeholder: "Search for a cell",
+                placeholder: "Search for a Cell",
                 allowClear: true,
-                data: formattedCellData
+                data: formattedCellData,
+                templateResult: function(item) {
+                    if (!item.id) { return item.text; }
+                    const synonyms = item.synonyms && item.synonyms.length > 1
+                        ? ` (${item.synonyms.join(', ')})`
+                        : '';
+                    const displayText = $('<span>').text(item.text + synonyms);
+                    return displayText;
+                }
+            });
+
+            $('#cellsDropdown').on('select2:select', function(e) {
+                const selectedData = e.params.data;
             });
         })
         .catch(error => console.error('Fetch error:', error));
@@ -820,37 +834,65 @@ $(document).ready(function() {
     fetch('/get_organs')
         .then(response => response.json())
         .then(data => {
-            const formattedOrgsData = data.map(organ => ({
+            const formattedOrgsData = Object.keys(data).map(organ => ({
                 id: organ,
-                text: organ
+                text: organ,
+                synonyms: data[organ]
             }));
+
             $('#organsDropdown').select2({
-                placeholder: "Search for a Organ",
+                placeholder: "Search for an Organ",
                 allowClear: true,
-                data: formattedOrgsData
+                data: formattedOrgsData,
+                templateResult: function(item) {
+                    if (!item.id) { return item.text; }
+                    const synonyms = item.synonyms && item.synonyms.length > 1
+                        ? ` (${item.synonyms.join(', ')})`
+                        : '';
+                    const displayText = $('<span>').text(item.text + synonyms);
+                    return displayText;
+                }
+            });
+
+            $('#organsDropdown').on('select2:select', function(e) {
+                const selectedData = e.params.data;
             });
         })
         .catch(error => console.error('Fetch error:', error));
+
     $('#organsDropdown').val(null).trigger('change');
 });
+
 
 $(document).ready(function() {
     fetch('/get_taxonomies')
         .then(response => response.json())
         .then(data => {
-            const formattedTaxData = data.map(tax => ({
+            const formattedTaxData = Object.keys(data).map(tax => ({
                 id: tax,
-                text: tax
+                text: tax,
+                synonyms: data[tax]
             }));
+
             $('#taxonomiDropdown').select2({
-                placeholder: "Search for a Tax",
+                placeholder: "Search for a Taxonomy",
                 allowClear: true,
-                data: formattedTaxData
+                data: formattedTaxData,
+                templateResult: function(item) {
+                    if (!item.id) { return item.text; }
+                    const synonyms = item.synonyms && item.synonyms.length > 1
+                        ? ` (${item.synonyms.join(', ')})`
+                        : '';
+                    const displayText = $('<span>').text(item.text + synonyms);
+                    return displayText;
+                }
             });
         })
         .catch(error => console.error('Fetch error:', error));
+
     $('#taxonomiDropdown').val(null).trigger('change');
 });
+
 
 $(document).ready(function() {
     fetch('/get_sexes')
@@ -874,19 +916,32 @@ $(document).ready(function() {
     fetch('/get_life_stages')
         .then(response => response.json())
         .then(data => {
-            const formattedLifeData = data.map(life => ({
-                id: life,
-                text: life
+            const formattedLifeData = Object.keys(data).map(lifeStage => ({
+                id: lifeStage,
+                text: lifeStage,
+                synonyms: data[lifeStage]
             }));
+
             $('#lifeStageDropdown').select2({
-                placeholder: "Search for a Life",
+                placeholder: "Search for a Life Stage",
                 allowClear: true,
-                data: formattedLifeData
+                data: formattedLifeData,
+                templateResult: function(item) {
+                    if (!item.id) { return item.text; }
+                    const synonyms = item.synonyms && item.synonyms.length > 1
+                        ? ` (${item.synonyms.join(', ')})`
+                        : '';
+                    const displayText = $('<span>').text(item.text + synonyms);
+                    return displayText;
+                }
             });
         })
         .catch(error => console.error('Fetch error:', error));
+
     $('#lifeStageDropdown').val(null).trigger('change');
 });
+
+
 
 
 

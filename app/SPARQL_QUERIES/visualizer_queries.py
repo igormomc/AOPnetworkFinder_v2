@@ -1,3 +1,4 @@
+
 from SPARQLWrapper import SPARQLWrapper, JSON, CSV
 
 
@@ -1351,22 +1352,28 @@ WHERE {
         print(e)
 
 
-def life_stage_filter_search(aop_id, life_stage):
+
+def life_stage_filter_search(aop_id, life_stages):
     # endpoint sparql
     sparql = SPARQLWrapper(
         "https://aopwiki.rdf.bigcat-bioinformatics.org/sparql"
     )
 
-    sparql.setReturnFormat(JSON)
-    sparql.setQuery("""
-SELECT DISTINCT ?aop
-WHERE {
+    # Join life stages into a SPARQL-compatible filter
+    life_stage_filter = " || ".join(
+        ["?lifeStage = '" + stage + "'" for stage in life_stages]
+    )
 
+    sparql.setReturnFormat(JSON)
+    sparql.setQuery(f"""
+SELECT DISTINCT ?aop
+WHERE {{
   ?aop a aopo:AdverseOutcomePathway ;
-       dc:identifier aop:""" + aop_id + """ ;
-       aopo:LifeStageContext '""" + life_stage + """' .
-}
-                        """)
+       dc:identifier aop:{aop_id} ;
+       aopo:LifeStageContext ?lifeStage .
+  FILTER ({life_stage_filter})
+}}
+    """)
 
     try:
         ret = sparql.query()
@@ -1399,48 +1406,25 @@ WHERE {
     except Exception as e:
         print(e)
 
-def organ_filter_search(aop_id, organ):
+def organ_filter_search(aop_id, organs):
     # endpoint sparql
-    sparql = SPARQLWrapper(
-        "https://aopwiki.rdf.bigcat-bioinformatics.org/sparql"
-    )
+    sparql = SPARQLWrapper("https://aopwiki.rdf.bigcat-bioinformatics.org/sparql")
+
+    organ_filter = " || ".join(["?organTitle = '" + organ + "'" for organ in organs])
 
     sparql.setReturnFormat(JSON)
-    sparql.setQuery("""
+    sparql.setQuery(f"""
     SELECT DISTINCT ?AOP
-    WHERE {
+    WHERE {{
       ?AOP a aopo:AdverseOutcomePathway;
-           dc:identifier aop:""" + aop_id + """ ;
-      		aopo:has_key_event ?ke .
-    	?ke aopo:OrganContext ?organ.
-      	?organ dc:title '""" + organ + """' .
-    }
-                        """)
-    try:
-        ret = sparql.query()
-        json_format = ret.convert()
-        return json_format
-    except Exception as e:
-        print(e)
+           dc:identifier aop:{aop_id} ;
+           aopo:has_key_event ?ke .
+      ?ke aopo:OrganContext ?organ .
+      ?organ dc:title ?organTitle .
+      FILTER ({organ_filter})
+    }}
+    """)
 
-
-def cell_filter_search(aop_id, cell):
-    # endpoint sparql
-    sparql = SPARQLWrapper(
-        "https://aopwiki.rdf.bigcat-bioinformatics.org/sparql"
-    )
-
-    sparql.setReturnFormat(JSON)
-    sparql.setQuery("""
-    SELECT DISTINCT ?AOP
-    WHERE {
-      ?AOP a aopo:AdverseOutcomePathway;
-           dc:identifier aop:""" + aop_id + """ ;
-      		aopo:has_key_event ?ke .
-    	?ke aopo:CellTypeContext ?cell.
-      	?cell dc:title '""" + cell + """' .
-    }
-                        """)
     try:
         ret = sparql.query()
         json_format = ret.convert()
@@ -1450,23 +1434,56 @@ def cell_filter_search(aop_id, cell):
 
 
 
-def taxonomic_filter_search(aop_id, tax_title):
+def cell_filter_search(aop_id, cells):
+    # endpoint sparql
+    sparql = SPARQLWrapper("https://aopwiki.rdf.bigcat-bioinformatics.org/sparql")
+
+    cell_filter = " || ".join(["?cellTitle = '" + cell + "'" for cell in cells])
+
+    sparql.setReturnFormat(JSON)
+    sparql.setQuery(f"""
+    SELECT DISTINCT ?AOP
+    WHERE {{
+      ?AOP a aopo:AdverseOutcomePathway;
+           dc:identifier aop:{aop_id} ;
+           aopo:has_key_event ?ke .
+      ?ke aopo:CellTypeContext ?cell .
+      ?cell dc:title ?cellTitle .
+      FILTER ({cell_filter})
+    }}
+    """)
+
+    try:
+        ret = sparql.query()
+        json_format = ret.convert()
+        return json_format
+    except Exception as e:
+        print(e)
+
+
+def taxonomic_filter_search(aop_id, tax_titles):
     # endpoint sparql
     sparql = SPARQLWrapper(
         "https://aopwiki.rdf.bigcat-bioinformatics.org/sparql"
     )
 
+    tax_filter = " || ".join(
+        ["?taxTitle = '" + title + "'" for title in tax_titles]
+    )
+
     sparql.setReturnFormat(JSON)
-    sparql.setQuery("""
-    SELECT DISTINCT ?AOP
-    WHERE {
-      ?AOP a aopo:AdverseOutcomePathway;
-           dc:identifier aop:""" + aop_id + """ ;
-      		aopo:has_key_event ?ke .
-    	?ke ncbitaxon:131567 ?tax.
-      	?tax dc:title '""" + tax_title + """' .
-    }
-                        """)
+    sparql.setQuery(f"""
+SELECT DISTINCT ?AOP
+WHERE {{
+  ?AOP a aopo:AdverseOutcomePathway ;
+       dc:identifier aop:{aop_id} ;
+       aopo:has_key_event ?ke .
+  ?ke ncbitaxon:131567 ?tax .
+  ?tax dc:title ?taxTitle .
+  FILTER ({tax_filter})
+}}
+    """)
+
     try:
         ret = sparql.query()
         json_format = ret.convert()

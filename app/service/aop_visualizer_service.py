@@ -6,6 +6,7 @@ import app.model.aop as aop
 import app.service.plot_aop_service as plot_aop
 import re
 import textdistance
+from app.service.helpers import group_life_stages, group_taxonomic_groups, group_cells, group_organs
 
 
 def visualize_aop_user_input(aop_ids, checkbox_gene, under_development_chx, endorsed_chx, under_review_chx,
@@ -239,7 +240,9 @@ def get_all_cells_from_aop_wiki():
     for x in cell_dict['results']['bindings']:
         # append to list_of_stressors
         list_of_cells.append(x['cell_title']['value'])
-    return list_of_cells
+
+    grouped_cells = group_cells(list_of_cells)
+    return grouped_cells
 
 def get_all_organs_from_aop_wiki():
     list_of_organs = []
@@ -248,7 +251,8 @@ def get_all_organs_from_aop_wiki():
     for x in organ_dict['results']['bindings']:
         # append to list_of_stressors
         list_of_organs.append(x['organ_title']['value'])
-    return list_of_organs
+    grouped_organs = group_organs(list_of_organs)
+    return grouped_organs
 
 def get_all_taxonomies_from_aop_wiki():
     list_of_taxonomic = []
@@ -257,7 +261,8 @@ def get_all_taxonomies_from_aop_wiki():
     for x in taxonomic_dict['results']['bindings']:
         # append to list_of_stressors
         list_of_taxonomic.append(x['tax_title']['value'])
-    return list_of_taxonomic
+    grouped_taxonomic = group_taxonomic_groups(list_of_taxonomic)
+    return grouped_taxonomic
 
 def get_all_sex_from_aop_wiki():
     list_of_sex = []
@@ -270,11 +275,12 @@ def get_all_sex_from_aop_wiki():
 
 def get_all_life_stage_from_aop_wiki():
     list_of_life_stage = []
-    # query
     life_stage_dict = sq.lifeStage_dump()
     for x in life_stage_dict['results']['bindings']:
         list_of_life_stage.append(x['lifeStageObject']['value'])
-    return list_of_life_stage
+    grouped_life_stages = group_life_stages(list_of_life_stage)
+
+    return grouped_life_stages
 
 
 def extract_all_aop_id_from_given_stressor_name(stressor_name):
@@ -295,9 +301,14 @@ def extract_all_aop_id_from_given_stressor_name(stressor_name):
 
     return aop_ids
 
+
 def check_if_life_stage_exist_in_aop(aop_id, life_stage):
-    life_stage_json = sq.life_stage_filter_search(aop_id, life_stage)
-    logging.error(f"life_stage_json: {life_stage_json}, {aop_id}, {life_stage}")
+    grouped_life_stages = get_all_life_stage_from_aop_wiki()
+    life_stage_array = grouped_life_stages.get(life_stage, [life_stage])
+
+    life_stage_json = sq.life_stage_filter_search(aop_id, life_stage_array)
+    logging.error(f"life_stage_json: {life_stage_json}, {aop_id}, {life_stage_array}")
+
     if len(life_stage_json['results']['bindings']) >= 1:
         return True
     return False
@@ -310,21 +321,28 @@ def check_if_sex_exist_in_aop(aop_id, sex):
     return False
 
 def check_if_organ_exist_in_aop(aop_id, organ):
-    organ_json = sq.organ_filter_search(aop_id, organ)
+    grouped_organs = get_all_organs_from_aop_wiki()
+    organ_array = grouped_organs.get(organ, [organ])
+    organ_json = sq.organ_filter_search(aop_id, organ_array)
     logging.error(f"organ_json: {organ_json}, {aop_id}, {organ}")
     if len(organ_json['results']['bindings']) >= 1:
         return True
     return False
 
 def check_if_cell_exist_in_aop(aop_id, cell):
-    cell_json = sq.cell_filter_search(aop_id, cell)
+    grouped_cells = get_all_cells_from_aop_wiki()
+    cell_array = grouped_cells.get(cell, [cell])
+    cell_json = sq.cell_filter_search(aop_id, cell_array)
     logging.error(f"cell_json: {cell_json}, {aop_id}, {cell}")
     if len(cell_json['results']['bindings']) >= 1:
         return True
     return False
 
 def check_if_taxonomic_exist_in_aop(aop_id, taxonomic):
-    taxonomic_json = sq.taxonomic_filter_search(aop_id, taxonomic)
+    grouped_taxonomic = get_all_taxonomies_from_aop_wiki()
+    taxonomic_array = grouped_taxonomic.get(taxonomic, [taxonomic])
+    taxonomic_json = sq.taxonomic_filter_search(aop_id, taxonomic_array)
+
     logging.error(f"taxonomic_json: {taxonomic_json}, {aop_id}, {taxonomic}")
     if len(taxonomic_json['results']['bindings']) >= 1:
         return True
