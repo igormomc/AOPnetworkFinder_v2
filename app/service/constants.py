@@ -16,7 +16,7 @@ life_stage_mapping = {
     "Development": [
         "Development",
         "During brain development",
-        "During brain development, adulthood and aging",
+            "During brain development, adulthood and aging",
         "During development and at adulthood"
     ],
     "Embryo": [

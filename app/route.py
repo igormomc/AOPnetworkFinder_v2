@@ -41,6 +41,7 @@ def search_aops():
 
     unique_ke_set = set()
     tmp_ke_id_set = set()
+    filtered_aop_list = []
     aop_list = []
 
     # Validate the form data
@@ -72,6 +73,7 @@ def search_aops():
         stressors = cache.get('get_stressors')
         stressor_query_validation = False
 
+        aop_query_list = aop_query.split(',')
         if stressors is None:
             # Cache miss, so fetch the stressors again and cache them
             stressors = visualizer_sv.get_all_stressors_from_aop_wiki()
@@ -95,7 +97,7 @@ def search_aops():
         sexes = cache.get('get_sexes')
         if sexes is None:
             sexes = visualizer_sv.get_all_sex_from_aop_wiki()
-            cache.set('get_sexes', taxonomies, timeout=6000)
+            cache.set('get_sexes', sexes, timeout=6000)
 
         lifeStages = cache.get('get_life_stages')
         if lifeStages is None:
@@ -106,32 +108,6 @@ def search_aops():
         if stressor_query in stressors:
             # Valid stressor submission
             stressor_query_validation = True
-
-        if life_stage_query in lifeStages:
-            status = visualizer_sv.check_if_life_stage_exist_in_aop(aop_query, life_stage_query)
-            if status is False:
-                return render_template('visualizer_page_one.html', data=None)
-
-        if sex_query in sexes:
-            status = visualizer_sv.check_if_sex_exist_in_aop(aop_query, sex_query)
-            if status is False:
-                return render_template('visualizer_page_one.html', data=None)
-
-        if organ_query in organs:
-            status = visualizer_sv.check_if_organ_exist_in_aop(aop_query, organ_query)
-            if status is False:
-                return render_template('visualizer_page_one.html', data=None)
-
-        if cell_query in cells:
-            status = visualizer_sv.check_if_cell_exist_in_aop(aop_query, cell_query)
-            if status is False:
-                return render_template('visualizer_page_one.html', data=None)
-
-        if taxonomy_query in taxonomies:
-            status = visualizer_sv.check_if_taxonomic_exist_in_aop(aop_query, taxonomy_query)
-            if status is False:
-                return render_template('visualizer_page_one.html', data=None)
-
 
         # Input validation and sanitation
         aop_query_validation = input_validation.validate_aop_ke_inputs(aop_query)
@@ -171,12 +147,47 @@ def search_aops():
         else:
             aop_list = visualizer_sv.extract_all_aops_given_ke_ids(ke_query)
 
+        #merge aop_list with aop_query
+        aop_query_list.extend(aop_list)
+        if len(aop_query_list) > 0:
+
+            for aop_id in aop_query_list:
+                all_filters_match = True
+                if life_stage_query in lifeStages:
+                    if not visualizer_sv.check_if_life_stage_exist_in_aop(aop_id, life_stage_query):
+                        all_filters_match = False
+
+                if sex_query in sexes:
+                    if not visualizer_sv.check_if_sex_exist_in_aop(aop_id, sex_query):
+                        all_filters_match = False
+
+                if organ_query in organs:
+                    if not visualizer_sv.check_if_organ_exist_in_aop(aop_id, organ_query):
+                        all_filters_match = False
+
+                if cell_query in cells:
+                    if not visualizer_sv.check_if_cell_exist_in_aop(aop_id, cell_query):
+                        all_filters_match = False
+
+                if taxonomy_query in taxonomies:
+                    if not visualizer_sv.check_if_taxonomic_exist_in_aop(aop_id, taxonomy_query):
+                        all_filters_match = False
+
+                if all_filters_match:
+                    filtered_aop_list.append(aop_id)
+
+            if len(filtered_aop_list) == 0:
+                return render_template('visualizer_page_one.html', data=None)
+
+
+
+
         aop_query_list = aop_query.split(',')
         aop_stressor_list = visualizer_sv.extract_all_aop_id_from_given_stressor_name(stressor_query)
         aop_list.extend(aop_query_list)
         aop_list.extend(aop_stressor_list)
         # Remove empty strings
-        aop_list_filtered = [aop for aop in aop_list if aop != '']
+        aop_list_filtered = [aop for aop in filtered_aop_list if aop != '']
 
         if len(aop_list_filtered) == 0 and len(unique_ke_set) > 0:
             aop_cytoscape, aop_after_filter = visualizer_sv.visualize_only_ke_degrees(unique_ke_set)
