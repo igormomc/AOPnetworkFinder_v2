@@ -157,9 +157,11 @@ def search_aops():
                     if not visualizer_sv.check_if_life_stage_exist_in_aop(aop_id, life_stage_query):
                         all_filters_match = False
 
-                if sex_query in sexes:
-                    if not visualizer_sv.check_if_sex_exist_in_aop(aop_id, sex_query):
-                        all_filters_match = False
+                if(len(sex_query) > 0):
+                    all_filters_match = False
+                    for sex in sex_query.split(','):
+                        if visualizer_sv.check_if_sex_exist_in_aop(aop_id, sex):
+                            all_filters_match = True
 
                 if organ_query in organs:
                     if not visualizer_sv.check_if_organ_exist_in_aop(aop_id, organ_query):

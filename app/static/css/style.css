@@ -119,7 +119,7 @@ html, body {
 
 .search-group {
     margin-right: auto;
-    width: 80%;
+    width: 100%;
     margin-bottom: 8%;
 }
 
@@ -176,7 +176,7 @@ html, body {
 }
 
 .search-group {
-    width: 48%; /* Each dropdown takes up 48% of the container width */
+    width: 100%;
 }
 
 .search-group label {
@@ -278,6 +278,13 @@ nav img {
     padding: 5px;
     box-sizing: border-box;
 }
+
+.search-group-sex select {
+    width: 100%;
+    padding: 5px;
+    box-sizing: border-box;
+}
+
 
 .modal-second {
   display: flex;
@@ -419,7 +426,7 @@ button:hover {
     margin-right: 4%;
 
 }
-    
+
 
 .nav-link.active {
     font-weight: bold;

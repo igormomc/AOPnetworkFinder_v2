@@ -125,10 +125,10 @@ document.addEventListener('DOMContentLoaded', function() {
         var organsDropdown = document.getElementById("organsDropdown").value;
         var taxonomiDropdown = document.getElementById("taxonomiDropdown").value;
         var lifeStageDropdown = document.getElementById("lifeStageDropdown").value;
-        var sexDropdown = document.getElementById("sexDropdown").value;
+        var sexDropdown = $('#sexDropdown').val();
         var cellsDropdown = document.getElementById("cellsDropdown").value;
 
-        // Add the filter checkboxes to formData
+        console.log("sexDropdown", sexDropdown)
         document.querySelectorAll('#checkbox-filter input[type="checkbox"]').forEach(function(checkbox) {
             formData.append(checkbox.name, checkbox.checked ? "1" : "0");
         });
@@ -905,12 +905,14 @@ $(document).ready(function() {
             $('#sexDropdown').select2({
                 placeholder: "Search for a Sex",
                 allowClear: true,
-                data: formattedSexData
+                data: formattedSexData,
+                multiple: true
             });
         })
         .catch(error => console.error('Fetch error:', error));
     $('#sexDropdown').val(null).trigger('change');
 });
+
 
 $(document).ready(function() {
     fetch('/get_life_stages')
