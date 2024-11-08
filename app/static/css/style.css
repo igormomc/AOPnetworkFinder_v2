@@ -25,7 +25,6 @@ html, body {
 }
 
 nav {
-    height: 60px;
     padding: 0;
     margin: 0;
     display: flex;
@@ -35,10 +34,9 @@ nav {
     box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-nav img, nav a {
-    height: auto;
-    max-height: 40px;
-    margin-right: 16px;
+nav img {
+    height: 40px;
+    margin-right: 30%;
 }
 
 .nav-link.active {
@@ -104,6 +102,14 @@ nav a, nav img {
     position: absolute;
     top: 0;
     width: 100%;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+}
+#emailIcon {
+    cursor: pointer;
+    width: 6%;
+    height: auto;
+    margin-right: 2%;
+
 }
 
 .toolbar img {
@@ -144,6 +150,7 @@ nav a, nav img {
 .search-group, .checkbox-group, .dropdown-container {
     width: 100%;
 }
+
 
 .search-field, select, button {
     width: 100%;

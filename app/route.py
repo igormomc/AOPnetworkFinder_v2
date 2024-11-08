@@ -150,12 +150,13 @@ def search_aops():
         #merge aop_list with aop_query
         aop_query_list.extend(aop_list)
         if len(aop_query_list) > 0:
-
             for aop_id in aop_query_list:
                 all_filters_match = True
-                if life_stage_query in lifeStages:
-                    if not visualizer_sv.check_if_life_stage_exist_in_aop(aop_id, life_stage_query):
-                        all_filters_match = False
+                if(len(life_stage_query) > 0):
+                    all_filters_match = False
+                    for life_stage in life_stage_query.split(','):
+                        if visualizer_sv.check_if_life_stage_exist_in_aop(aop_id, life_stage):
+                            all_filters_match = True
 
                 if(len(sex_query) > 0):
                     all_filters_match = False
@@ -163,17 +164,23 @@ def search_aops():
                         if visualizer_sv.check_if_sex_exist_in_aop(aop_id, sex):
                             all_filters_match = True
 
-                if organ_query in organs:
-                    if not visualizer_sv.check_if_organ_exist_in_aop(aop_id, organ_query):
-                        all_filters_match = False
+                if(len(organ_query) > 0):
+                    all_filters_match = False
+                    for organ in organ_query.split(','):
+                        if visualizer_sv.check_if_organ_exist_in_aop(aop_id, organ):
+                            all_filters_match = True
 
-                if cell_query in cells:
-                    if not visualizer_sv.check_if_cell_exist_in_aop(aop_id, cell_query):
-                        all_filters_match = False
+                if len(cell_query) > 0:
+                    all_filters_match = False
+                    for cell in cell_query.split(','):
+                        if visualizer_sv.check_if_cell_exist_in_aop(aop_id, cell):
+                            all_filters_match = True
 
-                if taxonomy_query in taxonomies:
-                    if not visualizer_sv.check_if_taxonomic_exist_in_aop(aop_id, taxonomy_query):
-                        all_filters_match = False
+                if len(taxonomy_query) > 0:
+                    all_filters_match = False
+                    for taxonomy in taxonomy_query.split(','):
+                        if visualizer_sv.check_if_taxonomic_exist_in_aop(aop_id, taxonomy):
+                            all_filters_match = True
 
                 if all_filters_match:
                     filtered_aop_list.append(aop_id)
@@ -198,7 +205,6 @@ def search_aops():
                                                                                      filter_development_chx,
                                                                                      filter_endorsed_chx, filter_review_chx,
                                                                                      filter_approved_chx, unique_ke_set)
-
         if aop_cytoscape is None:
             # Happens if all the aops the user inputted gets filtered out.
             return render_template('visualizer_page_one.html', data=None)
@@ -213,7 +219,8 @@ def search_aops():
             'aop_before_filter': aop_list_filtered,
             'aop_after_filter': aop_after_filter
         }
-        return jsonify(final_response)
+        json_result = jsonify(final_response)
+        return json_result
     return render_template('visualizer_page_one.html', data=None)
 
 

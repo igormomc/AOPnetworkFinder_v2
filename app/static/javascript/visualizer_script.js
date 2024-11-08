@@ -122,13 +122,12 @@ document.addEventListener('DOMContentLoaded', function() {
         var searchValueStressor = document.getElementById("stressorDropdown").value;
         var genesChecked = document.getElementById("checkedBoxGene").checked;
         var keDegreeSelection = document.querySelector('input[name="degree"]:checked').value;
-        var organsDropdown = document.getElementById("organsDropdown").value;
-        var taxonomiDropdown = document.getElementById("taxonomiDropdown").value;
-        var lifeStageDropdown = document.getElementById("lifeStageDropdown").value;
+        var organsDropdown = $('#organsDropdown').val();
+        var taxonomiDropdown = $('#taxonomiDropdown').val();
+        var lifeStageDropdown = $('#lifeStageDropdown').val();
         var sexDropdown = $('#sexDropdown').val();
-        var cellsDropdown = document.getElementById("cellsDropdown").value;
+        var cellsDropdown = $('#cellsDropdown').val();
 
-        console.log("sexDropdown", sexDropdown)
         document.querySelectorAll('#checkbox-filter input[type="checkbox"]').forEach(function(checkbox) {
             formData.append(checkbox.name, checkbox.checked ? "1" : "0");
         });
@@ -812,9 +811,10 @@ $(document).ready(function() {
                 placeholder: "Search for a Cell",
                 allowClear: true,
                 data: formattedCellData,
+                multiple: true,
                 templateResult: function(item) {
                     if (!item.id) { return item.text; }
-                    const synonyms = item.synonyms && item.synonyms.length > 1
+                    const synonyms = item.synonyms && item.synonyms.length > 0
                         ? ` (${item.synonyms.join(', ')})`
                         : '';
                     const displayText = $('<span>').text(item.text + synonyms);
@@ -827,8 +827,10 @@ $(document).ready(function() {
             });
         })
         .catch(error => console.error('Fetch error:', error));
+
     $('#cellsDropdown').val(null).trigger('change');
 });
+
 
 $(document).ready(function() {
     fetch('/get_organs')
@@ -844,9 +846,10 @@ $(document).ready(function() {
                 placeholder: "Search for an Organ",
                 allowClear: true,
                 data: formattedOrgsData,
+                multiple: true,
                 templateResult: function(item) {
                     if (!item.id) { return item.text; }
-                    const synonyms = item.synonyms && item.synonyms.length > 1
+                    const synonyms = item.synonyms && item.synonyms.length > 0
                         ? ` (${item.synonyms.join(', ')})`
                         : '';
                     const displayText = $('<span>').text(item.text + synonyms);
@@ -864,6 +867,7 @@ $(document).ready(function() {
 });
 
 
+
 $(document).ready(function() {
     fetch('/get_taxonomies')
         .then(response => response.json())
@@ -878,9 +882,10 @@ $(document).ready(function() {
                 placeholder: "Search for a Taxonomy",
                 allowClear: true,
                 data: formattedTaxData,
+                multiple: true,
                 templateResult: function(item) {
                     if (!item.id) { return item.text; }
-                    const synonyms = item.synonyms && item.synonyms.length > 1
+                    const synonyms = item.synonyms && item.synonyms.length > 0
                         ? ` (${item.synonyms.join(', ')})`
                         : '';
                     const displayText = $('<span>').text(item.text + synonyms);
@@ -892,6 +897,7 @@ $(document).ready(function() {
 
     $('#taxonomiDropdown').val(null).trigger('change');
 });
+
 
 
 $(document).ready(function() {
@@ -928,9 +934,12 @@ $(document).ready(function() {
                 placeholder: "Search for a Life Stage",
                 allowClear: true,
                 data: formattedLifeData,
+                multiple: true,
                 templateResult: function(item) {
-                    if (!item.id) { return item.text; }
-                    const synonyms = item.synonyms && item.synonyms.length > 1
+                    if (!item.id) {
+                        return item.text;
+                    }
+                    const synonyms = item.synonyms && item.synonyms.length > 0
                         ? ` (${item.synonyms.join(', ')})`
                         : '';
                     const displayText = $('<span>').text(item.text + synonyms);
