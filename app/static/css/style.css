@@ -15,55 +15,70 @@
 }*/
 
 html, body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
     background-image: url('../images/minimalistic_background_blue_white.webp');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-}
-
-nav {
-    padding: 0;
+    height: 100%;
     margin: 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background-color: #f8f9fa;
-    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-nav img {
-    height: 40px;
-    margin-right: 30%;
-}
-
-.nav-link.active {
-    font-weight: bold;
-}
-
-nav a, nav img {
     padding: 0;
-    margin: 0;
-    vertical-align: middle;
-    line-height: normal;
 }
 
+#main_text {
+    font-size: 2vw;
+}
+
+.cytoscape-container {
+    position: relative;
+    width: 100%;
+    height: 75vh;
+}
+
+#cy {
+    width: 100%;
+    height: 100%;
+    background-color: white;
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
+    border-bottom-left-radius: 15px;
+    border-bottom-right-radius: 15px;
+}
 .parent-container {
     display: flex;
-    height: 85vh;
-    padding: 5% 2% 2%;
+    justify-content: center;
+    align-items: start;
     gap: 2%;
-    align-items: stretch;
 }
 
 .leftside-container {
-    width: 20%;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
+    align-items: center;
+    width: 25%;
+    height: 75vh;
+}
+
+.leftside-container .input-group {
+    margin-top: 10%;
+}
+
+.leftside-container #clearSelection {
+    margin-top: 10%;
+    width: 100%;
+}
+
+.checkbox-group label {
+    display: block;
+    margin-bottom: 8px;
+}
+
+
+.rightside-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 40%;
+    height: 75vh;
 }
 
 .leftside-container #searchButtonAOP{
@@ -72,58 +87,6 @@ nav a, nav img {
 
 .leftside-container #clearSelection{
     border-radius: 10px;
-    margin-top: 10px;
-}
-
-.cytoscape-container {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    background-color: white;
-    border-radius: 15px;
-    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-}
-
-#cy {
-    flex-grow: 1;
-    width: 100%;
-    height: 100%;
-}
-
-.toolbar {
-    display: flex;
-    justify-content: flex-end;
-    padding: 10px;
-    background-color: rgba(255, 255, 255, 0.8);
-    z-index: 10;
-    gap: 10px;
-    position: absolute;
-    top: 0;
-    width: 100%;
-    border-bottom: 2px solid rgba(0, 0, 0, 0.1);
-}
-#emailIcon {
-    cursor: pointer;
-    width: 6%;
-    height: auto;
-    margin-right: 2%;
-
-}
-
-.toolbar img {
-    cursor: pointer;
-    width: 30px;
-    height: 30px;
-}
-
-.rightside-container {
-    width: 20%;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
 }
 
 .bottom-container {
@@ -146,53 +109,298 @@ nav a, nav img {
     margin-top: 5px;
 }
 
+.top-container {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 7vh;
+}
+.search-group {
+    margin-right: auto;
+    width: 100%;
+    margin-bottom: 8%;
+}
+.search-group label {
+    margin-right: 4%;
+    white-space: nowrap;
+}
+.search-field {
+    margin-left: auto;
+    width: 63%;
+    margin-bottom: 8%;
+}
+.rightside-container label[for="searchFieldKe"],
+.rightside-container #searchFieldKE {
+  align-self: stretch;
+  width: 100%;
+}
+.rightside-container label[for="searchFieldAOP"],
+.rightside-container #searchFieldAOP {
+  align-self: stretch;
+  width: 100%;
+}
+/* Styles for the search button */
+.search-button {
+    margin-left: auto;
+    width: 100%;
+}
+#exportToCytoscape {
+    justify-self: start;
+    /*margin-left: 16.5%;*/
+    width: 100%;
+}
+#checkboxGene{
+    justify-self: start;
+    margin-left: 0%;
+    width: 16.5%;
+    white-space: nowrap;
+}
+.dropdown-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 2%;
+    width: 100%;
+    margin-bottom: 16px; /* Adjust the space between rows of dropdowns */
+}
 
-.search-group, .checkbox-group, .dropdown-container {
+.search-group {
     width: 100%;
 }
 
-
-.search-field, select, button {
+.search-group label {
+    white-space: nowrap;
+    margin-bottom: 8px; /* Add space below the label */
+}
+.search-group select {
     width: 100%;
-    padding: 8px;
-    border-radius: 5px;
+    padding: 5px;
     box-sizing: border-box;
 }
 
-button {
-    border-radius: 10px;
-    padding: 8px;
-    font-size: 1em;
-    cursor: pointer;
+.checkbox-group {
+    width: 80%;
+    margin-top: 5%;
+    margin-right: auto;
+    text-align: left;
+}
+#searchGroupStressor, #searchGroupCells, #searchGroupOrgans #searchGroupTaxonomies #searchGroupSex #searchGroupLifeStage{
+    margin: auto;
+    width: 100%;
+    margin-bottom: 5%;
+    flex: 1
+}
+#searchFieldStressor {
+    margin: auto;
+    width: 73.5%;
+}
+#saveButtonLog {
+    margin-left: auto;
+    width: 90%;
+}
+#mergeButtonKeyEvent {
+    margin-left: auto;
+    width: 90%;
+}
+#stressorDropdown {
+    width: 100%;
 }
 
-button:hover {
-    background-color: #66b3ff;
+nav img {
+    height: 40px;
+    margin-right: 30%;
 }
 
+/* The popup window */
 .modal {
     display: none;
     position: fixed;
-    z-index: 100;
+    z-index: 1;
     left: 0;
     top: 0;
     width: 100vw;
     height: 100vh;
-    background-color: rgba(0, 0, 0, 0.4);
+    background-color: rgba(0,0,0,0.4);
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
+.popupMerge-content {
+    background-color: rgba(254, 254, 254, 1);
+    width: 40vw;
+    max-width: 500px;
+    height: 50vh;
+    overflow-y: auto;
+    border: 1px solid #888;
+    margin: auto;
+    border-radius: 15px;
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+}
+.popup-top {
+    display: grid;
+    grid-template-columns: 1fr 1fr 0.3fr;
+    padding: 10px;
+    gap: 10px;
+    align-items: end;
+    width: 100%;
+    height: 3vh;
+}
+.input-group select {
+    width: 175px;
+    max-width: 200%;
+    overflow: hidden;
+}
+.search-group select {
+    width: 100%;
+    padding: 5px;
+    box-sizing: border-box;
+}
+.search-group-sex select {
+    width: 100%;
+    padding: 5px;
+    box-sizing: border-box;
+}
+.modal-second {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  padding: 10px;
+  text-align: center;
+  height: 35vh;
+  width: 100%;
+}
+.modal-second button {
+  width: calc(50%);
+  margin: 5px 0;
+}
+#dynamicButtons {
+    height: auto;
+    width: 100%;
+}
+/* The Close Button */
+.close {
+/*    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+*/
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  cursor: pointer;
+}
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+.merge-option-group {
+    width: 100%;
+}
+.merge-option-button {
+    /* Default styles */
+    border-radius: 10px;
+    width: 100%;
+    gap: 5px;
+}
+.merge-option-button.active {
+    background-color: #4CAF50; /* Green background for active button */
+    color: white;
+}
+.radio-container {
+  text-align: left;
+  width: 100%;
+  position: relative;
+  top: -2vh;
+}
+#nodePopup {
+    display: none;
+    position: fixed;
+    bottom: 5vh;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80vw;
+    max-width: 800px;
+    z-index: 100;
+    background: rgba(240, 240, 240, 0.95);
+    border: 1px solid black;
+    padding: 10px;
+    box-sizing: border-box;
+    border-radius: 10px;
+}
+button:hover {
+    background-color: #66b3ff;
+}
+.toolbar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 40px;
+    padding: 1vh;
+    background-color: rgba(255, 255, 255, 0.8);
+    z-index: 10;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    border-bottom: 1px solid #ccc;
+    box-sizing: border-box;
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
+}
+#saveIcon {
+    cursor: pointer;
+    width: 4%;
+    height: auto;
+    margin-right: 2%;
+}
+#saveStyleIcon {
+    cursor: pointer;
+    width: 3.3%;
+    height: auto;
+    margin-right: 2%;
+}
+#colorBlindActive {
+    cursor: pointer;
+    width: 4%;
+    height: auto;
+    margin-right: 2%;
+    display: none;
+}
+#colorBlindNotActive {
+    cursor: pointer;
+    width: 4%;
+    height: auto;
+    margin-right: 2%;
+}
+#emailIcon {
+    cursor: pointer;
+    width: 6%;
+    height: auto;
+    margin-right: 4%;
+}
+.nav-link.active {
+    font-weight: bold;
+}
+#processButton {
+    border-radius: 10px;
+}
 .loader-container {
     position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     display: flex;
-    align-items: center;
     justify-content: center;
+    align-items: center;
     z-index: 1000;
+    left: -40px;
 }
 
 .loader {
