@@ -172,6 +172,7 @@ async function displayNodeInfo(geneSymbol, node, keTypeColor) {
     try {
         const aliasSymbols = (await fetchAliasSymbols(geneSymbol)).flat().filter(symb => symb !== undefined);
         console.log('Alias symbols:', aliasSymbols);
+        const assayInfo = assayGenesDict[geneSymbol];
         let connectedKEs = node.connectedEdges().map(edge => {
             console.log("Edge", edge);
             // Check connected nodes
@@ -192,6 +193,16 @@ async function displayNodeInfo(geneSymbol, node, keTypeColor) {
         contentHtml += `<tr><td>Name:</td><td> ${geneNameHtml}</td></tr>`;
         contentHtml += `<tr><td><strong>Alias and previous Symbols:</strong></td><td>${aliasSymbols.join(', ') || 'N/A'}</td></tr>`;
         contentHtml += `<tr><td><strong>Connected KE:</strong></td><td>${connectedKEs || 'N/A'}</td></tr>`;
+        //we only show info about one of the assays even if there are multiple
+        if (assayInfo && assayInfo.length > 0) {
+    const assayComponentName = assayInfo[0].assayComponentName || 'N/A';
+    const assayLink = assayComponentName !== 'N/A' ? `<a href="https://comptox.epa.gov/dashboard/assay-endpoints/${assayComponentName}" target="_blank">${assayComponentName}</a>` : 'N/A';
+    contentHtml += `<tr><td><strong>Assay Name: </strong></td><td>${assayLink}</td></tr>`;
+
+    if (assayInfo.length > 1) {
+        contentHtml += `<tr><td colspan="2">See other Assays for this gene: <a href="https://comptox.epa.gov/dashboard/assay-endpoints?search=${geneSymbol}" target="_blank">Link</a></td></tr>`;
+    }
+}
         contentHtml += `</table></div>`;
 
         // Set the HTML content for the node information display
