@@ -28,6 +28,11 @@
                 <label><input id="checkedBoxGene" type="checkbox" name="checkboxGenes"> Show Genes</label>
                 <label><input id="checkedAssayGenes" type="checkbox" name="checkboxAssayGenes"> Show Assay Genes</label>
             </div>
+            <div>
+                <input type="file" id="fileUpload" accept=".xlsx,.xls" style="display: none;">
+                <button type="button" id="triggerUpload" class="file-button">Upload file</button>
+                <pre id="output"></pre>
+            </div>
         </div>
 
         <div class="cytoscape-container">
@@ -192,6 +197,9 @@
 
     <script src="{{ url_for('static', filename='javascript/scripts/fetchAliasSymbols.js') }}"></script>
     <script src="{{ url_for('static', filename='javascript/scripts/fetchAllAssays.js') }}"></script>
+
+    <!-- Include xlsx library -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 
  <!-- Custom Validator Script

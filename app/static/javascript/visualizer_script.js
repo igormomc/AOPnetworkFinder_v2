@@ -447,6 +447,78 @@ function render_graph(url_string, formData) {
         }
     );
 }
+let userUploadedData = null; 
+
+
+function uploadFile() {
+    const fileInput = document.getElementById('fileUpload');
+
+    fileInput.click();
+
+    fileInput.addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const fileName = file.name;
+            console.log(`Selected file: ${fileName}`);
+
+            const reader = new FileReader();
+
+            reader.onload = function(event) {
+                const data = new Uint8Array(event.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+
+                // Convert sheet data to JSON
+                const json = XLSX.utils.sheet_to_json(worksheet);
+
+                json.forEach((row, index) => {
+                    console.log(`Row ${index + 1} Data:`, row);
+                });
+
+                // Required keys and their aliases
+                const requiredKeys = {
+                    keid: ['keid'],
+                    chemical: ['chemical', 'chem'],
+                    AC50: ['ac50']
+                };
+
+                const missingRows = [];
+                json.forEach((row, index) => {
+                    const normalizedRowKeys = Object.keys(row).map(key => key.toLowerCase());
+                    const missingKeys = Object.keys(requiredKeys).filter(
+                        key => !requiredKeys[key].some(alias => normalizedRowKeys.includes(alias))
+                    );
+
+                    if (missingKeys.length > 0) {
+                        console.warn(`Row ${index + 1} is missing keys: ${missingKeys.join(', ')}`);
+                        missingRows.push({ row: index + 1, missingKeys });
+                    }
+                });
+
+                if (missingRows.length > 0) {
+                    console.error("Validation failed for the following rows:", missingRows);
+                    alert(`Validation failed. Missing keys in rows:\n${missingRows.map(r => `Row ${r.row}: ${r.missingKeys.join(', ')}`).join('\n')}`);
+                } else {
+                    console.log('Validation passed. All required keys are present.');
+
+                    userUploadedData = json;
+                    console.log("userUploadedData", userUploadedData)
+                    // Add data to the graph
+                    //addDataToGraph(userUploadedData);
+                }
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+    }, { once: true }); 
+}
+
+
+document.getElementById('triggerUpload').addEventListener('click', uploadFile);
+
+
 
 function getColorByType(ke_type) {
     if (!isColorBlindMode) {
