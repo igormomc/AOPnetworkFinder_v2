@@ -326,16 +326,12 @@ function render_graph(url_string, formData) {
                     minTemp: 1.0
             }
         });
-        //edges between genes set to opacity 50%
         cy.ready(function() {
-            // Iterate over all edges
             cy.edges().forEach(function(edge) {
-                // Check if either the source or target node has 'ke_type' equal to 'genes'
                 var sourceNode = edge.source();
                 var targetNode = edge.target();
 
                 if (sourceNode.data('ke_type') === 'genes' || targetNode.data('ke_type') === 'genes') {
-                    // Update the edge more translucent
                     edge.style('opacity', 0.5);
                 }
             });
@@ -364,6 +360,7 @@ function render_graph(url_string, formData) {
 
             // Fetch alias and prev symbols for the clicked gene
             displayNodeInfo(geneSymbol, node, keTypeColor);
+        
         } else {
 
                     let upstreamKEs = [];
@@ -403,16 +400,19 @@ function render_graph(url_string, formData) {
                     }).join(', '); // Join all urls
 
                     const processKEs = (keArray) => {
-                        // Check if the array is empty or contains only 'N/A'
-                        if (keArray.length === 0 || (keArray.length === 1 && keArray[0] === 'N/A')) {
-                            return 'N/A'; // Return 'N/A' as plain text, not a link
-                        } else {
-                            return keArray.map(ke => {
-                                let keId = ke.split('/').pop();
-                                return `<a href="${ke}" target="_blank">${keId}</a>`;
-                            }).join(', ');
+                        if (!keArray || !Array.isArray(keArray)) {
+                            return 'N/A';
                         }
+                    
+                        return keArray
+                            .filter(ke => typeof ke === 'string' && ke.includes('/')) 
+                            .map(ke => {
+                                let keId = ke.split('/').pop(); 
+                                return `<a href="${ke}" target="_blank">${keId}</a>`;
+                            })
+                            .join(', ') || 'N/A'; 
                     };
+                    
 
                     contentHtml += `<tr><td>ID: </td><td> ${node.data('label') || 'N/A'}</td></tr>`;
                     contentHtml += `<tr><td>Name: </td><td> ${node.data('name') || 'N/A'}</td></tr>`;
@@ -447,7 +447,121 @@ function render_graph(url_string, formData) {
         }
     );
 }
-let userUploadedData = null; 
+let userUploadedData = null;
+
+function addDataToGraph(data) {
+    if (!data || data.length === 0) {
+        console.error("No data to add to the graph.");
+        return;
+    }
+
+    console.log("Adding data to the graph:", data);
+
+    data.forEach((entry, index) => {
+        const keid = getInsensitiveKeyValue(entry, ['KEID', 'keid']);
+        const assayName = getInsensitiveKeyValue(entry, ['chemical', 'chem']) || `Assay-${Math.random().toString(36).substring(2, 7)}`;
+        const ac50 = getInsensitiveKeyValue(entry, ['AC50', 'ac50']) || 'N/A';
+        const gene = getInsensitiveKeyValue(entry, ['GENE', 'gene']);
+        console.log("gen", gene);
+
+        console.log(`Row ${index + 1}: KE ID: ${keid}, Assay: ${assayName}, AC50: ${ac50}`);
+
+        if (!keid) {
+            console.warn(`Row ${index + 1}: Missing KE ID. Skipping entry:`, entry);
+            return;
+        }
+
+        const keNode = cy.nodes().filter(node => node.data('label') === keid);
+
+        if (keNode.length === 0) {
+            console.error(`Row ${index + 1}: KE Node with label "${keid}" does not exist. Skipping.`);
+            return;
+        }
+
+        const keNodePosition = keNode.position();
+        const angle = Math.random() * 2 * Math.PI;
+        const offsetX = 200 * Math.cos(angle); 
+        const offsetY = 200 * Math.sin(angle);
+        const genePosition = {
+            x: keNodePosition.x + offsetX,
+            y: keNodePosition.y + offsetY
+        };
+
+        let assayNode = cy.nodes(`[id = "assay-${assayName}"]`);
+        if (assayNode.length === 0) {
+            try {
+                assayNode = cy.add({
+                    group: 'nodes',
+                    data: {
+                        id: `assay-${assayName}`,
+                        label: `${assayName}`,
+                        ke_type: 'assay',
+                        name: `${gene}`,
+                    },
+                    position: genePosition, 
+                    style: {
+                        'background-color': '#35d135',
+                        'width': 10,
+                        'height': 10
+                    }
+                });
+                console.log(`Added Assay Node: assay-${assayName}`);
+            } catch (error) {
+                console.error(`Error adding assay node "assay-${assayName}":`, error);
+                return;
+            }
+        }
+
+        // Add an edge from the assay node to the KE node
+        const existingEdge = cy.edges(`[source = "assay-${assayName}"][target = "${keNode.id()}"]`);
+        try {
+            if (existingEdge.length === 0) {
+                cy.add({
+                    group: 'edges',
+                    data: {
+                        id: `edge-${assayName}-${keid}`,
+                        source: `assay-${assayName}`, 
+                        target: keNode.id(), 
+                        label: `AC50: ${ac50}`
+                    },
+                    style: {
+                        'line-color': '#7A7A7A',
+                        'width': 2
+                    }
+                });
+                console.log(`Edge added: assay-${assayName} -> ${keNode.id()}`);
+            } else {
+                console.log(`Edge already exists: assay-${assayName} -> ${keNode.id()}`);
+            }
+        } catch (error) {
+            console.error(`Error adding edge between assay-${assayName} and ${keNode.id()}:`, error);
+        }
+    });
+
+    alert("Uploaded data added to the graph!");
+    console.log("All Nodes in Graph:", cy.nodes().map(node => node.data('id')));
+}
+
+
+
+// Helper function to handle case-insensitive key matching
+function getInsensitiveKeyValue(object, keys) {
+    const key = keys.find(k => Object.keys(object).some(ok => ok.toLowerCase() === k.toLowerCase()));
+    return key ? object[key] : undefined;
+}
+
+
+function getInsensitiveKeyValue(obj, keys) {
+    for (const key of keys) {
+        const matchedKey = Object.keys(obj).find(k => k.toLowerCase() === key.toLowerCase());
+        if (matchedKey) {
+            return obj[matchedKey];
+        }
+    }
+    return undefined;
+}
+
+
 
 
 function uploadFile() {
@@ -481,7 +595,8 @@ function uploadFile() {
                 const requiredKeys = {
                     keid: ['keid'],
                     chemical: ['chemical', 'chem'],
-                    AC50: ['ac50']
+                    AC50: ['ac50'],
+                    Gene: ['gene'],
                 };
 
                 const missingRows = [];
@@ -506,7 +621,7 @@ function uploadFile() {
                     userUploadedData = json;
                     console.log("userUploadedData", userUploadedData)
                     // Add data to the graph
-                    //addDataToGraph(userUploadedData);
+                    addDataToGraph(userUploadedData);
                 }
             };
 
