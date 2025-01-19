@@ -29,9 +29,27 @@
                 <label><input id="checkedAssayGenes" type="checkbox" name="checkboxAssayGenes"> Show Assay Genes</label>
             </div>
             <div class="uploadWrapper">
-                <input type="file" id="fileUpload" accept=".xlsx,.xls" style="display: none;">
+                <input type="file" id="fileUpload" accept=".csv" style="display: none;">
                 <button type="button" id="triggerUpload" class="file-button">Upload file</button>
                 <pre id="output"></pre>
+                <span class="info-button" id="infoButton">ℹ Info</span>
+                <div class="info-section" id="infoSection" style="display: none;">
+                    <p><strong>How to Upload a CSV File:</strong></p>
+                    <ul>
+                        <li>Ensure the file is in CSV format (<code>.csv</code>).</li>
+                        <li>The file must contain the following fields:
+                            <ul>
+                                <li><code>keid</code></li>
+                                <li><code>chemical</code></li>
+                                <li><code>ac50</code></li>
+                                <li><code>gene</code></li>
+                            </ul>
+                        </li>
+                        <li>You can download a template file below.</li>
+                    </ul>
+                    <button id="downloadTemplateButton">Download CSV Template</button>
+                </div>
+                
             </div>
         </div>
 

@@ -563,44 +563,89 @@ function getInsensitiveKeyValue(obj, keys) {
 
 
 
-
 function uploadFile() {
     const fileInput = document.getElementById('fileUpload');
 
     fileInput.click();
 
-    fileInput.addEventListener('change', function(event) {
+    fileInput.addEventListener('change', function (event) {
         const file = event.target.files[0];
         if (file) {
             const fileName = file.name;
             console.log(`Selected file: ${fileName}`);
 
+            
+            if (!fileName.endsWith('.csv')) {
+                alert('Invalid file format. Please upload a CSV file.');
+                return;
+            }
+
+            
+            const maxFileSize = 1048576; // 1MB in bytes
+            if (file.size > maxFileSize) {
+                alert('File is too large. Please upload a file smaller than 1MB.');
+                return;
+            }
+
             const reader = new FileReader();
 
-            reader.onload = function(event) {
-                const data = new Uint8Array(event.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
+            reader.onload = function (event) {
+                const fileContent = event.target.result;
 
-                const sheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[sheetName];
+                
+                try {
+                    if (!isUtf8(fileContent)) {
+                        throw new Error('Invalid file encoding. Please upload a UTF-8 encoded CSV file.');
+                    }
+                } catch (error) {
+                    console.error(error.message);
+                    alert(error.message);
+                    return;
+                }
 
-                // Convert sheet data to JSON
-                const json = XLSX.utils.sheet_to_json(worksheet);
+               
+                const rows = fileContent.split('\n').map(row => row.trim()).filter(row => row);
+                const headers = rows.shift().split(',').map(header => header.trim().toLowerCase());
+                console.log('Headers in uploaded file:', headers);
 
-                json.forEach((row, index) => {
-                    console.log(`Row ${index + 1} Data:`, row);
+               
+                const requiredHeaders = ['keid', 'chemical', 'ac50', 'gene'];
+                const missingHeaders = requiredHeaders.filter(header => !headers.includes(header));
+                if (missingHeaders.length > 0) {
+                    alert(`Invalid file format. Missing headers: ${missingHeaders.join(', ')}`);
+                    return;
+                }
+
+                const json = rows.map(row => {
+                    const values = row.split(',').map(value => value.trim());
+                    return headers.reduce((obj, header, index) => {
+                        obj[header] = values[index] || '';
+                        return obj;
+                    }, {});
                 });
 
-                // Required keys and their aliases
+          
+                const sanitizedData = json.map(row => {
+                    for (const key in row) {
+                        if (row[key].startsWith('=') || row[key].startsWith('+') || row[key].startsWith('-') || row[key].startsWith('@')) {
+                            row[key] = `'${row[key]}`; 
+                        }
+                    }
+                    return row;
+                });
+
+                console.log('Sanitized Data:', sanitizedData);
+
+                
                 const requiredKeys = {
                     keid: ['keid'],
                     chemical: ['chemical', 'chem'],
-                    AC50: ['ac50'],
-                    Gene: ['gene'],
+                    ac50: ['ac50'],
+                    gene: ['gene'],
                 };
 
                 const missingRows = [];
-                json.forEach((row, index) => {
+                sanitizedData.forEach((row, index) => {
                     const normalizedRowKeys = Object.keys(row).map(key => key.toLowerCase());
                     const missingKeys = Object.keys(requiredKeys).filter(
                         key => !requiredKeys[key].some(alias => normalizedRowKeys.includes(alias))
@@ -618,20 +663,47 @@ function uploadFile() {
                 } else {
                     console.log('Validation passed. All required keys are present.');
 
-                    userUploadedData = json;
-                    console.log("userUploadedData", userUploadedData)
+                    const userUploadedData = sanitizedData;
+                    console.log("userUploadedData", userUploadedData);
                     // Add data to the graph
                     addDataToGraph(userUploadedData);
                 }
             };
 
-            reader.readAsArrayBuffer(file);
+            reader.readAsText(file); // Use readAsText for CSV files
         }
-    }, { once: true }); 
+    }, { once: true });
+}
+
+// Utility function to check UTF-8 encoding
+function isUtf8(fileContent) {
+    const decoder = new TextDecoder('utf-8', { fatal: true });
+    try {
+        decoder.decode(new Uint8Array(fileContent.split('').map(c => c.charCodeAt(0))));
+        return true;
+    } catch (error) {
+        return false;
+    }
 }
 
 
+
 document.getElementById('triggerUpload').addEventListener('click', uploadFile);
+document.getElementById('infoButton').addEventListener('click', function () {
+    const infoSection = document.getElementById('infoSection');
+    infoSection.style.display = infoSection.style.display === 'none' ? 'block' : 'none';
+});
+document.getElementById('downloadTemplateButton').addEventListener('click', function () {
+    const csvContent = "keid,chemical,ac50,gene\n"; // Template header
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = "template.csv";
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+});
 
 
 
