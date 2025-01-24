@@ -15,6 +15,8 @@ from werkzeug.utils import secure_filename
 from .security_config.AopKeFormDataExctarctionValidation import AopKeFormDataExtractionValidation, \
     sanitize_form_extraction
 from .security_config.AopKeFormValidation import AopKeFormValidation, sanitize_form
+from .service.dose_response import run_dose_response
+import json
 
 
 # Page Routing
@@ -328,3 +330,29 @@ def fetch_bioactivity_assays():
         return jsonify(data)  # Serve the data as JSON
     except requests.exceptions.RequestException as e:
         return jsonify({'error': str(e)}), 500  # Return error message with 500 status code
+
+
+@app.route('/api/dose_response', methods=['GET'])
+def dose_response():
+    """
+    Endpoint to run the Bayesian dose-response code and return the result.
+    """
+    # Get parameters from query string
+    ke_assay_dict_str = request.args.get('ke_assay_list')  # Stringified JSON
+    doseOfSubstance = request.args.get('doseOfSubstance')
+    chemical = request.args.get('chemical')
+
+    # Parse the query parameters
+    ke_assay_dict = json.loads(ke_assay_dict_str)  # Convert JSON string to dict
+    doseOfSubstance = float(doseOfSubstance)
+    print("HER ER ke_assay_dict: ", ke_assay_dict)
+
+    print("-------------------------")
+    print("doseOfSubstance", doseOfSubstance)
+    print("chemical", chemical)
+    print("ke_assay_dict", ke_assay_dict)
+
+    # Call the run_dose_response function with the dictionary
+    results = run_dose_response(doseOfSubstance, chemical, ke_assay_dict)
+
+    return jsonify(results)

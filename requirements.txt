@@ -4,6 +4,8 @@
 #
 #    pip-compile requirements.in
 #
+arviz==0.20.0
+    # via pymc
 attrs==23.1.0
     # via -r requirements.in
 bleach==6.1.0
@@ -16,6 +18,8 @@ cachelib==0.9.0
     # via
     #   -r requirements.in
     #   flask-caching
+cachetools==5.5.0
+    # via pymc
 certifi==2024.8.30
     # via requests
 cffi==1.15.1
@@ -26,8 +30,25 @@ click==8.1.7
     # via
     #   -r requirements.in
     #   flask
+cloudpickle==3.1.1
+    # via pymc
+cons==0.4.6
+    # via
+    #   etuples
+    #   minikanren
+    #   pytensor
+contourpy==1.3.1
+    # via matplotlib
+cycler==0.12.1
+    # via matplotlib
 et-xmlfile==1.1.0
     # via openpyxl
+etuples==0.3.9
+    # via
+    #   minikanren
+    #   pytensor
+filelock==3.16.1
+    # via pytensor
 flask==3.0.2
     # via
     #   -r requirements.in
@@ -37,10 +58,16 @@ flask-caching==2.1.0
     # via -r requirements.in
 flask-wtf==1.2.1
     # via -r requirements.in
+fonttools==4.55.3
+    # via matplotlib
 future==0.18.3
     # via -r requirements.in
 gunicorn==20.1.0
     # via -r requirements.in
+h5netcdf==1.4.1
+    # via arviz
+h5py==3.12.1
+    # via h5netcdf
 idna==3.10
     # via requests
 importlib-metadata==7.0.2
@@ -60,38 +87,85 @@ jinja2==3.1.3
     #   flask
 keyring==23.13.1
     # via -r requirements.in
+kiwisolver==1.4.8
+    # via matplotlib
+logical-unification==0.4.6
+    # via
+    #   cons
+    #   minikanren
+    #   pytensor
+markdown-it-py==3.0.0
+    # via rich
 markupsafe==2.1.5
     # via
     #   -r requirements.in
     #   jinja2
     #   werkzeug
     #   wtforms
+matplotlib==3.10.0
+    # via arviz
+mdurl==0.1.2
+    # via markdown-it-py
+minikanren==1.0.3
+    # via pytensor
 more-itertools==10.2.0
     # via jaraco-classes
+multipledispatch==1.0.0
+    # via
+    #   etuples
+    #   logical-unification
+    #   minikanren
 networkx==2.8.8
     # via -r requirements.in
 numpy==1.26.4
     # via
     #   -r requirements.in
+    #   arviz
+    #   contourpy
+    #   h5py
+    #   matplotlib
     #   pandas
+    #   pymc
+    #   pytensor
     #   scipy
+    #   xarray
+    #   xarray-einstats
 openpyxl==3.1.2
     # via -r requirements.in
 packaging==24.0
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   arviz
+    #   h5netcdf
+    #   matplotlib
+    #   xarray
 pandas==2.2.1
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   arviz
+    #   pymc
+    #   xarray
 pillow==10.2.0
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   matplotlib
 pycparser==2.21
     # via cffi
+pygments==2.19.1
+    # via rich
+pymc==5.20.0
+    # via -r requirements.in
 pyparsing==3.1.2
     # via
     #   -r requirements.in
+    #   matplotlib
     #   rdflib
+pytensor==2.26.4
+    # via pymc
 python-dateutil==2.8.2
     # via
     #   -r requirements.in
+    #   matplotlib
     #   pandas
 python-dotenv==1.0.1
     # via -r requirements.in
@@ -103,8 +177,15 @@ rdflib==7.0.0
     # via sparqlwrapper
 requests==2.32.3
     # via -r requirements.in
+rich==13.9.4
+    # via pymc
 scipy==1.12.0
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   arviz
+    #   pymc
+    #   pytensor
+    #   xarray-einstats
 six==1.16.0
     # via
     #   -r requirements.in
@@ -115,6 +196,16 @@ sparqlwrapper==2.0.0
     # via -r requirements.in
 textdistance==4.2.2
     # via -r requirements.in
+threadpoolctl==3.5.0
+    # via pymc
+toolz==1.0.0
+    # via
+    #   logical-unification
+    #   minikanren
+typing-extensions==4.12.2
+    # via
+    #   arviz
+    #   pymc
 tzdata==2023.4
     # via
     #   -r requirements.in
@@ -131,6 +222,12 @@ wtforms==3.1.2
     # via
     #   -r requirements.in
     #   flask-wtf
+xarray==2025.1.1
+    # via
+    #   arviz
+    #   xarray-einstats
+xarray-einstats==0.8.0
+    # via arviz
 zipp==3.17.0
     # via
     #   -r requirements.in

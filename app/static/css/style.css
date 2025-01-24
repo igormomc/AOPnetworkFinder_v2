@@ -94,7 +94,6 @@ html, body {
 }
 #triggerUpload {
     border-radius: 10px;
-    margin-top: 10%;
     width: 100%;
 }
 
@@ -193,7 +192,6 @@ html, body {
     text-align: left;
 }
 #searchGroupStressor, #searchGroupCells, #searchGroupOrgans #searchGroupTaxonomies #searchGroupSex #searchGroupLifeStage{
-    margin: auto;
     width: 100%;
     margin-bottom: 5%;
     flex: 1
@@ -425,3 +423,59 @@ button:hover {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+.popupMerge-content-info {
+  background-color: #fff;
+  margin: 10% auto; /* Position roughly 10% from the top */
+  padding: 20px;
+  border-radius: 5px;
+  width: 70%;
+  max-width: 600px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  font-family: Arial, sans-serif;
+}
+
+/* Info section styling */
+#infoSection p {
+  font-size: 1.1rem;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+#infoSection ul {
+  list-style: disc;
+  margin: 10px 0;
+  padding-left: 40px;
+}
+
+#infoSection li {
+  margin-bottom: 8px;
+}
+
+#infoSection code {
+  background: #f8f8f8;
+  padding: 2px 4px;
+  font-size: 0.9rem;
+  border-radius: 3px;
+}
+
+/* Button styling */
+#downloadTemplateButton {
+  padding: 10px 20px;
+  background: #007bff;
+  color: #ffffff;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+#downloadTemplateButton:hover {
+  background: #0056b3;
+}
+
+.info-button {
+    justify-content: right;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+

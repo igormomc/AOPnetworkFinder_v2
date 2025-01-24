@@ -1,4 +1,3 @@
-
 //Global variable for storing the graph strucutr
 
 let globalGraphJson = [];
@@ -24,6 +23,8 @@ const colorBlindColors = {
 };
 
 let assayGenesDict = null;
+let userUploadedData = null;
+
 
 let lastClickTime = 0;
 const doubleClickThreshold = 300; // Milliseconds
@@ -35,27 +36,27 @@ function updateGeneVisibility() {
 
     if (showAssayGenesOnly) {
         cy.nodes().filter('[ke_type="genes"]').addClass('hidden');
-        cy.edges().filter(function(edge) {
+        cy.edges().filter(function (edge) {
             return edge.source().data('ke_type') === 'genes' || edge.target().data('ke_type') === 'genes';
         }).addClass('hidden');
 
-        cy.nodes().filter(function(node) {
+        cy.nodes().filter(function (node) {
             return node.data('ke_type') === 'genes' && assayGenesDict && assayGenesDict[node.data('name')];
         }).removeClass('hidden');
 
-        cy.edges().filter(function(edge) {
+        cy.edges().filter(function (edge) {
             const sourceIsAssayGene = edge.source().data('ke_type') === 'genes' && assayGenesDict && assayGenesDict[edge.source().data('name')];
             const targetIsAssayGene = edge.target().data('ke_type') === 'genes' && assayGenesDict && assayGenesDict[edge.target().data('name')];
             return sourceIsAssayGene || targetIsAssayGene;
         }).removeClass('hidden');
     } else if (showGenes) {
         cy.nodes().filter('[ke_type="genes"]').removeClass('hidden');
-        cy.edges().filter(function(edge) {
+        cy.edges().filter(function (edge) {
             return edge.source().data('ke_type') === 'genes' || edge.target().data('ke_type') === 'genes';
         }).removeClass('hidden');
     } else {
         cy.nodes().filter('[ke_type="genes"]').addClass('hidden');
-        cy.edges().filter(function(edge) {
+        cy.edges().filter(function (edge) {
             return edge.source().data('ke_type') === 'genes' || edge.target().data('ke_type') === 'genes';
         }).addClass('hidden');
     }
@@ -68,14 +69,14 @@ function updateGeneVisibility() {
         .update();
 }
 
-document.getElementById('checkedBoxGene').addEventListener('change', function() {
+document.getElementById('checkedBoxGene').addEventListener('change', function () {
     if (this.checked) {
         document.getElementById('checkedAssayGenes').checked = false;
     }
     updateGeneVisibility();
 });
 
-document.getElementById('checkedAssayGenes').addEventListener('change', function() {
+document.getElementById('checkedAssayGenes').addEventListener('change', function () {
     if (this.checked) {
         document.getElementById('checkedBoxGene').checked = false;
     }
@@ -99,8 +100,8 @@ function groupAssaysByGeneSymbol(assays) {
 
 //sending the user inputted values to the backend for processing
 // Add the bioactivity call within the searchButtonAOP click event listener
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById("searchButtonAOP").addEventListener("click", async function(event) {
+document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById("searchButtonAOP").addEventListener("click", async function (event) {
         event.preventDefault();
         document.getElementById("loader").style.display = "flex";
 
@@ -128,7 +129,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var sexDropdown = $('#sexDropdown').val();
         var cellsDropdown = $('#cellsDropdown').val();
 
-        document.querySelectorAll('#checkbox-filter input[type="checkbox"]').forEach(function(checkbox) {
+        document.querySelectorAll('#checkbox-filter input[type="checkbox"]').forEach(function (checkbox) {
             formData.append(checkbox.name, checkbox.checked ? "1" : "0");
         });
         console.log("FormData: ", formData.values());
@@ -173,6 +174,7 @@ async function displayNodeInfo(geneSymbol, node, keTypeColor) {
         const aliasSymbols = (await fetchAliasSymbols(geneSymbol)).flat().filter(symb => symb !== undefined);
         console.log('Alias symbols:', aliasSymbols);
         const assayInfo = assayGenesDict[geneSymbol];
+        console.log('Assay Info:', assayInfo);
         let connectedKEs = node.connectedEdges().map(edge => {
             console.log("Edge", edge);
             // Check connected nodes
@@ -195,14 +197,14 @@ async function displayNodeInfo(geneSymbol, node, keTypeColor) {
         contentHtml += `<tr><td><strong>Connected KE:</strong></td><td>${connectedKEs || 'N/A'}</td></tr>`;
         //we only show info about one of the assays even if there are multiple
         if (assayInfo && assayInfo.length > 0) {
-    const assayComponentName = assayInfo[0].assayComponentName || 'N/A';
-    const assayLink = assayComponentName !== 'N/A' ? `<a href="https://comptox.epa.gov/dashboard/assay-endpoints/${assayComponentName}" target="_blank">${assayComponentName}</a>` : 'N/A';
-    contentHtml += `<tr><td><strong>Assay Name: </strong></td><td>${assayLink}</td></tr>`;
+            const assayComponentName = assayInfo[0].assayComponentName || 'N/A';
+            const assayLink = assayComponentName !== 'N/A' ? `<a href="https://comptox.epa.gov/dashboard/assay-endpoints/${assayComponentName}" target="_blank">${assayComponentName}</a>` : 'N/A';
+            contentHtml += `<tr><td><strong>Assay Name: </strong></td><td>${assayLink}</td></tr>`;
 
-    if (assayInfo.length > 1) {
-        contentHtml += `<tr><td colspan="2">See other Assays for this gene: <a href="https://comptox.epa.gov/dashboard/assay-endpoints?search=${geneSymbol}" target="_blank">Link</a></td></tr>`;
-    }
-}
+            if (assayInfo.length > 1) {
+                contentHtml += `<tr><td colspan="2">See other Assays for this gene: <a href="https://comptox.epa.gov/dashboard/assay-endpoints?search=${geneSymbol}" target="_blank">Link</a></td></tr>`;
+            }
+        }
         contentHtml += `</table></div>`;
 
         // Set the HTML content for the node information display
@@ -219,235 +221,238 @@ function render_graph(url_string, formData) {
         body: formData,
         credentials: 'same-origin'
     })
-    .then(response => response.json())
-    .then(cyData => {
-        globalGraphJson = cyData.elements;
-        globalMergeJson = cyData['merge_options:'];
-        console.log(globalMergeJson);
+        .then(response => response.json())
+        .then(cyData => {
+                globalGraphJson = cyData.elements;
+                globalMergeJson = cyData['merge_options:'];
+                console.log(globalMergeJson);
 
-        const destinationDropdown = document.getElementById('keepNodeDropDown');
-        const sourceDropdown = document.getElementById('loseNodeDropDown');
-        const aopDropDown = document.getElementById('aopDropDown')
+                const destinationDropdown = document.getElementById('keepNodeDropDown');
+                const sourceDropdown = document.getElementById('loseNodeDropDown');
+                const aopDropDown = document.getElementById('aopDropDown')
 
-        loggingAopVisualized(cyData['aop_before_filter'], cyData['aop_after_filter']);
-        populateMergeOptionsDropDown(destinationDropdown, sourceDropdown, globalGraphJson);
-        populateHighlightAopDropDown(aopDropDown, cyData['aop_after_filter']);
+                loggingAopVisualized(cyData['aop_before_filter'], cyData['aop_after_filter']);
+                populateMergeOptionsDropDown(destinationDropdown, sourceDropdown, globalGraphJson);
+                populateHighlightAopDropDown(aopDropDown, cyData['aop_after_filter']);
 
-        cy = cytoscape({
-            container: document.getElementById('cy'),
-            elements: {
-                nodes: globalGraphJson.nodes,
-                edges: globalGraphJson.edges
-            },
-            style: [
-                // Conditional styling based on 'ke_type' - node color
-                {
-                    selector: 'node[ke_type="Molecular Initiating Event"]',
-                    style: {
-                        'label': 'data(id)',
-                        'background-color': '#00A79D'  // Green for 'Key Event'
-                    }
-                },
-                {
-                    selector: 'node[ke_type="Adverse Outcome"]',
-                    style: {
-                        'label': 'data(id)',
-                        'background-color': '#ED1C24'  // Red for 'Adverse Outcome'
-                    }
-                },
-                {
-                    selector: 'node[ke_type="Key Event"]',
-                    style: {
-                        'label': 'data(id)',
-                        'background-color': '#F7941D'  // Orange for 'Key Event'
-                    }
-                },
-                 {
-                    selector: 'node[ke_type="genes"]',
-                    style: {
-                        'label': 'data(id)',
-                        'background-color': function(ele) {
-                            const geneSymbol = ele.data('name');
-                            // Check if the gene is in the assayGenesDict
-                            return assayGenesDict && assayGenesDict[geneSymbol] ? '#35d135' : '#27AAE1'; // Green if in assayGenesDict, otherwise blue
+                cy = cytoscape({
+                    container: document.getElementById('cy'),
+                    elements: {
+                        nodes: globalGraphJson.nodes,
+                        edges: globalGraphJson.edges
+                    },
+                    style: [
+                        // Conditional styling based on 'ke_type' - node color
+                        {
+                            selector: 'node[ke_type="Molecular Initiating Event"]',
+                            style: {
+                                'label': 'data(id)',
+                                'background-color': '#00A79D'  // Green for 'Key Event'
+                            }
                         },
-                        'width': 10,
-                        'height': 10
-                    }
-                },
-                {
-                    selector: 'edge',
-                    style: {
-                        'width': 3,
-                        'line-color': '#7A7A7A',
-                        'target-arrow-color': '#7A7A7A',
-                        'target-arrow-shape': 'triangle',
-                        'curve-style': 'bezier',
-                        'target-arrow-scale': 1.5,
-                        'opacity': 1
-                    }
-                },
-                {
-                    selector: 'node.highlighted',
-                    style: {
-                        'background-opacity': 1,
-                        'border-color': 'black',
-                        'border-width': 2,
-                        'border-opacity': 1,
-                        'text-opacity': 1 // labels are visible for highlighted nodes
-                    }
-                },
-                {
-                    selector: 'node.non-highlighted',
-                    style: {
-                        'background-opacity': 0.3,
-                        'text-opacity': 0, // Hide label text
-                        'border-opacity': 0
-                    }
-                }
-            ],
-            layout: {
-                    name: 'cose',
-                    idealEdgeLength: 100,
-                    nodeRepulsion: function( node ){ return 400000; },
-                    animate: true,
-                    animationDuration: 1000,
-                    animationEasing: undefined,
-                    fit: true,
-                    padding: 30,
-                    randomize: false,
-                    componentSpacing: 100,
-                    nodeOverlap: 50,
-                    nestingFactor: 5,
-                    gravity: 80,
-                    numIter: 1000,
-                    initialTemp: 200,
-                    coolingFactor: 0.95,
-                    minTemp: 1.0
-            }
-        });
-        cy.ready(function() {
-            cy.edges().forEach(function(edge) {
-                var sourceNode = edge.source();
-                var targetNode = edge.target();
-
-                if (sourceNode.data('ke_type') === 'genes' || targetNode.data('ke_type') === 'genes') {
-                    edge.style('opacity', 0.5);
-                }
-            });
-        });
-        // Inside render_graph, after cy initialization
-        setupEdgeAddition(cy);
-        toggleGeneLabels(document.getElementById('toggleLabels').checked);
-        toggleGenesNode(document.getElementById('checkedBoxGene').checked);
-        updateGeneVisibility();
-        if (isColorBlindMode){
-            applyColorScheme(colorBlindColors);
-        }
-        createMergeButtons(globalMergeJson);
-
-        cy.on('click', 'node', function(evt) {
-    console.log("Node clicked: ", evt.target);
-    const currentTime = new Date().getTime();
-    if (currentTime - lastClickTime <= doubleClickThreshold) {
-        const node = evt.target;
-        let keTypeColor = getColorByType(node.data().ke_type);
-        let contentHtml = `<strong>Node Data: (<span style="color: ${keTypeColor};">${node.data().ke_type}</span>)</strong><br><div><table>`;
-
-        if (node.data().ke_type === 'genes') {
-            // For Gene nodes
-            let geneSymbol = node.data('name'); // Assuming the gene name is stored in the 'name' attribute
-
-            // Fetch alias and prev symbols for the clicked gene
-            displayNodeInfo(geneSymbol, node, keTypeColor);
-        
-        } else {
-
-                    let upstreamKEs = [];
-                    let downstreamKEs = [];
-                    let connectedGenes = [];
-                    let ke_aop_urls = node.data('ke_aop_urls') || [];
-
-                    // Determine upstream, downstream KEs, and connected genes
-                    node.connectedEdges().forEach(edge => {
-                        const targetNode = edge.target();
-                        const sourceNode = edge.source();
-
-                        if (sourceNode.id() === node.id()) { // downstream
-                            downstreamKEs.push(targetNode.data('ke_identifier'));
-                        } else { //upstream
-                            if (sourceNode.data().ke_type === 'genes') {
-                                connectedGenes.push(sourceNode.data('name'));
-                            } else {
-                                upstreamKEs.push(sourceNode.data('ke_identifier'));
+                        {
+                            selector: 'node[ke_type="Adverse Outcome"]',
+                            style: {
+                                'label': 'data(id)',
+                                'background-color': '#ED1C24'  // Red for 'Adverse Outcome'
+                            }
+                        },
+                        {
+                            selector: 'node[ke_type="Key Event"]',
+                            style: {
+                                'label': 'data(id)',
+                                'background-color': '#F7941D'  // Orange for 'Key Event'
+                            }
+                        },
+                        {
+                            selector: 'node[ke_type="genes"]',
+                            style: {
+                                'label': 'data(id)',
+                                'background-color': function (ele) {
+                                    const geneSymbol = ele.data('name');
+                                    // Check if the gene is in the assayGenesDict
+                                    return assayGenesDict && assayGenesDict[geneSymbol] ? '#35d135' : '#27AAE1'; // Green if in assayGenesDict, otherwise blue
+                                },
+                                'width': 10,
+                                'height': 10
+                            }
+                        },
+                        {
+                            selector: 'edge',
+                            style: {
+                                'width': 3,
+                                'line-color': '#7A7A7A',
+                                'target-arrow-color': '#7A7A7A',
+                                'target-arrow-shape': 'triangle',
+                                'curve-style': 'bezier',
+                                'target-arrow-scale': 1.5,
+                                'opacity': 1
+                            }
+                        },
+                        {
+                            selector: 'node.highlighted',
+                            style: {
+                                'background-opacity': 1,
+                                'border-color': 'black',
+                                'border-width': 2,
+                                'border-opacity': 1,
+                                'text-opacity': 1 // labels are visible for highlighted nodes
+                            }
+                        },
+                        {
+                            selector: 'node.non-highlighted',
+                            style: {
+                                'background-opacity': 0.3,
+                                'text-opacity': 0, // Hide label text
+                                'border-opacity': 0
                             }
                         }
-                    });
-
-                    // no upstream/downstream or connected genes
-                    if (upstreamKEs.length === 0) upstreamKEs.push('N/A');
-                    if (downstreamKEs.length === 0) downstreamKEs.push('N/A');
-                    if (connectedGenes.length === 0) connectedGenes.push('N/A');
-
-                    // Generating the clickable KE in AOPs links
-                    let keAopLinksHtml = ke_aop_urls.map(url => {
-                        const match = url.match(/\/(\d+)$/);
-                        if (match) {
-                            const aopId = match[1];
-                            return `<a href="${url}" target="_blank">${aopId}</a>`; // Create clickable link
-                        }
-                        return ''; // URL does not match the expected format
-                    }).join(', '); // Join all urls
-
-                    const processKEs = (keArray) => {
-                        if (!keArray || !Array.isArray(keArray)) {
-                            return 'N/A';
-                        }
-                    
-                        return keArray
-                            .filter(ke => typeof ke === 'string' && ke.includes('/')) 
-                            .map(ke => {
-                                let keId = ke.split('/').pop(); 
-                                return `<a href="${ke}" target="_blank">${keId}</a>`;
-                            })
-                            .join(', ') || 'N/A'; 
-                    };
-                    
-
-                    contentHtml += `<tr><td>ID: </td><td> ${node.data('label') || 'N/A'}</td></tr>`;
-                    contentHtml += `<tr><td>Name: </td><td> ${node.data('name') || 'N/A'}</td></tr>`;
-                    const url = node.data('ke_url') ? `<a href="${node.data('ke_url')}" target="_blank">${node.data('ke_url')}</a>` : 'N/A';
-                    contentHtml += `<tr><td>KE Url: </td><td> ${url}</td></tr>`;
-                    contentHtml += `<tr><td>Downstream KE:</td><td>${processKEs(downstreamKEs) || 'N/A'}</td></tr>`;
-                    contentHtml += `<tr><td>Upstream KE:</td><td>${processKEs(upstreamKEs) || 'N/A'}</td></tr>`;
-                    contentHtml += `<tr><td>Connected Genes: </td><td> ${connectedGenes.join(', ') || 'N/A'}</td></tr>`;
-                    if (keAopLinksHtml) {
-                        contentHtml += `<tr><td>KE in AOPs:</td><td>${keAopLinksHtml}</td></tr>`;
+                    ],
+                    layout: {
+                        name: 'cose',
+                        idealEdgeLength: 100,
+                        nodeRepulsion: function (node) {
+                            return 400000;
+                        },
+                        animate: true,
+                        animationDuration: 1000,
+                        animationEasing: undefined,
+                        fit: true,
+                        padding: 30,
+                        randomize: false,
+                        componentSpacing: 100,
+                        nodeOverlap: 50,
+                        nestingFactor: 5,
+                        gravity: 80,
+                        numIter: 1000,
+                        initialTemp: 200,
+                        coolingFactor: 0.95,
+                        minTemp: 1.0
                     }
-                }
-                contentHtml += `</table></div>`;
-                document.getElementById('nodeInfo').innerHTML = contentHtml;
-                document.getElementById('nodePopup').style.display = 'block';
+                });
+                cy.ready(function () {
+                    cy.edges().forEach(function (edge) {
+                        var sourceNode = edge.source();
+                        var targetNode = edge.target();
 
-                allowHidePopup = false;
-                setTimeout(() => { allowHidePopup = true; }, 50);
+                        if (sourceNode.data('ke_type') === 'genes' || targetNode.data('ke_type') === 'genes') {
+                            edge.style('opacity', 0.5);
+                        }
+                    });
+                });
+                // Inside render_graph, after cy initialization
+                setupEdgeAddition(cy);
+                toggleGeneLabels(document.getElementById('toggleLabels').checked);
+                toggleGenesNode(document.getElementById('checkedBoxGene').checked);
+                updateGeneVisibility();
+                if (isColorBlindMode) {
+                    applyColorScheme(colorBlindColors);
+                }
+                createMergeButtons(globalMergeJson);
+
+                cy.on('click', 'node', function (evt) {
+                    console.log("Node clicked: ", evt.target);
+                    const currentTime = new Date().getTime();
+                    if (currentTime - lastClickTime <= doubleClickThreshold) {
+                        const node = evt.target;
+                        let keTypeColor = getColorByType(node.data().ke_type);
+                        let contentHtml = `<strong>Node Data: (<span style="color: ${keTypeColor};">${node.data().ke_type}</span>)</strong><br><div><table>`;
+
+                        if (node.data().ke_type === 'genes') {
+                            // For Gene nodes
+                            let geneSymbol = node.data('name');
+
+                            // Fetch alias and prev symbols for the clicked gene
+                            displayNodeInfo(geneSymbol, node, keTypeColor);
+
+                        } else {
+
+                            let upstreamKEs = [];
+                            let downstreamKEs = [];
+                            let connectedGenes = [];
+                            let ke_aop_urls = node.data('ke_aop_urls') || [];
+
+                            // Determine upstream, downstream KEs, and connected genes
+                            node.connectedEdges().forEach(edge => {
+                                const targetNode = edge.target();
+                                const sourceNode = edge.source();
+
+                                if (sourceNode.id() === node.id()) { // downstream
+                                    downstreamKEs.push(targetNode.data('ke_identifier'));
+                                } else { //upstream
+                                    if (sourceNode.data().ke_type === 'genes') {
+                                        connectedGenes.push(sourceNode.data('name'));
+                                    } else {
+                                        upstreamKEs.push(sourceNode.data('ke_identifier'));
+                                    }
+                                }
+                            });
+
+                            // no upstream/downstream or connected genes
+                            if (upstreamKEs.length === 0) upstreamKEs.push('N/A');
+                            if (downstreamKEs.length === 0) downstreamKEs.push('N/A');
+                            if (connectedGenes.length === 0) connectedGenes.push('N/A');
+
+                            // Generating the clickable KE in AOPs links
+                            let keAopLinksHtml = ke_aop_urls.map(url => {
+                                const match = url.match(/\/(\d+)$/);
+                                if (match) {
+                                    const aopId = match[1];
+                                    return `<a href="${url}" target="_blank">${aopId}</a>`; // Create clickable link
+                                }
+                                return ''; // URL does not match the expected format
+                            }).join(', '); // Join all urls
+
+                            const processKEs = (keArray) => {
+                                if (!keArray || !Array.isArray(keArray)) {
+                                    return 'N/A';
+                                }
+
+                                return keArray
+                                    .filter(ke => typeof ke === 'string' && ke.includes('/'))
+                                    .map(ke => {
+                                        let keId = ke.split('/').pop();
+                                        return `<a href="${ke}" target="_blank">${keId}</a>`;
+                                    })
+                                    .join(', ') || 'N/A';
+                            };
+
+
+                            contentHtml += `<tr><td>ID: </td><td> ${node.data('label') || 'N/A'}</td></tr>`;
+                            contentHtml += `<tr><td>Name: </td><td> ${node.data('name') || 'N/A'}</td></tr>`;
+                            const url = node.data('ke_url') ? `<a href="${node.data('ke_url')}" target="_blank">${node.data('ke_url')}</a>` : 'N/A';
+                            contentHtml += `<tr><td>KE Url: </td><td> ${url}</td></tr>`;
+                            contentHtml += `<tr><td>Downstream KE:</td><td>${processKEs(downstreamKEs) || 'N/A'}</td></tr>`;
+                            contentHtml += `<tr><td>Upstream KE:</td><td>${processKEs(upstreamKEs) || 'N/A'}</td></tr>`;
+                            contentHtml += `<tr><td>Connected Genes: </td><td> ${connectedGenes.join(', ') || 'N/A'}</td></tr>`;
+                            if (keAopLinksHtml) {
+                                contentHtml += `<tr><td>KE in AOPs:</td><td>${keAopLinksHtml}</td></tr>`;
+                            }
+                        }
+                        contentHtml += `</table></div>`;
+                        document.getElementById('nodeInfo').innerHTML = contentHtml;
+                        document.getElementById('nodePopup').style.display = 'block';
+
+                        allowHidePopup = false;
+                        setTimeout(() => {
+                            allowHidePopup = true;
+                        }, 50);
+                    }
+                    lastClickTime = currentTime;
+                });
+                cy.ready(function () {
+                    document.getElementById("loader").style.display = "none";
+                });
             }
-            lastClickTime = currentTime;
-        });
-      cy.ready(function() {
-            document.getElementById("loader").style.display = "none";
-        });
-    }
-    )
-    .catch(
-        function(error) {
-            console.log('Error:', error);
-            document.getElementById("loader").style.display = "none";
-            alert("Error: Unable to fetch this AOP, please check the AOP ID and try again.");
-        }
-    );
+        )
+        .catch(
+            function (error) {
+                console.log('Error:', error);
+                document.getElementById("loader").style.display = "none";
+                alert("Error: Unable to fetch this AOP, please check the AOP ID and try again.");
+            }
+        );
 }
-let userUploadedData = null;
 
 function addDataToGraph(data) {
     if (!data || data.length === 0) {
@@ -459,12 +464,12 @@ function addDataToGraph(data) {
 
     data.forEach((entry, index) => {
         const keid = getInsensitiveKeyValue(entry, ['KEID', 'keid']);
-        const assayName = getInsensitiveKeyValue(entry, ['chemical', 'chem']) || `Assay-${Math.random().toString(36).substring(2, 7)}`;
+        const chemName = getInsensitiveKeyValue(entry, ['chemical', 'chem']);
         const ac50 = getInsensitiveKeyValue(entry, ['AC50', 'ac50']) || 'N/A';
         const gene = getInsensitiveKeyValue(entry, ['GENE', 'gene']);
         console.log("gen", gene);
 
-        console.log(`Row ${index + 1}: KE ID: ${keid}, Assay: ${assayName}, AC50: ${ac50}`);
+        console.log(`Row ${index + 1}: KE ID: ${keid}, Assay: ${chemName}, AC50: ${ac50}`);
 
         if (!keid) {
             console.warn(`Row ${index + 1}: Missing KE ID. Skipping entry:`, entry);
@@ -480,48 +485,48 @@ function addDataToGraph(data) {
 
         const keNodePosition = keNode.position();
         const angle = Math.random() * 2 * Math.PI;
-        const offsetX = 200 * Math.cos(angle); 
+        const offsetX = 200 * Math.cos(angle);
         const offsetY = 200 * Math.sin(angle);
         const genePosition = {
             x: keNodePosition.x + offsetX,
             y: keNodePosition.y + offsetY
         };
 
-        let assayNode = cy.nodes(`[id = "assay-${assayName}"]`);
+        let assayNode = cy.nodes(`[id = "assay-${gene}"]`);
         if (assayNode.length === 0) {
             try {
                 assayNode = cy.add({
                     group: 'nodes',
                     data: {
-                        id: `assay-${assayName}`,
-                        label: `${assayName}`,
+                        id: `assay-${gene}`,
+                        label: `${gene}`,
                         ke_type: 'assay',
                         name: `${gene}`,
                     },
-                    position: genePosition, 
+                    position: genePosition,
                     style: {
                         'background-color': '#35d135',
                         'width': 10,
                         'height': 10
                     }
                 });
-                console.log(`Added Assay Node: assay-${assayName}`);
+                console.log(`Added Assay Node: assay-${gene}`);
             } catch (error) {
-                console.error(`Error adding assay node "assay-${assayName}":`, error);
+                console.error(`Error adding assay node "assay-${gene}":`, error);
                 return;
             }
         }
 
         // Add an edge from the assay node to the KE node
-        const existingEdge = cy.edges(`[source = "assay-${assayName}"][target = "${keNode.id()}"]`);
+        const existingEdge = cy.edges(`[source = "assay-${gene}"][target = "${keNode.id()}"]`);
         try {
             if (existingEdge.length === 0) {
                 cy.add({
                     group: 'edges',
                     data: {
-                        id: `edge-${assayName}-${keid}`,
-                        source: `assay-${assayName}`, 
-                        target: keNode.id(), 
+                        id: `edge-${gene}-${keid}`,
+                        source: `assay-${gene}`,
+                        target: keNode.id(),
                         label: `AC50: ${ac50}`
                     },
                     style: {
@@ -529,19 +534,18 @@ function addDataToGraph(data) {
                         'width': 2
                     }
                 });
-                console.log(`Edge added: assay-${assayName} -> ${keNode.id()}`);
+                console.log(`Edge added: assay-${gene} -> ${keNode.id()}`);
             } else {
-                console.log(`Edge already exists: assay-${assayName} -> ${keNode.id()}`);
+                console.log(`Edge already exists: assay-${gene} -> ${keNode.id()}`);
             }
         } catch (error) {
-            console.error(`Error adding edge between assay-${assayName} and ${keNode.id()}:`, error);
+            console.error(`Error adding edge between assay-${gene} and ${keNode.id()}:`, error);
         }
     });
 
     alert("Uploaded data added to the graph!");
     console.log("All Nodes in Graph:", cy.nodes().map(node => node.data('id')));
 }
-
 
 
 // Helper function to handle case-insensitive key matching
@@ -562,7 +566,6 @@ function getInsensitiveKeyValue(obj, keys) {
 }
 
 
-
 function uploadFile() {
     const fileInput = document.getElementById('fileUpload');
 
@@ -574,13 +577,13 @@ function uploadFile() {
             const fileName = file.name;
             console.log(`Selected file: ${fileName}`);
 
-            
+
             if (!fileName.endsWith('.csv')) {
                 alert('Invalid file format. Please upload a CSV file.');
                 return;
             }
 
-            
+
             const maxFileSize = 1048576; // 1MB in bytes
             if (file.size > maxFileSize) {
                 alert('File is too large. Please upload a file smaller than 1MB.');
@@ -592,7 +595,7 @@ function uploadFile() {
             reader.onload = function (event) {
                 const fileContent = event.target.result;
 
-                
+
                 try {
                     if (!isUtf8(fileContent)) {
                         throw new Error('Invalid file encoding. Please upload a UTF-8 encoded CSV file.');
@@ -603,12 +606,12 @@ function uploadFile() {
                     return;
                 }
 
-               
+
                 const rows = fileContent.split('\n').map(row => row.trim()).filter(row => row);
                 const headers = rows.shift().split(',').map(header => header.trim().toLowerCase());
                 console.log('Headers in uploaded file:', headers);
 
-               
+
                 const requiredHeaders = ['keid', 'chemical', 'ac50', 'gene'];
                 const missingHeaders = requiredHeaders.filter(header => !headers.includes(header));
                 if (missingHeaders.length > 0) {
@@ -624,11 +627,11 @@ function uploadFile() {
                     }, {});
                 });
 
-          
+
                 const sanitizedData = json.map(row => {
                     for (const key in row) {
                         if (row[key].startsWith('=') || row[key].startsWith('+') || row[key].startsWith('-') || row[key].startsWith('@')) {
-                            row[key] = `'${row[key]}`; 
+                            row[key] = `'${row[key]}`;
                         }
                     }
                     return row;
@@ -636,7 +639,7 @@ function uploadFile() {
 
                 console.log('Sanitized Data:', sanitizedData);
 
-                
+
                 const requiredKeys = {
                     keid: ['keid'],
                     chemical: ['chemical', 'chem'],
@@ -653,7 +656,7 @@ function uploadFile() {
 
                     if (missingKeys.length > 0) {
                         console.warn(`Row ${index + 1} is missing keys: ${missingKeys.join(', ')}`);
-                        missingRows.push({ row: index + 1, missingKeys });
+                        missingRows.push({row: index + 1, missingKeys});
                     }
                 });
 
@@ -663,7 +666,7 @@ function uploadFile() {
                 } else {
                     console.log('Validation passed. All required keys are present.');
 
-                    const userUploadedData = sanitizedData;
+                    userUploadedData = sanitizedData;
                     console.log("userUploadedData", userUploadedData);
                     // Add data to the graph
                     addDataToGraph(userUploadedData);
@@ -672,12 +675,12 @@ function uploadFile() {
 
             reader.readAsText(file); // Use readAsText for CSV files
         }
-    }, { once: true });
+    }, {once: true});
 }
 
 // Utility function to check UTF-8 encoding
 function isUtf8(fileContent) {
-    const decoder = new TextDecoder('utf-8', { fatal: true });
+    const decoder = new TextDecoder('utf-8', {fatal: true});
     try {
         decoder.decode(new Uint8Array(fileContent.split('').map(c => c.charCodeAt(0))));
         return true;
@@ -687,15 +690,20 @@ function isUtf8(fileContent) {
 }
 
 
-
 document.getElementById('triggerUpload').addEventListener('click', uploadFile);
 document.getElementById('infoButton').addEventListener('click', function () {
-    const infoSection = document.getElementById('infoSection');
-    infoSection.style.display = infoSection.style.display === 'none' ? 'block' : 'none';
+    const modal = document.getElementById("mergePopupInfo");
+    modal.style.display = 'block'
+
+    window.onclick = function (event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
 });
 document.getElementById('downloadTemplateButton').addEventListener('click', function () {
     const csvContent = "keid,chemical,ac50,gene\n"; // Template header
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([csvContent], {type: 'text/csv;charset=utf-8;'});
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = "template.csv";
@@ -704,7 +712,6 @@ document.getElementById('downloadTemplateButton').addEventListener('click', func
     link.click();
     document.body.removeChild(link);
 });
-
 
 
 function getColorByType(ke_type) {
@@ -738,7 +745,7 @@ function getColorByType(ke_type) {
     }
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Get the modal
     var modal = document.getElementById("mergePopup");
 
@@ -747,17 +754,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
     //var span = document.getElementsByClassName("close")[0];
 
-    btn.onclick = function() {
+    btn.onclick = function () {
         modal.style.display = "block";
         createMergeButtons(globalMergeJson);
     }
+
 
     /*span.onclick = function() {
         modal.style.display = "none";
     }*/
 
     // When the user clicks anywhere outside of the modal, close it
-    window.onclick = function(event) {
+    window.onclick = function (event) {
         if (event.target == modal) {
             modal.style.display = "none";
         }
@@ -779,7 +787,6 @@ function highlightNodesById(idToHighlight) {
 }
 
 
-
 //Logic for merging nodes
 function mergeNodes(keepNodeId, loseNodeId) {
     let keepNode = cy.getElementById(keepNodeId);
@@ -797,7 +804,7 @@ function mergeNodes(keepNodeId, loseNodeId) {
         // Check if an equivalent edge already exists
         let existingEdge = cy.edges().some(e => {
             return (e.source().id() === newSourceId && e.target().id() === newTargetId) ||
-                   (e.source().id() === newTargetId && e.target().id() === newSourceId);
+                (e.source().id() === newTargetId && e.target().id() === newSourceId);
         });
 
         // Add a new edge if no equivalent edge exists
@@ -822,48 +829,48 @@ function mergeNodes(keepNodeId, loseNodeId) {
 
     const destinationDropdown = document.getElementById('keepNodeDropDown');
     const sourceDropdown = document.getElementById('loseNodeDropDown');
-    populateMergeOptionsDropDown(destinationDropdown,sourceDropdown,globalGraphJson);
+    populateMergeOptionsDropDown(destinationDropdown, sourceDropdown, globalGraphJson);
     //regenerate the updated buttons
     createMergeButtons(globalMergeJson);
 }
 
 function createMergeButtons(mergeOptions) {
-  const container = document.getElementById('dynamicButtons');
-  container.innerHTML = ''; // Clear existing content if any
+    const container = document.getElementById('dynamicButtons');
+    container.innerHTML = ''; // Clear existing content if any
 
-  mergeOptions.forEach((pair, index) => {
-    // Create a div to group buttons for each option pair
-    const pairDiv = document.createElement('div');
-    pairDiv.className = 'merge-option-group';
-    pairDiv.id = `merge-pair-${index}`;
+    mergeOptions.forEach((pair, index) => {
+        // Create a div to group buttons for each option pair
+        const pairDiv = document.createElement('div');
+        pairDiv.className = 'merge-option-group';
+        pairDiv.id = `merge-pair-${index}`;
 
-    // Iterate over each option in the pair to create buttons
-    pair.forEach((option, optionIndex) => {
-      const button = document.createElement('button');
-      button.textContent = option; // Set the button text
-      button.className = 'merge-option-button';
-      button.id = `merge-option-${index}-${optionIndex}`;
+        // Iterate over each option in the pair to create buttons
+        pair.forEach((option, optionIndex) => {
+            const button = document.createElement('button');
+            button.textContent = option; // Set the button text
+            button.className = 'merge-option-button';
+            button.id = `merge-option-${index}-${optionIndex}`;
 
-      button.setAttribute('data-node-id', option);
+            button.setAttribute('data-node-id', option);
 
-      // Attach the event listener to each button
-      button.addEventListener('click', function() {
-          // Remove 'active' class from sibling button in the same pair
-          const siblingButton = pairDiv.querySelector('.merge-option-button.active');
-          if (siblingButton) {
-              siblingButton.classList.remove('active');
-          }
-          // Toggle 'active' class on clicked button
-          this.classList.toggle('active');
-          console.log(`Merge option selected: ${option}`);
-      });
+            // Attach the event listener to each button
+            button.addEventListener('click', function () {
+                // Remove 'active' class from sibling button in the same pair
+                const siblingButton = pairDiv.querySelector('.merge-option-button.active');
+                if (siblingButton) {
+                    siblingButton.classList.remove('active');
+                }
+                // Toggle 'active' class on clicked button
+                this.classList.toggle('active');
+                console.log(`Merge option selected: ${option}`);
+            });
 
-      pairDiv.appendChild(button); // Add the button to the pair's div
+            pairDiv.appendChild(button); // Add the button to the pair's div
+        });
+
+        container.appendChild(pairDiv); // Add the pair's div to the dynamicButtons container
     });
-
-    container.appendChild(pairDiv); // Add the pair's div to the dynamicButtons container
-  });
-  updateMergeButtonLabel(mergeOptions.length);
+    updateMergeButtonLabel(mergeOptions.length);
 }
 
 function populateMergeOptionsDropDown(dropDownKeep, dropDownLose, graphJson) {
@@ -888,8 +895,8 @@ function populateMergeOptionsDropDown(dropDownKeep, dropDownLose, graphJson) {
         dropDownLose.appendChild(optionTwo);
     });
 
-    $(dropDownKeep).select2({ placeholder: "Select a node to keep" });
-    $(dropDownLose).select2({ placeholder: "Select a node to merge" });
+    $(dropDownKeep).select2({placeholder: "Select a node to keep"});
+    $(dropDownLose).select2({placeholder: "Select a node to merge"});
 
     $(dropDownKeep).val(null).trigger('change');
     $(dropDownLose).val(null).trigger('change');
@@ -909,13 +916,13 @@ function populateHighlightAopDropDown(dropDownAop, graphJson) {
         dropDownAop.appendChild(option);
     });
 
-    $(dropDownAop).select2({ placeholder: "Select an AOP to highlight" });
+    $(dropDownAop).select2({placeholder: "Select an AOP to highlight"});
 
     $(dropDownAop).val(null).trigger('change');
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('processButton').addEventListener('click', function() {
+document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('processButton').addEventListener('click', function () {
         //Manuel merge process
         var keepNodeDropDown = document.getElementById("keepNodeDropDown").value;
         var loseNodeDropDown = document.getElementById("loseNodeDropDown").value;
@@ -924,9 +931,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (keepNodeDropDown === '' || loseNodeDropDown === '' || keepNodeDropDown === loseNodeDropDown) {
             console.log('Either one of the options is empty or both options are equal. Skipping manual merge.');
         } else {
-        // manuel merge
-             mergeNodes(keepNodeDropDown, loseNodeDropDown)
-             loggingMergeActions(keepNodeDropDown, loseNodeDropDown)
+            // manuel merge
+            mergeNodes(keepNodeDropDown, loseNodeDropDown)
+            loggingMergeActions(keepNodeDropDown, loseNodeDropDown)
         }
 
         //Button merge process
@@ -983,8 +990,8 @@ function removeButtonPairsManuelMerge(loseNodeId) {
     });
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('exportToCytoscape').addEventListener('click', function() {
+document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('exportToCytoscape').addEventListener('click', function () {
         const now = new Date();
         const formattedDate = `${String(now.getDate()).padStart(2, '0')}${String(now.getMonth() + 1).padStart(2, '0')}${now.getFullYear()}`;
 
@@ -1047,7 +1054,7 @@ function generateGraphML(cy) {
     return graphml;
 }
 
-$(document).ready(function() {
+$(document).ready(function () {
     fetch('/get_stressors')
         .then(response => response.json())
         .then(data => {
@@ -1067,7 +1074,7 @@ $(document).ready(function() {
     $('#stressorDropdown').val(null).trigger('change');
 });
 
-$(document).ready(function() {
+$(document).ready(function () {
     fetch('/get_cells')
         .then(response => response.json())
         .then(data => {
@@ -1082,8 +1089,10 @@ $(document).ready(function() {
                 allowClear: true,
                 data: formattedCellData,
                 multiple: true,
-                templateResult: function(item) {
-                    if (!item.id) { return item.text; }
+                templateResult: function (item) {
+                    if (!item.id) {
+                        return item.text;
+                    }
                     const synonyms = item.synonyms && item.synonyms.length > 0
                         ? ` (${item.synonyms.join(', ')})`
                         : '';
@@ -1092,7 +1101,7 @@ $(document).ready(function() {
                 }
             });
 
-            $('#cellsDropdown').on('select2:select', function(e) {
+            $('#cellsDropdown').on('select2:select', function (e) {
                 const selectedData = e.params.data;
             });
         })
@@ -1102,7 +1111,7 @@ $(document).ready(function() {
 });
 
 
-$(document).ready(function() {
+$(document).ready(function () {
     fetch('/get_organs')
         .then(response => response.json())
         .then(data => {
@@ -1117,8 +1126,10 @@ $(document).ready(function() {
                 allowClear: true,
                 data: formattedOrgsData,
                 multiple: true,
-                templateResult: function(item) {
-                    if (!item.id) { return item.text; }
+                templateResult: function (item) {
+                    if (!item.id) {
+                        return item.text;
+                    }
                     const synonyms = item.synonyms && item.synonyms.length > 0
                         ? ` (${item.synonyms.join(', ')})`
                         : '';
@@ -1127,7 +1138,7 @@ $(document).ready(function() {
                 }
             });
 
-            $('#organsDropdown').on('select2:select', function(e) {
+            $('#organsDropdown').on('select2:select', function (e) {
                 const selectedData = e.params.data;
             });
         })
@@ -1137,8 +1148,7 @@ $(document).ready(function() {
 });
 
 
-
-$(document).ready(function() {
+$(document).ready(function () {
     fetch('/get_taxonomies')
         .then(response => response.json())
         .then(data => {
@@ -1153,8 +1163,10 @@ $(document).ready(function() {
                 allowClear: true,
                 data: formattedTaxData,
                 multiple: true,
-                templateResult: function(item) {
-                    if (!item.id) { return item.text; }
+                templateResult: function (item) {
+                    if (!item.id) {
+                        return item.text;
+                    }
                     const synonyms = item.synonyms && item.synonyms.length > 0
                         ? ` (${item.synonyms.join(', ')})`
                         : '';
@@ -1169,8 +1181,7 @@ $(document).ready(function() {
 });
 
 
-
-$(document).ready(function() {
+$(document).ready(function () {
     fetch('/get_sexes')
         .then(response => response.json())
         .then(data => {
@@ -1190,7 +1201,7 @@ $(document).ready(function() {
 });
 
 
-$(document).ready(function() {
+$(document).ready(function () {
     fetch('/get_life_stages')
         .then(response => response.json())
         .then(data => {
@@ -1205,7 +1216,7 @@ $(document).ready(function() {
                 allowClear: true,
                 data: formattedLifeData,
                 multiple: true,
-                templateResult: function(item) {
+                templateResult: function (item) {
                     if (!item.id) {
                         return item.text;
                     }
@@ -1223,15 +1234,11 @@ $(document).ready(function() {
 });
 
 
-
-
-
-
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('saveButtonLog').addEventListener('click', function() {
-        if (globalUserActionsLog.length === 0){
+document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('saveButtonLog').addEventListener('click', function () {
+        if (globalUserActionsLog.length === 0) {
             console.log("Log file is empty")
-        }else {
+        } else {
             saveLogToFile();
         }
     });
@@ -1254,17 +1261,17 @@ function logCytoscape() {
 function logUserInput(formData) {
     logHeaderName("USER INPUTS\n")
 
-    if (formData.get("searchFieldAOP")){
+    if (formData.get("searchFieldAOP")) {
         logHeaderName("USER INPUT AOP IDS:\n")
         logUserAction(formData.get("searchFieldAOP"));
     }
 
-    if (formData.get("searchFieldKE")){
+    if (formData.get("searchFieldKE")) {
         logHeaderName("USER INPUT KE IDS:\n")
         logUserAction(formData.get("searchFieldKE"));
     }
 
-    if (formData.get("stressorDropdown")){
+    if (formData.get("stressorDropdown")) {
         logHeaderName("USER INPUT STRESSOR NAME:\n")
         logUserAction(formData.get("stressorDropdown"));
     }
@@ -1277,29 +1284,29 @@ function logUserInput(formData) {
         logUserAction("Genes disabled");
     }*/
 
-    if (formData.get("checkboxDevelopment") === '1'){
+    if (formData.get("checkboxDevelopment") === '1') {
         logUserAction("Filtering: OECD Under Development");
     }
 
-    if (formData.get("checkboxEndorsed") === '1'){
+    if (formData.get("checkboxEndorsed") === '1') {
         logUserAction("Filtering: OECD WPHA Endorsed");
     }
 
-    if (formData.get("checkboxReview") === '1'){
+    if (formData.get("checkboxReview") === '1') {
         logUserAction("Filtering: OECD Under Review");
     }
 
-    if (formData.get("checkboxApproved") === '1'){
+    if (formData.get("checkboxApproved") === '1') {
         logUserAction("Filtering: OECD EAGMST Approved");
     }
 }
 
-function loggingMergeActions(keepNode,removeNode){
+function loggingMergeActions(keepNode, removeNode) {
     logHeaderName("\n")
     logUserAction(`Merging the KE node: ${removeNode} into the KE: ${keepNode}`)
 }
 
-function loggingAopVisualized(aop_before_filter, aop_after_filter){
+function loggingAopVisualized(aop_before_filter, aop_after_filter) {
     logHeaderName("\nAOPs before filtering\n")
     logUserAction(aop_before_filter)
     logHeaderName("\nAOPs after filtering (AOP VISUALIZED)\n")
@@ -1333,9 +1340,10 @@ function toggleGeneLabels(showLabels) {
         cy.style().selector('node[ke_type="genes"]').style('label', '').update();
     }
 }
+
 // Handle checkbox change event
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('toggleLabels').addEventListener('change', function(e) {
+document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('toggleLabels').addEventListener('change', function (e) {
         toggleGeneLabels(this.checked);
     });
 });
@@ -1365,18 +1373,18 @@ function highlightGraphForAop(aopId) {
     }
 }
 
-$(document).ready(function() {
+$(document).ready(function () {
     $('#aopDropDown').select2({
         placeholder: "Select an AOP to highlight",
         allowClear: true
     });
 
-    $('#aopDropDown').on('select2:select', function(e) {
+    $('#aopDropDown').on('select2:select', function (e) {
         var selectedAop = $(this).val();
         highlightGraphForAop(selectedAop);
     });
     // Custom clear button functionality
-    $('#clearSelection').on('click', function() {
+    $('#clearSelection').on('click', function () {
         $('#aopDropDown').val(null).trigger('change');
         highlightGraphForAop(null);
     });
@@ -1386,41 +1394,41 @@ function setupEdgeAddition(cy) {
     let firstNodeId = null; // to keep track of the first node clicked
     let shiftKeyDown = false; // to track whether the Shift key is held down
 
-    document.addEventListener('keydown', function(event) {
-      if(event.key === 'Shift') {
-        shiftKeyDown = true;
-      }
-    });
-
-    document.addEventListener('keyup', function(event) {
-      if(event.key === 'Shift') {
-        shiftKeyDown = false;
-      }
-    });
-
-    cy.on('tap', 'node', function(evt){
-      if(shiftKeyDown) {
-        let nodeId = evt.target.id();
-        if(firstNodeId === null) {
-          firstNodeId = nodeId;
-        } else {
-          cy.add([
-            { group: "edges", data: { source: firstNodeId, target: nodeId } }
-          ]);
-          firstNodeId = null; // Reset for next edge addition
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Shift') {
+            shiftKeyDown = true;
         }
-      }
+    });
+
+    document.addEventListener('keyup', function (event) {
+        if (event.key === 'Shift') {
+            shiftKeyDown = false;
+        }
+    });
+
+    cy.on('tap', 'node', function (evt) {
+        if (shiftKeyDown) {
+            let nodeId = evt.target.id();
+            if (firstNodeId === null) {
+                firstNodeId = nodeId;
+            } else {
+                cy.add([
+                    {group: "edges", data: {source: firstNodeId, target: nodeId}}
+                ]);
+                firstNodeId = null; // Reset for next edge addition
+            }
+        }
     });
 }
 
-document.addEventListener('click', function(e) {
+document.addEventListener('click', function (e) {
     var popup = document.getElementById('nodePopup');
     if (popup && popup.style.display === 'block' && !popup.contains(e.target) && allowHidePopup) {
         popup.style.display = 'none';
     }
 });
 
-document.getElementById('nodePopup').addEventListener('click', function(e) {
+document.getElementById('nodePopup').addEventListener('click', function (e) {
     e.stopPropagation(); // Prevent click inside popup from propagating
 });
 
@@ -1433,7 +1441,7 @@ function applyColorScheme(colors) {
 }
 
 function colorBlindModeToggle() {
-    if (cy){
+    if (cy) {
         //graph initialized, call applyColorchema method
         isColorBlindMode = !isColorBlindMode; // Toggle the state
 
@@ -1447,7 +1455,7 @@ function colorBlindModeToggle() {
             this.style.color = "";
         }
     } else {
-    //graph not initialized, change only state and button color.
+        //graph not initialized, change only state and button color.
         isColorBlindMode = !isColorBlindMode //toggle the state
         if (isColorBlindMode) {
             this.style.backgroundColor = "#AADDAA";
@@ -1459,7 +1467,7 @@ function colorBlindModeToggle() {
     }
 }
 
-document.getElementById('saveIcon').addEventListener('click', function() {
+document.getElementById('saveIcon').addEventListener('click', function () {
 
     const fileName = prompt("Enter the filename with extension (.png or .jpg):", "aop.png");
     var scale = 2;
@@ -1471,11 +1479,13 @@ document.getElementById('saveIcon').addEventListener('click', function() {
             dataUrl = cy.png({
                 bg: "white",
                 full: true,
-                scale: scale});
+                scale: scale
+            });
         } else if (fileName.endsWith('.jpg')) {
             dataUrl = cy.jpg({
                 bg: "white",
-                quality: 1});
+                quality: 1
+            });
         } else {
             alert("Invalid file extension. Please use .png or .jpg only.");
             return;
@@ -1492,21 +1502,21 @@ document.getElementById('saveIcon').addEventListener('click', function() {
     }
 });
 
-document.getElementById('colorBlindNotActive').addEventListener('click', function() {
+document.getElementById('colorBlindNotActive').addEventListener('click', function () {
     this.style.display = 'none';
     document.getElementById('colorBlindActive').style.display = 'block';
     // Enable color blind mode
     colorBlindModeToggle()
 });
 
-document.getElementById('colorBlindActive').addEventListener('click', function() {
+document.getElementById('colorBlindActive').addEventListener('click', function () {
     this.style.display = 'none';
     document.getElementById('colorBlindNotActive').style.display = 'block';
     // Disable color blind mode
     colorBlindModeToggle()
 });
 
-document.getElementById('saveStyleIcon').addEventListener('click', function() {
+document.getElementById('saveStyleIcon').addEventListener('click', function () {
     const choice = prompt("Type '1' to download the Cytoscape Desktop Standard Style Template or '2' to download the Cytoscape Desktop Color-Blind Style Template:");
 
     if (choice === null) {
@@ -1514,7 +1524,7 @@ document.getElementById('saveStyleIcon').addEventListener('click', function() {
     }
 
     let fileName;
-    switch(choice) {
+    switch (choice) {
         case '1':
             fileName = 'Cytoscape_AOPnetworkFinder_Style.xml';
             break;
@@ -1529,27 +1539,22 @@ document.getElementById('saveStyleIcon').addEventListener('click', function() {
     window.location.href = `/download/${fileName}`;
 });
 
-document.getElementById('emailIcon').addEventListener('click', function() {
+document.getElementById('emailIcon').addEventListener('click', function () {
     var searchValueAop = document.getElementById("searchFieldAOP").value;
-   // Split the AOP IDs by commas and trim any extra spaces
-   let aopArray = searchValueAop.split(',').map(id => id.trim());
+    let aopArray = searchValueAop.split(',').map(id => id.trim());
 
-      // Filter out any invalid or empty IDs
-      let validAopArray = aopArray.filter(aopId => !isNaN(aopId) && aopId !== '');
+    let validAopArray = aopArray.filter(aopId => !isNaN(aopId) && aopId !== '');
 
-      // Check if there are any valid AOP IDs
-      if (validAopArray.length > 0) {
-        // Collect URLs for all valid AOP IDs
+    if (validAopArray.length > 0) {
         let urls = validAopArray.map(aopId => `https://aopwiki.org/contact_form?aop=${aopId}`);
 
-        // Open each URL in a new tab without relying on index
         urls.forEach(url => {
-          window.open(url, '_blank');  // Open each link in a new tab
+            window.open(url, '_blank');
         });
-      } else {
+    } else {
         alert('Please enter valid AOP IDs.');
-      }
-   
+    }
+
 });
 
 function updateMergeButtonLabel(mergeCount) {
@@ -1557,11 +1562,11 @@ function updateMergeButtonLabel(mergeCount) {
     mergeButton.textContent = `Merge KE: (${mergeCount})`;
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('mergeButtonKeyEvent').textContent = 'Merge KE: (0)';
 });
 
-document.getElementById('checkedBoxGene').addEventListener('change', function() {
+document.getElementById('checkedBoxGene').addEventListener('change', function () {
     toggleGenesNode(this.checked)
 });
 
@@ -1570,22 +1575,143 @@ function toggleGenesNode(checked) {
         cy.elements().removeClass('hidden');
     } else {
 
-        cy.edges().filter(function(edge) {
+        cy.edges().filter(function (edge) {
             return edge.source().data('ke_type') === 'genes' || edge.target().data('ke_type') === 'genes';
         }).addClass('hidden');
 
-        cy.nodes().filter(function(node) {
+        cy.nodes().filter(function (node) {
             return node.data('ke_type') === 'genes';
         }).addClass('hidden');
     }
 
     cy.style()
         .selector('.hidden')
-          .style({
+        .style({
             'display': 'none'
-          })
+        })
         .update();
 }
+
+//checkUploadedFileForAssay
+function checkUploadedFileForAssay(ke) {
+    if (!userUploadedData) {
+        return null;
+    }
+
+    const keData = userUploadedData.find(row => row.keid === ke);
+    console.log("KE Data from uploaded file:", keData);
+    if (!keData) {
+        return null;
+    }
+
+    return {
+        gene: keData.gene,
+        ke: keData.keid,
+        ac50: keData.ac50,
+        chemical: keData.chemical,
+    }
+}
+
+document.getElementById('triggerDoseResponse').addEventListener('click', async function () {
+    const dose = document.getElementById("dose").value;
+    const chemical = document.getElementById("chemical").value;
+    const keyEvetnPath = document.getElementById("kePath").value.split(",").map(path => path.trim());
+
+    const graph = cy.nodes();
+    let keToAssaysMap = {};
+
+    keyEvetnPath.forEach(path => {
+        graph.forEach(node => {
+            if (node.data('label') === path) {
+                const connectedKEs = node.connectedEdges();
+                let foundAssay = false;
+
+                for (let edge of connectedKEs) {
+                    const sourceIsAssayGene =
+                        edge.source().data('ke_type') === 'genes' &&
+                        assayGenesDict &&
+                        assayGenesDict[edge.source().data('name')];
+
+                    if (sourceIsAssayGene) {
+                        sourceIsAssayGene.forEach(assay => {
+                            const keNumber = node.data('label').replace("KE ", "");
+                            if (!keToAssaysMap[keNumber]) {
+                                keToAssaysMap[keNumber] = [];
+                            }
+                            keToAssaysMap[keNumber].push(assay.assayComponentName);
+                        });
+
+                        foundAssay = true;
+                    }
+                }
+
+                if (!foundAssay) {
+                    console.log("No assay found in graph for KE", node.data('label'));
+
+                    const excelAssayData = checkUploadedFileForAssay(node.data('label'));
+                    console.log("CSV assay data:", excelAssayData);
+
+                    if (excelAssayData) {
+                        const keNumber = node.data('label').replace("KE ", "");
+
+                        if (!keToAssaysMap[keNumber]) {
+                            keToAssaysMap[keNumber] = [];
+                        }
+
+                        keToAssaysMap[keNumber].push({
+                            gene: excelAssayData.gene,
+                            ac50: excelAssayData.ac50,
+                            chemical: excelAssayData.chemical
+                        });
+                    }
+                }
+
+            }
+        });
+    });
+
+    console.log("Final KE-to-Assays Map:", keToAssaysMap);
+    const jsonIfy = JSON.stringify(keToAssaysMap);
+    console.log("jsonIfy", jsonIfy);
+
+    const doseOfSubstance = parseFloat(dose);
+
+    const response = await fetch(`/api/dose_response?doseOfSubstance=${doseOfSubstance}&chemical=${chemical}&ke_assay_list=${encodeURIComponent(JSON.stringify(keToAssaysMap))}`);
+    const bioactivityAssays = await response.json();
+
+    console.log("Bioactivity Assays Results:", bioactivityAssays);
+    cy.nodes('[ke_type = "Key Event"]').forEach(node => {
+        node.style({
+            'border-width': 0,
+            'border-color': '#000'
+        });
+    });
+
+    if (bioactivityAssays.ke_likelihoods) {
+        for (const [keNumber, likelihood] of Object.entries(bioactivityAssays.ke_likelihoods)) {
+            const node = cy.nodes().filter(ele => ele.data('label') === `KE ${keNumber}`);
+            if (node && node.length > 0) {
+                let borderColor;
+                if (likelihood == null) {
+                    borderColor = 'grey';
+                } else if (likelihood >= 0.8) {
+                    borderColor = 'green';
+                } else if (likelihood >= 0.5) {
+                    borderColor = 'orange';
+                } else {
+                    borderColor = 'red';
+                }
+
+                node.style({
+                    'border-width': 6,
+                    'border-color': borderColor,
+                    'border-opacity': 1
+                });
+            }
+        }
+    }
+});
+
 
 //document.addEventListener('click', function(event) {
 //    console.log(event.target); // See which element was clicked

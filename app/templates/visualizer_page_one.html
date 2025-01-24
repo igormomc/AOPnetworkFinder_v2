@@ -30,26 +30,16 @@
             </div>
             <div class="uploadWrapper">
                 <input type="file" id="fileUpload" accept=".csv" style="display: none;">
+                <span class="info-button" id="infoButton">ℹ</span>
                 <button type="button" id="triggerUpload" class="file-button">Upload file</button>
                 <pre id="output"></pre>
-                <span class="info-button" id="infoButton">ℹ Info</span>
-                <div class="info-section" id="infoSection" style="display: none;">
-                    <p><strong>How to Upload a CSV File:</strong></p>
-                    <ul>
-                        <li>Ensure the file is in CSV format (<code>.csv</code>).</li>
-                        <li>The file must contain the following fields:
-                            <ul>
-                                <li><code>keid</code></li>
-                                <li><code>chemical</code></li>
-                                <li><code>ac50</code></li>
-                                <li><code>gene</code></li>
-                            </ul>
-                        </li>
-                        <li>You can download a template file below.</li>
-                    </ul>
-                    <button id="downloadTemplateButton">Download CSV Template</button>
-                </div>
                 
+            </div>
+            <div class="inputPath">
+                <input type="text" id="dose" placeholder="Enter Dose" />
+                <input type="text" id="chemical" placeholder="Enter Chemical" />
+                <input type="text" id="kePath" placeholder="Enter Key Events" />
+                <button type="button" id="triggerDoseResponse" class="file-button">Run Dose Response</button>
             </div>
         </div>
 
@@ -164,6 +154,27 @@
         <button id="mergeButtonKeyEvent" onclick="console.log('Button clicked')">Merge KE:</button>
     </div>
 
+    <div id="mergePopupInfo" class="modal">
+        <div id="mergePopup-content-Info" class="popupMerge-content-info">
+                <div class="info-section" id="infoSection">
+                    <p><strong>How to Upload a CSV File:</strong></p>
+                    <ul>
+                        <li>Ensure the file is in CSV format (<code>.csv</code>).</li>
+                        <li>The file must contain the following fields:
+                            <ul>
+                                <li><code>keid</code></li>
+                                <li><code>chemical</code></li>
+                                <li><code>ac50</code></li>
+                                <li><code>gene</code></li>
+                            </ul>
+                        </li>
+                        <li>You can download a template file below.</li>
+                    </ul>
+                    <button id="downloadTemplateButton">Download CSV Template</button>
+                </div>
+        </div>
+    </div>
+
     <div id="mergePopup" class="modal">
         <!-- popup Window for merging KE -->
         <div id="mergePopup-content" class="popupMerge-content">
@@ -215,6 +226,7 @@
 
     <script src="{{ url_for('static', filename='javascript/scripts/fetchAliasSymbols.js') }}"></script>
     <script src="{{ url_for('static', filename='javascript/scripts/fetchAllAssays.js') }}"></script>
+    <script src="{{ url_for('static', filename='javascript/scripts/fetchDoseResponse.js') }}"></script>
 
     <!-- Include xlsx library -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>

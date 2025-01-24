@@ -16,6 +16,10 @@ app.config['CACHE_TYPE'] = 'SimpleCache'
 #Initialize cache
 cache = Cache(app)
 
+#THIS CATCH SHOULD BE MOVED, ITS HERE BECOUSE OF CIRCULAR IMPORTS
+from app.service.convertExcelToJsonAc50 import get_excel_data
+get_excel_data()
+
 # Initialize CSRF protection
 csrf = CSRFProtect(app)
 

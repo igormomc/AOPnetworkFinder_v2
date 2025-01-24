@@ -32,3 +32,5 @@ gunicorn
 Flask-WTF>=1.2.1
 requests
 python-dotenv
+pymc
+arviz==0.17.1
