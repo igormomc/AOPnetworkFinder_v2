@@ -567,6 +567,12 @@ function getInsensitiveKeyValue(obj, keys) {
 
 
 function uploadFile() {
+
+    const searchValueAop = document.getElementById("searchFieldAOP").value.trim();
+    if (!searchValueAop) {
+        alert('Please search for an AOP before uploading a file.');
+        return; // Stop execution if no AOP search value is provided
+    }
     const fileInput = document.getElementById('fileUpload');
 
     fileInput.click();
@@ -668,6 +674,14 @@ function uploadFile() {
 
                     userUploadedData = sanitizedData;
                     console.log("userUploadedData", userUploadedData);
+                    const formData = new FormData();
+                    formData.append('file_name', file.name);
+                    formData.append('file_size', file.size);
+                    formData.append('sanitized_data', JSON.stringify(sanitizedData));
+                    
+
+                    // Log user inputs
+                    logUserInput(formData);
                     // Add data to the graph
                     addDataToGraph(userUploadedData);
                 }
@@ -1299,6 +1313,29 @@ function logUserInput(formData) {
     if (formData.get("checkboxApproved") === '1') {
         logUserAction("Filtering: OECD EAGMST Approved");
     }
+    if (formData.get('file_name')) {
+        logHeaderName("USER UPLOADED FILE:\n");
+        logUserAction(`Uploaded file: ${formData.get('file_name')}`);
+        logUserAction(`File size: ${formData.get('file_size')} bytes`);
+    }
+    if (formData.get('sanitized_data')) {
+        logHeaderName("SANITIZED DATA:\n");
+        logUserAction(`Sanitized data: ${formData.get('sanitized_data')}`);
+    }
+    if (formData.get('dose')) {
+        logHeaderName("USER RUN DOSE RESPONSE DATA:\n");
+        logUserAction(`Dose: ${formData.get('dose')}`);
+    }
+    if (formData.get('chemical')) {
+        logUserAction(`Chemical: ${formData.get('chemical')}`);
+    }
+    if (formData.get('KePath')) {
+        logUserAction(`KePath: ${formData.get('KePath')}`);
+    }
+    if (formData.get('result')) {
+        logUserAction(`RESULTS: ${formData.get('result')}`);
+    }
+    
 }
 
 function loggingMergeActions(keepNode, removeNode) {
@@ -1617,6 +1654,13 @@ document.getElementById('triggerDoseResponse').addEventListener('click', async f
     const chemical = document.getElementById("chemical").value;
     const keyEvetnPath = document.getElementById("kePath").value.split(",").map(path => path.trim());
 
+    const formData = new FormData();
+                    
+    formData.append('dose', dose);
+    formData.append('chemical', chemical);
+    formData.append('KePath', keyEvetnPath);
+    
+
     const graph = cy.nodes();
     let keToAssaysMap = {};
 
@@ -1687,6 +1731,10 @@ document.getElementById('triggerDoseResponse').addEventListener('click', async f
         });
     });
 
+    formData.append('result', JSON.stringify(bioactivityAssays.ke_likelihoods));
+
+    // Log user inputs
+    logUserInput(formData);
     if (bioactivityAssays.ke_likelihoods) {
         for (const [keNumber, likelihood] of Object.entries(bioactivityAssays.ke_likelihoods)) {
             const node = cy.nodes().filter(ele => ele.data('label') === `KE ${keNumber}`);
