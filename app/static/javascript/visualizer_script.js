@@ -6,6 +6,7 @@ let globalUserActionsLog = [];
 let allowHidePopup = false; // Flag to control the hiding of the popup
 var cy;
 let geneHGNCurl = 'https://www.genenames.org/data/gene-symbol-report/#!/symbol/';
+let doseKeyeventsWithInfo = [];
 
 let isColorBlindMode = false; // Track the color mode state
 const defaultColors = {
@@ -428,6 +429,22 @@ function render_graph(url_string, formData) {
                             if (keAopLinksHtml) {
                                 contentHtml += `<tr><td>KE in AOPs:</td><td>${keAopLinksHtml}</td></tr>`;
                             }
+                            let keyEvent = node.data('label').replace("KE", "").trim();
+                            if (doseKeyeventsWithInfo.length > 0) {
+                                let doseKeyEvents;
+                                for (let i = 0; i < doseKeyeventsWithInfo.length; i++) {
+                                    if (doseKeyeventsWithInfo[i].ke === keyEvent) {
+                                        doseKeyEvents = doseKeyeventsWithInfo[i].likelihood;
+                                    }
+                                }
+                                if (doseKeyEvents) {
+                                    let doseKeyEventsToDisplay = (doseKeyEvents * 100).toFixed(3);
+                                    contentHtml += `<tr><td>Key Event Likelihood:</td><td>${doseKeyEventsToDisplay}%</td></tr>`;
+                                } else if (doseKeyEvents === null) {
+                                    contentHtml += `<tr><td>Key Event Likelihood:</td><td>N/A</td></tr>`;
+                                }
+                            }
+
                         }
                         contentHtml += `</table></div>`;
                         document.getElementById('nodeInfo').innerHTML = contentHtml;
@@ -678,7 +695,7 @@ function uploadFile() {
                     formData.append('file_name', file.name);
                     formData.append('file_size', file.size);
                     formData.append('sanitized_data', JSON.stringify(sanitizedData));
-                    
+
 
                     // Log user inputs
                     logUserInput(formData);
@@ -715,6 +732,18 @@ document.getElementById('infoButton').addEventListener('click', function () {
         }
     }
 });
+
+document.getElementById('openDoseResponseDialog').addEventListener('click', function () {
+    const modal = document.getElementById("doseResponseDialog");
+    modal.style.display = 'block'
+
+    window.onclick = function (event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+});
+
 document.getElementById('downloadTemplateButton').addEventListener('click', function () {
     const csvContent = "keid,chemical,ac50,gene\n"; // Template header
     const blob = new Blob([csvContent], {type: 'text/csv;charset=utf-8;'});
@@ -1335,7 +1364,7 @@ function logUserInput(formData) {
     if (formData.get('result')) {
         logUserAction(`RESULTS: ${formData.get('result')}`);
     }
-    
+
 }
 
 function loggingMergeActions(keepNode, removeNode) {
@@ -1649,30 +1678,34 @@ function checkUploadedFileForAssay(ke) {
     }
 }
 
-document.getElementById('triggerDoseResponse').addEventListener('click', async function () {
+// Reusable function that processes an array of Key Event labels
+async function gatherAndProcessDoseResponse(kePaths) {
     const dose = document.getElementById("dose").value;
     const chemical = document.getElementById("chemical").value;
     const keyEvetnPath = document.getElementById("kePath").value.split(",").map(path => path.trim());
 
     const formData = new FormData();
-                    
+
     formData.append('dose', dose);
     formData.append('chemical', chemical);
     formData.append('KePath', keyEvetnPath);
-    
+
 
     const graph = cy.nodes();
     let keToAssaysMap = {};
 
-    keyEvetnPath.forEach(path => {
+    // Build up the KE->Assay map
+    kePaths.forEach(path => {
         graph.forEach(node => {
             if (node.data('label') === path) {
                 const connectedKEs = node.connectedEdges();
+                console.log("connectedKEs", connectedKEs)
                 let foundAssay = false;
 
                 for (let edge of connectedKEs) {
+                   console.log("edge.source().data('ke_type')", edge.source())
                     const sourceIsAssayGene =
-                        edge.source().data('ke_type') === 'genes' &&
+                        (edge.source().data('ke_type') === 'genes') &&
                         assayGenesDict &&
                         assayGenesDict[edge.source().data('name')];
 
@@ -1697,19 +1730,18 @@ document.getElementById('triggerDoseResponse').addEventListener('click', async f
 
                     if (excelAssayData) {
                         const keNumber = node.data('label').replace("KE ", "");
-
                         if (!keToAssaysMap[keNumber]) {
                             keToAssaysMap[keNumber] = [];
                         }
-
                         keToAssaysMap[keNumber].push({
                             gene: excelAssayData.gene,
                             ac50: excelAssayData.ac50,
                             chemical: excelAssayData.chemical
                         });
+                    } else {
+                        keToAssaysMap[node.data('label').replace("KE ", "")] = null;
                     }
                 }
-
             }
         });
     });
@@ -1718,12 +1750,16 @@ document.getElementById('triggerDoseResponse').addEventListener('click', async f
     const jsonIfy = JSON.stringify(keToAssaysMap);
     console.log("jsonIfy", jsonIfy);
 
+    // Make your API call with the compiled data
     const doseOfSubstance = parseFloat(dose);
-
-    const response = await fetch(`/api/dose_response?doseOfSubstance=${doseOfSubstance}&chemical=${chemical}&ke_assay_list=${encodeURIComponent(JSON.stringify(keToAssaysMap))}`);
+    const response = await fetch(
+        `/api/dose_response?doseOfSubstance=${doseOfSubstance}&chemical=${chemical}&ke_assay_list=${encodeURIComponent(JSON.stringify(keToAssaysMap))}`
+    );
     const bioactivityAssays = await response.json();
 
     console.log("Bioactivity Assays Results:", bioactivityAssays);
+
+    // Reset all Key Event node styles
     cy.nodes('[ke_type = "Key Event"]').forEach(node => {
         node.style({
             'border-width': 0,
@@ -1736,6 +1772,15 @@ document.getElementById('triggerDoseResponse').addEventListener('click', async f
     // Log user inputs
     logUserInput(formData);
     if (bioactivityAssays.ke_likelihoods) {
+        doseKeyeventsWithInfo = [];
+        for (const [keNumber, likelihood] of Object.entries(bioactivityAssays.ke_likelihoods)) {
+            doseKeyeventsWithInfo.push({ke: keNumber, likelihood: likelihood});
+        }
+    }
+    allKeyEventsActivated = doseKeyeventsWithInfo.every(ke => ke.likelihood >= 0.8);
+
+    // Update node border colors based on ke_likelihoods
+    if (bioactivityAssays.ke_likelihoods) {
         for (const [keNumber, likelihood] of Object.entries(bioactivityAssays.ke_likelihoods)) {
             const node = cy.nodes().filter(ele => ele.data('label') === `KE ${keNumber}`);
             if (node && node.length > 0) {
@@ -1743,22 +1788,226 @@ document.getElementById('triggerDoseResponse').addEventListener('click', async f
                 if (likelihood == null) {
                     borderColor = 'grey';
                 } else if (likelihood >= 0.8) {
-                    borderColor = 'green';
-                } else if (likelihood >= 0.5) {
-                    borderColor = 'orange';
-                } else {
                     borderColor = 'red';
+                } else if (likelihood >= 0.5) {
+                    borderColor = '#b36200';
+                } else {
+                    borderColor = 'green';
                 }
-
                 node.style({
                     'border-width': 6,
                     'border-color': borderColor,
                     'border-opacity': 1
                 });
             }
+            if (allKeyEventsActivated) {
+                const adverseNodes = cy.nodes('[ke_type = "Adverse Outcome"]');
+
+                adverseNodes.style({'background-color': 'magenta'});
+
+                const createBigCrazyExplosion = (node) => {
+                    const centerPos = node.position();
+
+                    const shakes = 3;
+                    let shakeSequence = [];
+                    for (let i = 0; i < shakes; i++) {
+                        const offsetX = (Math.random() - 0.5) * 10;
+                        const offsetY = (Math.random() - 0.5) * 10;
+                        shakeSequence.push({
+                            position: {
+                                x: centerPos.x + offsetX,
+                                y: centerPos.y + offsetY
+                            },
+                            duration: 100,
+                            easing: 'ease-in-out'
+                        });
+                    }
+                    shakeSequence.push({
+                        position: {x: centerPos.x, y: centerPos.y},
+                        duration: 100,
+                        easing: 'ease-in-out'
+                    });
+
+                    node.animate(
+                        {
+                            queue: true,
+                            complete: () => {
+                                const shockwave = cy.add({
+                                    group: 'nodes',
+                                    data: {id: 'shockwave-' + node.id() + '-' + Math.random()},
+                                    style: {
+                                        'background-color': 'rgba(255, 165, 0, 0.2)',
+                                        'border-color': 'red',
+                                        'border-width': 2,
+                                        'border-opacity': 0.8,
+                                        width: 1,
+                                        height: 1
+                                    },
+                                    position: centerPos
+                                });
+
+                                shockwave.animate(
+                                    {
+                                        style: {
+                                            width: 200,
+                                            height: 200,
+                                            'border-opacity': 0,
+                                            'background-opacity': 0
+                                        }
+                                    },
+                                    {
+                                        duration: 1000,
+                                        easing: 'ease-out',
+                                        complete: () => shockwave.remove()
+                                    }
+                                );
+
+                                node.animate(
+                                    {style: {'background-color': 'yellow'}},
+                                    {
+                                        duration: 300,
+                                        easing: 'ease-in-out',
+                                        complete: () => {
+                                            node.animate(
+                                                {style: {'background-color': 'red'}},
+                                                {
+                                                    duration: 300,
+                                                    easing: 'ease-in-out',
+                                                    complete: () => {
+                                                        node.animate(
+                                                            {style: {'background-color': 'orange'}},
+                                                            {
+                                                                duration: 300,
+                                                                easing: 'ease-in-out',
+                                                                complete: () => {
+                                                                    node.style('background-color', 'magenta');
+                                                                    triggerElectricWave(node);
+                                                                }
+                                                            }
+                                                        );
+                                                    }
+                                                }
+                                            );
+                                        }
+                                    }
+                                );
+
+                                const shrapnelCount = 16;
+                                for (let i = 0; i < shrapnelCount; i++) {
+                                    const shrapnelNode = cy.add({
+                                        group: 'nodes',
+                                        data: {
+                                            id: 'boom-' + node.id() + '-' + i + '-' + Math.random()
+                                        },
+                                        style: {
+                                            'background-color': 'orange',
+                                            width: 10,
+                                            height: 10,
+                                            label: '💥'
+                                        },
+                                        position: {
+                                            x: centerPos.x,
+                                            y: centerPos.y
+                                        }
+                                    });
+
+                                    // Random direction & distance
+                                    const angle = Math.random() * 2 * Math.PI;
+                                    const distance = 80 + Math.random() * 80; // fling them further
+
+                                    const targetX = centerPos.x + distance * Math.cos(angle);
+                                    const targetY = centerPos.y + distance * Math.sin(angle);
+
+                                    shrapnelNode.animate(
+                                        {position: {x: targetX, y: targetY}},
+                                        {
+                                            duration: 800, // slower fling for drama
+                                            easing: 'ease-out',
+                                            complete: () => {
+                                                // Fade out & shrink them
+                                                shrapnelNode.animate(
+                                                    {
+                                                        style: {
+                                                            opacity: 0,
+                                                            width: 1,
+                                                            height: 1
+                                                        }
+                                                    },
+                                                    {
+                                                        duration: 800,
+                                                        complete: () => shrapnelNode.remove()
+                                                    }
+                                                );
+                                            }
+                                        }
+                                    );
+                                }
+                            }
+                        },
+                        shakeSequence
+                    );
+                };
+
+                const triggerElectricWave = (startNode) => {
+                    const electricColor = '#00ffc3';
+                    const defaultEdgeColor = '#999';
+                    const defaultEdgeWidth = 2;
+
+                    cy.elements().bfs({
+                        roots: startNode,
+                        directed: false,
+                        visit: (v, e, u, i, depth) => {
+                            if (e) {
+                                setTimeout(() => {
+                                    // "Light up" the edge
+                                    e.animate(
+                                        {
+                                            style: {'line-color': electricColor, width: 4}
+                                        },
+                                        {
+                                            duration: 300,
+                                            complete: () => {
+                                                // Then revert it
+                                                e.animate(
+                                                    {
+                                                        style: {'line-color': defaultEdgeColor, width: defaultEdgeWidth}
+                                                    },
+                                                    {
+                                                        duration: 300
+                                                    }
+                                                );
+                                            }
+                                        }
+                                    );
+                                }, depth * 400); // wave delay from the center (adjust as desired)
+                            }
+                        }
+                    });
+                };
+
+                adverseNodes.forEach((node) => createBigCrazyExplosion(node));
+            }
+
         }
     }
-});
+}
+
+
+        document.getElementById('runAllKeyEvents').addEventListener('click', async function () {
+            const kePaths = cy.nodes('[ke_type = "Key Event"], [ke_type = "Molecular Initiating Event"]').map(node => node.data('label'));
+            console.log("kePathskePaths", kePaths)
+            document.getElementById('doseResponseDialog').style.display = "none";
+            await gatherAndProcessDoseResponse(kePaths);
+        });
+
+        document.getElementById('triggerDoseResponse').addEventListener('click', async function () {
+            const kePaths = document.getElementById("kePath").value
+                .split(",")
+                .map(path => path.trim());
+            document.getElementById('doseResponseDialog').style.display = "none";
+            await gatherAndProcessDoseResponse(kePaths);
+
+        });
 
 
 //document.addEventListener('click', function(event) {

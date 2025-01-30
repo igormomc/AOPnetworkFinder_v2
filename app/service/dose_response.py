@@ -113,6 +113,8 @@ def run_dose_response(doseOfSubstance, chemical, ke_assay_dict):
         # Now average any found AC50 values
         if ac50_values:
             ac50_avg = sum(ac50_values) / len(ac50_values)
+            #ac50_min_value = min(ac50_values)
+            #ac50_median = np.median(ac50_values)
             ke_avg_ac50[ke_number] = ac50_avg
         else:
             ke_avg_ac50[ke_number] = None
@@ -179,11 +181,13 @@ def run_dose_response(doseOfSubstance, chemical, ke_assay_dict):
     # --------------------------------------------------
     # 10. Return final results
     # --------------------------------------------------
-    # Round results, but keep None for KEs that were skipped
-    rounded_ke_likelihoods = {
-        k: (round(v, 3) if v is not None else None)
-        for k, v in ke_likelihoods.items()
-    }
+    rounded_ke_likelihoods = {}
+    for k, v in ke_likelihoods.items():
+        if(v is not None):
+            rounded_ke_likelihoods[k] = round(v, 3)
+        else:
+            rounded_ke_likelihoods[k] = None
+
     rounded_ke_prior_means = {
         k: round(v, 3) for k, v in ke_prior_means.items()
     }
