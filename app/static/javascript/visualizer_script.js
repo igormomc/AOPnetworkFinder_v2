@@ -1678,6 +1678,48 @@ function checkUploadedFileForAssay(ke) {
     }
 }
 
+
+function getGradientColor(likelihood) {
+    if (likelihood == null) {
+        return 'grey';
+    }
+
+    // Clamp likelihood between 0 and 1
+    likelihood = Math.max(0, Math.min(1, likelihood));
+
+    // Define the 10-color palette from worst (1) to best (0)
+    const colorScale = [
+        '#9e0142', // 1. Worst
+        '#d53e4f',
+        '#f46d43',
+        '#fdae61',
+        '#fee08b',
+        '#e6f598',
+        '#abdda4',
+        '#66c2a5',
+        '#3288bd',
+        '#5e4fa2'  // 10. Best
+    ];
+
+    // Calculate the index for the color scale
+    // Since likelihood=1 should map to index 0 (worst) and likelihood=0 to index 9 (best),
+    // we invert the mapping by subtracting the scaled index from (colorScale.length - 1)
+    const scaledLikelihood = likelihood * colorScale.length;
+    let index = Math.floor(scaledLikelihood);
+
+    // Handle edge case where likelihood=1 maps exactly to the last color
+    if (index >= colorScale.length) {
+        index = colorScale.length - 1;
+    }
+
+    // Since the colorScale is ordered from worst to best,
+    // we map likelihood=1 to index=0 and likelihood=0 to index=9
+    const reversedIndex = colorScale.length - 1 - index;
+
+    return colorScale[reversedIndex];
+}
+
+
 // Reusable function that processes an array of Key Event labels
 async function gatherAndProcessDoseResponse(kePaths) {
     const dose = document.getElementById("dose").value;
@@ -1780,27 +1822,21 @@ async function gatherAndProcessDoseResponse(kePaths) {
     allKeyEventsActivated = doseKeyeventsWithInfo.every(ke => ke.likelihood >= 0.8);
 
     // Update node border colors based on ke_likelihoods
-    if (bioactivityAssays.ke_likelihoods) {
-        for (const [keNumber, likelihood] of Object.entries(bioactivityAssays.ke_likelihoods)) {
-            const node = cy.nodes().filter(ele => ele.data('label') === `KE ${keNumber}`);
-            if (node && node.length > 0) {
-                let borderColor;
-                if (likelihood == null) {
-                    borderColor = 'grey';
-                } else if (likelihood >= 0.8) {
-                    borderColor = 'red';
-                } else if (likelihood >= 0.5) {
-                    borderColor = '#b36200';
-                } else {
-                    borderColor = 'green';
+    // Update node border colors based on ke_likelihoods
+        if (bioactivityAssays.ke_likelihoods) {
+            for (const [keNumber, likelihood] of Object.entries(bioactivityAssays.ke_likelihoods)) {
+                const node = cy.nodes().filter(ele => ele.data('label') === `KE ${keNumber}`);
+                if (node && node.length > 0) {
+                    const borderColor = getGradientColor(likelihood);
+                    node.style({
+                        'border-width': 6,
+                        'border-color': borderColor,
+                        'border-opacity': 1,
+                        'border-padding': 20,
+                        'border-margin': 20
+                    });
                 }
-                node.style({
-                    'border-width': 6,
-                    'border-color': borderColor,
-                    'border-opacity': 1
-                });
-            }
-            if (allKeyEventsActivated) {
+                    if (allKeyEventsActivated) {
                 const adverseNodes = cy.nodes('[ke_type = "Adverse Outcome"]');
 
                 adverseNodes.style({'background-color': 'magenta'});

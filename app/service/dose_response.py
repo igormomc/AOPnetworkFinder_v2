@@ -1,9 +1,9 @@
 import pymc as pm
 import numpy as np
 import pandas as pd
-
+import json
+import requests
 from app.service.convertExcelToJsonAc50 import get_excel_data
-
 
 def run_dose_response(doseOfSubstance, chemical, ke_assay_dict):
     """
@@ -25,33 +25,56 @@ def run_dose_response(doseOfSubstance, chemical, ke_assay_dict):
     # 1. Load your Excel data once (if not already)
     # --------------------------------------------------
     df, json_data = get_excel_data()
+    with open('app/localDataFiles/chemNameToDsstoxid.json', 'r') as file:
+        chem_to_dsstoxi = json.load(file)
+    with open('app/localDataFiles/allAssays.json', 'r') as file2:
+        all_assays_json = json.load(file2)
+    with open('app/localDataFiles/testdata.json', 'r') as file3:
+        testdata = json.load(file3)
+
+
+
+
 
     # --------------------------------------------------
     # 2. Helper: Get AC50 for a single assay from Excel/CSV
     # --------------------------------------------------
-    def get_ac50_for_assay(assay_name, chemical_name):
+    def get_ac50_for_assay(assay_id, chemical_name):
+        #testData looks like:
         """
-        Looks up the AC50 value for (chemical_name, assay_name) in the Excel/CSV data.
-        """
-        if assay_name not in df.columns:
-            print(f"[WARN] No assay name '{assay_name}' in columns. Skipped.")
-            return None
+        [
+            {
+                "aeid": 2574,
+                "assayComponentEndpointName": "ERF_CR_ENZ_hELANE",
+                "m4id": 1205680,
+                "data": [
+                    {
+                        "ac50": 0.3839979849326894,
+                        "dtxsid": "DTXSID8031077"
+                    },
+                    {
+                        "ac50": 5,
+                        "dtxsid": "DTXSID3041035"
+                    },
+                    {
+                        "ac50": 9.338029682116078,
+                        "dtxsid": "DTXSID00872663"
+                    },
+                    {
+                        "ac50": 5,
+                        "dtxsid": "DTXSID30865801"
+                    }
+                ]
+            },
+            """
+        for item in testdata:
+            if item['aeid'] == assay_id:
+                for data in item['data']:
+                    if data['dtxsid'] == chemical_name:
+                        print("AC DATA HER: ", data['ac50'])
+                        return data['ac50']
+        return None
 
-        # The second column in df is typically the chemical name
-        matching_rows = df[df.iloc[:, 1] == chemical_name]
-        if matching_rows.empty:
-            print(f"[WARN] No rows found for {chemical_name}/{assay_name}.")
-            return None
-
-        row = matching_rows.iloc[0]  # assume only one match
-        ac50_value = row[assay_name]
-
-        if pd.isna(ac50_value) or ac50_value > 10000:
-            print("[WARN] Missing or invalid AC50 value in CSV for "
-                  f"{chemical_name}/{assay_name}: {ac50_value}")
-            return None
-
-        return float(ac50_value)
 
     # --------------------------------------------------
     # 3. Hill-equation-based likelihood
@@ -64,7 +87,14 @@ def run_dose_response(doseOfSubstance, chemical, ke_assay_dict):
     # 4. Compute (or retrieve) the average AC50 for each KE
     # --------------------------------------------------
     ke_avg_ac50 = {}
-
+    dsstox_substance_id = None
+    for item in chem_to_dsstoxi:
+        if item['chnm'] == chemical:
+            dsstox_substance_id = item['dsstox_substance_id']
+            break
+    if dsstox_substance_id is None:
+        print(f"Could not find dsstox_substance_id for chemical '{chemical}'")
+        return None
     for ke_number, assay_info_list in ke_assay_dict.items():
         """
         We might have:
@@ -86,7 +116,16 @@ def run_dose_response(doseOfSubstance, chemical, ke_assay_dict):
         if isinstance(first_item, str):
             # --- Case A: array of assay names --- #
             for assay_name in assay_info_list:
-                ac50_val = get_ac50_for_assay(assay_name, chemical)
+                assay_aeid = None
+                for item in all_assays_json:
+                    if item['assayComponentEndpointName'] == assay_name:
+                        assay_aeid = item['aeid']
+                        break
+                if assay_aeid is None:
+                    print(f"Could not find aeid for assay '{assay_name}'")
+                    return None
+
+                ac50_val = get_ac50_for_assay(assay_aeid, dsstox_substance_id)
                 if ac50_val is not None:
                     ac50_values.append(ac50_val)
 
@@ -112,6 +151,7 @@ def run_dose_response(doseOfSubstance, chemical, ke_assay_dict):
 
         # Now average any found AC50 values
         if ac50_values:
+            print("ac50_values", ac50_values)
             ac50_avg = sum(ac50_values) / len(ac50_values)
             #ac50_min_value = min(ac50_values)
             #ac50_median = np.median(ac50_values)
@@ -144,7 +184,7 @@ def run_dose_response(doseOfSubstance, chemical, ke_assay_dict):
         ao_prior = pm.Beta("AO", alpha=5, beta=1)
 
         # Sample from the posterior
-        trace = pm.sample(1000, return_inferencedata=True, progressbar=False)
+        trace = pm.sample(500, return_inferencedata=True, progressbar=False)
 
     # --------------------------------------------------
     # 7. Extract means from the posterior
