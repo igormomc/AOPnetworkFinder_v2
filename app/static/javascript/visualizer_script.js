@@ -1802,6 +1802,7 @@ async function gatherAndProcessDoseResponse(kePaths) {
                         keToAssaysMap[node.data('label').replace("KE ", "")] = null;
                     }
                 }
+                addGradientBarToGraph()
             }
         });
     });
@@ -2047,6 +2048,38 @@ async function gatherAndProcessDoseResponse(kePaths) {
     }
 }
 
+function addGradientBarToGraph() {
+    // Add the gradient bar as a custom node
+    cy.add({
+        group: 'nodes',
+        data: {
+            id: 'gradientBar',
+            label: '', // Optional label
+            isLegend: true // Custom data attribute to identify this node as a legend
+        },
+        position: { x: 0, y: 0 }, // Adjust position
+        selectable: false,
+        grabbable: false,
+        classes: 'gradient-bar-node'
+    });
+
+    // Style the gradient bar node with the Base64 image
+    cy.style()
+        .selector('.gradient-bar-node')
+        .style({
+            'background-image': "/static/images/bar-gradient.png",
+            'background-fit': 'contain', // Ensure the image fits within the node
+            'background-opacity': 1, // Make the image fully visible
+            'shape': 'rectangle', // Keep the shape as a rectangle
+            'width': 470, // Match the image width
+            'height': 50, // Match the image height
+            'border-width': 0, // Remove border
+            'border-opacity': 0 // Ensure no border is visible
+        })
+        .update();
+}
+
+
 
         document.getElementById('runAllKeyEvents').addEventListener('click', async function () {
             const kePaths = cy.nodes('[ke_type = "Key Event"], [ke_type = "Molecular Initiating Event"]').map(node => node.data('label'));
@@ -2064,25 +2097,8 @@ async function gatherAndProcessDoseResponse(kePaths) {
 
         });
 
-    // Style the gradient bar using Cytoscape's stylesheet
-    cy.style()
-    .selector('.gradient-bar-node')
-    .style({
-        'background-image': '/static/images/bar-gradient.png', // Path to the uploaded image
-        'background-fit': 'contain', // Ensure the image fits within the node
-        'background-opacity': 1, // Make the image fully visible
-        'shape': 'rectangle', // Optional: explicitly set the shape to rectangle
-        'width': 460, // Match the image width
-        'height': 50, // Match the image height
-        'border-width': 0, // Remove the border
-        'border-opacity': 0, // Ensure no border is visible
-        'padding': 0 // Remove any internal padding
-    })
-    .update();
-
     console.log("Gradient bar added to graph!");
-
-
+}
 //document.addEventListener('click', function(event) {
 //    console.log(event.target); // See which element was clicked
 //});
