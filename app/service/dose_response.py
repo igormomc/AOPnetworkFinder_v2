@@ -5,6 +5,7 @@ import json
 import requests
 from app.service.convertExcelToJsonAc50 import get_excel_data
 
+
 def run_dose_response(doseOfSubstance, chemical, ke_assay_dict):
     """
     Args:
@@ -12,69 +13,53 @@ def run_dose_response(doseOfSubstance, chemical, ke_assay_dict):
         chemical (str): The chemical name to look up or match.
         ke_assay_dict (dict): A dictionary mapping KE number (str) to a list
                               *either* of assay names (str) or objects containing "ac50".
-
-            Examples:
-            {"55": ["BSK_BT_xTNFa", "BSK_LPS_TNFa", "LTEA_HepaRG_BCL2"]}
-            {"386": [{"gene":"CA1","ac50":"5","chemical":"Azoxystrobin"}]}
-
+                              e.g.,
+                              {"55": ["BSK_BT_xTNFa", "BSK_LPS_TNFa", "LTEA_HepaRG_BCL2"]}
+                              {"386": [{"gene": "CA1", "ac50": "5", "chemical": "Azoxystrobin"}]}
     Returns:
         dict: Results of the Bayesian dose-response, including KE likelihoods, etc.
     """
 
     # --------------------------------------------------
-    # 1. Load your Excel data once (if not already)
+    # 1. Load your Excel data and supporting JSON files
     # --------------------------------------------------
     df, json_data = get_excel_data()
     with open('app/localDataFiles/chemNameToDsstoxid.json', 'r') as file:
         chem_to_dsstoxi = json.load(file)
     with open('app/localDataFiles/allAssays.json', 'r') as file2:
         all_assays_json = json.load(file2)
-    with open('app/localDataFiles/testdata.json', 'r') as file3:
+    with open('app/localDataFiles/structured_filename.json', 'r') as file3:
         testdata = json.load(file3)
 
-
-
-
-
     # --------------------------------------------------
-    # 2. Helper: Get AC50 for a single assay from Excel/CSV
+    # 2. Helper: Get AC50 for a single assay from the new JSON testdata
     # --------------------------------------------------
-    def get_ac50_for_assay(assay_id, chemical_name):
-        #testData looks like:
+    def get_ac50_for_assay(assay_name, chemical_id):
         """
-        [
-            {
-                "aeid": 2574,
-                "assayComponentEndpointName": "ERF_CR_ENZ_hELANE",
-                "m4id": 1205680,
-                "data": [
-                    {
-                        "ac50": 0.3839979849326894,
-                        "dtxsid": "DTXSID8031077"
-                    },
-                    {
-                        "ac50": 5,
-                        "dtxsid": "DTXSID3041035"
-                    },
-                    {
-                        "ac50": 9.338029682116078,
-                        "dtxsid": "DTXSID00872663"
-                    },
-                    {
-                        "ac50": 5,
-                        "dtxsid": "DTXSID30865801"
-                    }
-                ]
-            },
-            """
-        for item in testdata:
-            if item['aeid'] == assay_id:
-                for data in item['data']:
-                    if data['dtxsid'] == chemical_name:
-                        print("AC DATA HER: ", data['ac50'])
-                        return data['ac50']
-        return None
+        With the new testdata structure, for example:
+        {
+          "ERF_CR_ENZ_hELANE": {
+              "8031077": [0.384],
+              "3041035": [5]
+          },
+          ...
+        }
+        The keys no longer include the "DTXSID" prefix. So if chemical_id
+        comes in as "DTXSID8031077", we remove the prefix before lookup.
+        """
+        # Remove "DTXSID" prefix if present
+        lookup_key = chemical_id
+        if chemical_id.startswith("DTXSID"):
+            lookup_key = chemical_id[len("DTXSID"):]
 
+        assay_data = testdata.get(assay_name)
+        if assay_data is not None:
+            ac50_value = assay_data.get(lookup_key)
+            if ac50_value is not None:
+                print("AC DATA HERE:", ac50_value)
+                # If the value is in a list, return the first element
+                return ac50_value[0] if isinstance(ac50_value, list) else ac50_value
+        return None
 
     # --------------------------------------------------
     # 3. Hill-equation-based likelihood
@@ -95,45 +80,28 @@ def run_dose_response(doseOfSubstance, chemical, ke_assay_dict):
     if dsstox_substance_id is None:
         print(f"Could not find dsstox_substance_id for chemical '{chemical}'")
         return None
-    for ke_number, assay_info_list in ke_assay_dict.items():
-        """
-        We might have:
 
-          case A) assay_info_list = ["BSK_BT_xTNFa","BSK_LPS_TNFa",...]  (array of strings)
-          case B) assay_info_list = [{"gene": "CA1", "ac50": "5", "chemical": "Azoxystrobin"}, ...]
-        """
+    for ke_number, assay_info_list in ke_assay_dict.items():
+        # The assay_info_list can be either:
+        #   - Case A: a list of assay names, e.g., ["BSK_BT_xTNFa", "BSK_LPS_TNFa", ...]
+        #   - Case B: a list of dictionaries that already include AC50 values.
         if not assay_info_list:
-            # If it's an empty list, nothing to do
             ke_avg_ac50[ke_number] = None
             continue
 
-        # Identify whether the first item is a string (case A) or a dict (case B)
         first_item = assay_info_list[0]
-
-        # We'll store all valid AC50 values for this KE in a list, then average them.
         ac50_values = []
 
         if isinstance(first_item, str):
             # --- Case A: array of assay names --- #
             for assay_name in assay_info_list:
-                assay_aeid = None
-                for item in all_assays_json:
-                    if item['assayComponentEndpointName'] == assay_name:
-                        assay_aeid = item['aeid']
-                        break
-                if assay_aeid is None:
-                    print(f"Could not find aeid for assay '{assay_name}'")
-                    return None
-
-                ac50_val = get_ac50_for_assay(assay_aeid, dsstox_substance_id)
+                ac50_val = get_ac50_for_assay(assay_name, dsstox_substance_id)
                 if ac50_val is not None:
                     ac50_values.append(ac50_val)
 
         elif isinstance(first_item, dict):
             # --- Case B: array of objects that already contain AC50 --- #
             for obj in assay_info_list:
-                # We assume each dict has { "ac50": "5", "chemical": "Azoxystrobin", ... }
-                # If "chemical" must match the user-supplied chemical, check that here:
                 if obj.get("chemical") == chemical:
                     ac50_str = obj.get("ac50")
                     try:
@@ -142,19 +110,15 @@ def run_dose_response(doseOfSubstance, chemical, ke_assay_dict):
                     except (ValueError, TypeError):
                         print(f"[WARN] Could not convert '{ac50_str}' to float AC50.")
                 else:
-                    # If you only want to use matches for the same chemical
                     print(f"[INFO] Skipping object with different chemical: {obj.get('chemical')}")
         else:
             print(f"[WARN] Unexpected item type in ke_assay_dict for KE '{ke_number}'. Skipping.")
             ke_avg_ac50[ke_number] = None
             continue
 
-        # Now average any found AC50 values
         if ac50_values:
             print("ac50_values", ac50_values)
             ac50_avg = sum(ac50_values) / len(ac50_values)
-            #ac50_min_value = min(ac50_values)
-            #ac50_median = np.median(ac50_values)
             ke_avg_ac50[ke_number] = ac50_avg
         else:
             ke_avg_ac50[ke_number] = None
@@ -175,11 +139,10 @@ def run_dose_response(doseOfSubstance, chemical, ke_assay_dict):
     # 6. Build and sample the Bayesian model (illustrative)
     # --------------------------------------------------
     with pm.Model() as model:
-        # Create a Beta prior for each KE (regardless of AC50)
+        # Create a Beta prior for each KE
         ke_priors = {}
         for ke_number in ke_avg_ac50.keys():
             ke_priors[ke_number] = pm.Beta(ke_number, alpha=2, beta=5)
-
         # A single Beta prior for "AO"
         ao_prior = pm.Beta("AO", alpha=5, beta=1)
 
@@ -198,12 +161,10 @@ def run_dose_response(doseOfSubstance, chemical, ke_assay_dict):
     # --------------------------------------------------
     # 8. Calculate Probability of AO at this dose
     # --------------------------------------------------
-    # If a KE has likelihood=None, it means we skip it (like a factor of 1.0).
     valid_likelihoods = [lk for lk in ke_likelihoods.values() if lk is not None]
     if valid_likelihoods:
         P_AO_at_dose = np.prod(valid_likelihoods)
     else:
-        # If we have no valid KE likelihoods, set this to 0 or some fallback
         P_AO_at_dose = 0
 
     # --------------------------------------------------
@@ -214,7 +175,6 @@ def run_dose_response(doseOfSubstance, chemical, ke_assay_dict):
     for ke_number, likelihood_value in ke_likelihoods.items():
         if (likelihood_value is not None) and (likelihood_value >= threshold):
             activated_events.append(ke_number)
-
     if P_AO_at_dose >= threshold:
         activated_events.append("AO")
 
@@ -223,14 +183,9 @@ def run_dose_response(doseOfSubstance, chemical, ke_assay_dict):
     # --------------------------------------------------
     rounded_ke_likelihoods = {}
     for k, v in ke_likelihoods.items():
-        if(v is not None):
-            rounded_ke_likelihoods[k] = round(v, 3)
-        else:
-            rounded_ke_likelihoods[k] = None
+        rounded_ke_likelihoods[k] = round(v, 3) if v is not None else None
 
-    rounded_ke_prior_means = {
-        k: round(v, 3) for k, v in ke_prior_means.items()
-    }
+    rounded_ke_prior_means = {k: round(v, 3) for k, v in ke_prior_means.items()}
 
     return {
         "dose": doseOfSubstance,

@@ -2081,7 +2081,8 @@ async function gatherAndProcessDoseResponse(kePaths) {
     .update();
 
     console.log("Gradient bar added to graph!");
-}
+
+
 //document.addEventListener('click', function(event) {
 //    console.log(event.target); // See which element was clicked
 //});
