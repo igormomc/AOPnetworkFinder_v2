@@ -35,11 +35,9 @@
                 <pre id="output"></pre>
                 
             </div>
-            <div class="inputPath">
-                <input type="text" id="dose" placeholder="Enter Dose" />
-                <input type="text" id="chemical" placeholder="Enter Chemical" />
-                <input type="text" id="kePath" placeholder="Enter Key Events" />
-                <button type="button" id="triggerDoseResponse" class="file-button">Run Dose Response</button>
+            <div class="uploadWrapper">
+                <button type="button" id="openDoseResponseDialog" class="openDose-button">Dose Response</button>
+                <pre></pre>
             </div>
         </div>
 
@@ -209,6 +207,36 @@
             <!-- <span class="close">&times;</span> -->
         </div>
     </div>
+
+<div id="doseResponseDialog" class="modal">
+  <div class="doseResponseDialog-content">
+    <span class="close" onclick="document.getElementById('doseResponseDialog').style.display='none'">&times;</span>
+    <h2>Dose Response Calculation</h2>
+    <div class="doseResponseWrapper">
+      <div class="input-group">
+        <label for="dose">Dose</label>
+        <input type="text" id="dose" placeholder="Enter Dose" />
+      </div>
+      <div class="input-group">
+        <label for="chemical">Chemical</label>
+        <input type="text" id="chemical" placeholder="Enter Chemical" />
+      </div>
+      <div class="input-group">
+        <label for="kePath">Key Events</label>
+        <input type="text" id="kePath" placeholder="Enter Key Events" />
+      </div>
+
+      <div class="button-group">
+        <button type="button" id="triggerDoseResponse" class="openDose-button">
+          Run Dose Response
+        </button>
+        <button type="button" id="runAllKeyEvents" class="openDose-button">
+          Run on All Key Events
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
     <!-- Popup Container -->
     <div id="nodePopup">
