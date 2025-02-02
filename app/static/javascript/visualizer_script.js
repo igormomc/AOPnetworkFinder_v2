@@ -565,132 +565,150 @@ function getInsensitiveKeyValue(obj, keys) {
     return undefined;
 }
 
-
 function uploadFile() {
-
+    // Check if the user has entered an AOP search value
     const searchValueAop = document.getElementById("searchFieldAOP").value.trim();
     if (!searchValueAop) {
         alert('Please search for an AOP before uploading a file.');
         return; // Stop execution if no AOP search value is provided
     }
+
     const fileInput = document.getElementById('fileUpload');
 
+    // Reset file input to allow selecting the same file again
+    fileInput.value = "";
+
+    // Remove previous event listener to avoid multiple triggers
+    fileInput.removeEventListener('change', handleFileUpload);
+
+    // Add the event listener again
+    fileInput.addEventListener('change', handleFileUpload);
+
+    // Trigger file selection dialog
     fileInput.click();
+}
 
-    fileInput.addEventListener('change', function (event) {
-        const file = event.target.files[0];
-        if (file) {
-            const fileName = file.name;
-            console.log(`Selected file: ${fileName}`);
+// Function to handle file upload
+function handleFileUpload(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const fileName = file.name;
+        console.log(`Selected file: ${fileName}`);
 
+        // Validate file type
+        if (!fileName.endsWith('.csv')) {
+            alert('Invalid file format. Please upload a CSV file.');
+            return;
+        }
 
-            if (!fileName.endsWith('.csv')) {
-                alert('Invalid file format. Please upload a CSV file.');
+        // Validate file size (max 1MB)
+        const maxFileSize = 1048576; // 1MB in bytes
+        if (file.size > maxFileSize) {
+            alert('File is too large. Please upload a file smaller than 1MB.');
+            return;
+        }
+
+        const reader = new FileReader();
+
+        reader.onload = function (event) {
+            const fileContent = event.target.result;
+
+            // Process and sanitize the CSV content
+            try {
+                if (!isUtf8(fileContent)) {
+                    throw new Error('Invalid file encoding. Please upload a UTF-8 encoded CSV file.');
+                }
+            } catch (error) {
+                console.error(error.message);
+                alert(error.message);
                 return;
             }
 
+            const rows = fileContent.split('\n').map(row => row.trim()).filter(row => row);
+            const headers = rows.shift().split(',').map(header => header.trim().toLowerCase());
+            console.log('Headers in uploaded file:', headers);
 
-            const maxFileSize = 1048576; // 1MB in bytes
-            if (file.size > maxFileSize) {
-                alert('File is too large. Please upload a file smaller than 1MB.');
+            // Check for required headers
+            const requiredHeaders = ['keid', 'chemical', 'ac50', 'gene'];
+            const missingHeaders = requiredHeaders.filter(header => !headers.includes(header));
+            if (missingHeaders.length > 0) {
+                alert(`Invalid file format. Missing headers: ${missingHeaders.join(', ')}`);
                 return;
             }
 
-            const reader = new FileReader();
+            // Convert rows into JSON objects
+            const json = rows.map(row => {
+                const values = row.split(',').map(value => value.trim());
+                return headers.reduce((obj, header, index) => {
+                    obj[header] = values[index] || '';
+                    return obj;
+                }, {});
+            });
 
-            reader.onload = function (event) {
-                const fileContent = event.target.result;
-
-
-                try {
-                    if (!isUtf8(fileContent)) {
-                        throw new Error('Invalid file encoding. Please upload a UTF-8 encoded CSV file.');
+            // Sanitize the data
+            const sanitizedData = json.map(row => {
+                for (const key in row) {
+                    if (row[key].startsWith('=') || row[key].startsWith('+') || row[key].startsWith('-') || row[key].startsWith('@')) {
+                        row[key] = `'${row[key]}`;
                     }
-                } catch (error) {
-                    console.error(error.message);
-                    alert(error.message);
-                    return;
                 }
+                return row;
+            });
 
+            console.log('Sanitized Data:', sanitizedData);
 
-                const rows = fileContent.split('\n').map(row => row.trim()).filter(row => row);
-                const headers = rows.shift().split(',').map(header => header.trim().toLowerCase());
-                console.log('Headers in uploaded file:', headers);
-
-
-                const requiredHeaders = ['keid', 'chemical', 'ac50', 'gene'];
-                const missingHeaders = requiredHeaders.filter(header => !headers.includes(header));
-                if (missingHeaders.length > 0) {
-                    alert(`Invalid file format. Missing headers: ${missingHeaders.join(', ')}`);
-                    return;
-                }
-
-                const json = rows.map(row => {
-                    const values = row.split(',').map(value => value.trim());
-                    return headers.reduce((obj, header, index) => {
-                        obj[header] = values[index] || '';
-                        return obj;
-                    }, {});
-                });
-
-
-                const sanitizedData = json.map(row => {
-                    for (const key in row) {
-                        if (row[key].startsWith('=') || row[key].startsWith('+') || row[key].startsWith('-') || row[key].startsWith('@')) {
-                            row[key] = `'${row[key]}`;
-                        }
-                    }
-                    return row;
-                });
-
-                console.log('Sanitized Data:', sanitizedData);
-
-
-                const requiredKeys = {
-                    keid: ['keid'],
-                    chemical: ['chemical', 'chem'],
-                    ac50: ['ac50'],
-                    gene: ['gene'],
-                };
-
-                const missingRows = [];
-                sanitizedData.forEach((row, index) => {
-                    const normalizedRowKeys = Object.keys(row).map(key => key.toLowerCase());
-                    const missingKeys = Object.keys(requiredKeys).filter(
-                        key => !requiredKeys[key].some(alias => normalizedRowKeys.includes(alias))
-                    );
-
-                    if (missingKeys.length > 0) {
-                        console.warn(`Row ${index + 1} is missing keys: ${missingKeys.join(', ')}`);
-                        missingRows.push({row: index + 1, missingKeys});
-                    }
-                });
-
-                if (missingRows.length > 0) {
-                    console.error("Validation failed for the following rows:", missingRows);
-                    alert(`Validation failed. Missing keys in rows:\n${missingRows.map(r => `Row ${r.row}: ${r.missingKeys.join(', ')}`).join('\n')}`);
-                } else {
-                    console.log('Validation passed. All required keys are present.');
-
-                    userUploadedData = sanitizedData;
-                    console.log("userUploadedData", userUploadedData);
-                    const formData = new FormData();
-                    formData.append('file_name', file.name);
-                    formData.append('file_size', file.size);
-                    formData.append('sanitized_data', JSON.stringify(sanitizedData));
-                    
-
-                    // Log user inputs
-                    logUserInput(formData);
-                    // Add data to the graph
-                    addDataToGraph(userUploadedData);
-                }
+            // Check for missing keys in rows
+            const requiredKeys = {
+                keid: ['keid'],
+                chemical: ['chemical', 'chem'],
+                ac50: ['ac50'],
+                gene: ['gene'],
             };
 
-            reader.readAsText(file); // Use readAsText for CSV files
-        }
-    }, {once: true});
+            const missingRows = [];
+            sanitizedData.forEach((row, index) => {
+                const normalizedRowKeys = Object.keys(row).map(key => key.toLowerCase());
+                const missingKeys = Object.keys(requiredKeys).filter(
+                    key => !requiredKeys[key].some(alias => normalizedRowKeys.includes(alias))
+                );
+
+                if (missingKeys.length > 0) {
+                    console.warn(`Row ${index + 1} is missing keys: ${missingKeys.join(', ')}`);
+                    missingRows.push({ row: index + 1, missingKeys });
+                }
+            });
+
+            if (missingRows.length > 0) {
+                console.error("Validation failed for the following rows:", missingRows);
+                alert(`Validation failed. Missing keys in rows:\n${missingRows.map(r => `Row ${r.row}: ${r.missingKeys.join(', ')}`).join('\n')}`);
+                return;
+            }
+
+            console.log('Validation passed. All required keys are present.');
+
+            userUploadedData = sanitizedData;
+            console.log("userUploadedData", userUploadedData);
+
+            // Append details to FormData
+            const formData = new FormData();
+            formData.append('file_name', file.name);
+            formData.append('file_size', file.size);
+            formData.append('sanitized_data', JSON.stringify(sanitizedData));
+
+            // Log user inputs
+            logUserInput(formData);
+
+            // Add data to the graph
+            addDataToGraph(userUploadedData);
+
+            // Reset file input so user can upload another file
+            document.getElementById('fileUpload').value = "";
+        };
+
+        reader.readAsText(file); // Read the file as text
+    }
 }
+
 
 // Utility function to check UTF-8 encoding
 function isUtf8(fileContent) {
@@ -1659,7 +1677,6 @@ document.getElementById('triggerDoseResponse').addEventListener('click', async f
     formData.append('dose', dose);
     formData.append('chemical', chemical);
     formData.append('KePath', keyEvetnPath);
-    
 
     const graph = cy.nodes();
     let keToAssaysMap = {};
@@ -1709,7 +1726,6 @@ document.getElementById('triggerDoseResponse').addEventListener('click', async f
                         });
                     }
                 }
-
             }
         });
     });
@@ -1735,6 +1751,7 @@ document.getElementById('triggerDoseResponse').addEventListener('click', async f
 
     // Log user inputs
     logUserInput(formData);
+
     if (bioactivityAssays.ke_likelihoods) {
         for (const [keNumber, likelihood] of Object.entries(bioactivityAssays.ke_likelihoods)) {
             const node = cy.nodes().filter(ele => ele.data('label') === `KE ${keNumber}`);
@@ -1743,11 +1760,11 @@ document.getElementById('triggerDoseResponse').addEventListener('click', async f
                 if (likelihood == null) {
                     borderColor = 'grey';
                 } else if (likelihood >= 0.8) {
-                    borderColor = 'green';
-                } else if (likelihood >= 0.5) {
-                    borderColor = 'orange';
-                } else {
                     borderColor = 'red';
+                } else if (likelihood >= 0.5) {
+                    borderColor = 'yellow';
+                } else {
+                    borderColor = 'green';
                 }
 
                 node.style({
@@ -1758,9 +1775,46 @@ document.getElementById('triggerDoseResponse').addEventListener('click', async f
             }
         }
     }
+
+
+    // After processing nodes and likelihoods, add the gradient bar
+    addGradientBarToGraph();
 });
 
 
+function addGradientBarToGraph() {
+    // Add the gradient bar as a custom node
+    cy.add({
+        group: 'nodes',
+        data: {
+            id: 'gradientBar',
+            label: '',
+            isLegend: true, // Custom data attribute to identify this node as a legend
+        },
+        position: { x: 0, y: 0 }, // Position it outside the main graph area
+        selectable: false,
+        grabbable: false,
+        classes: 'gradient-bar-node'
+    });
+
+    // Style the gradient bar using Cytoscape's stylesheet
+    cy.style()
+    .selector('.gradient-bar-node')
+    .style({
+        'background-image': '/static/images/bar-gradient.png', // Path to the uploaded image
+        'background-fit': 'contain', // Ensure the image fits within the node
+        'background-opacity': 1, // Make the image fully visible
+        'shape': 'rectangle', // Optional: explicitly set the shape to rectangle
+        'width': 460, // Match the image width
+        'height': 50, // Match the image height
+        'border-width': 0, // Remove the border
+        'border-opacity': 0, // Ensure no border is visible
+        'padding': 0 // Remove any internal padding
+    })
+    .update();
+
+    console.log("Gradient bar added to graph!");
+}
 //document.addEventListener('click', function(event) {
 //    console.log(event.target); // See which element was clicked
 //});
