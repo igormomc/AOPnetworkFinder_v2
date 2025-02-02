@@ -1802,10 +1802,10 @@ async function gatherAndProcessDoseResponse(kePaths) {
                         keToAssaysMap[node.data('label').replace("KE ", "")] = null;
                     }
                 }
-                addGradientBarToGraph()
             }
         });
     });
+    addGradientBarToGraph()
 
     console.log("Final KE-to-Assays Map:", keToAssaysMap);
     const jsonIfy = JSON.stringify(keToAssaysMap);
@@ -2097,8 +2097,6 @@ function addGradientBarToGraph() {
 
         });
 
-    console.log("Gradient bar added to graph!");
-}
 //document.addEventListener('click', function(event) {
 //    console.log(event.target); // See which element was clicked
 //});
