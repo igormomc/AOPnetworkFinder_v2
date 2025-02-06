@@ -341,6 +341,7 @@ def dose_response():
     ke_assay_dict_str = request.args.get('ke_assay_list')  # Stringified JSON
     doseOfSubstance = request.args.get('doseOfSubstance')
     chemical = request.args.get('chemical')
+    handleNoneDataNodesMode = request.args.get('handleNoneDataNodesMode')
 
     # Parse the query parameters
     ke_assay_dict = json.loads(ke_assay_dict_str)  # Convert JSON string to dict
@@ -353,6 +354,6 @@ def dose_response():
     print("ke_assay_dict", ke_assay_dict)
 
     # Call the run_dose_response function with the dictionary
-    results = run_dose_response(doseOfSubstance, chemical, ke_assay_dict)
+    results = run_dose_response(doseOfSubstance, chemical, ke_assay_dict, handleNoneDataNodesMode)
 
     return jsonify(results)

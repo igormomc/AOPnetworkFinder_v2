@@ -691,7 +691,7 @@ function handleFileUpload(event) {
 
                 if (missingKeys.length > 0) {
                     console.warn(`Row ${index + 1} is missing keys: ${missingKeys.join(', ')}`);
-                    missingRows.push({ row: index + 1, missingKeys });
+                    missingRows.push({row: index + 1, missingKeys});
                 }
             });
 
@@ -1737,12 +1737,46 @@ function getGradientColor(likelihood) {
     return colorScale[reversedIndex];
 }
 
+document.addEventListener('DOMContentLoaded', function () {
+    const checkboxDose = document.getElementById("checkbox-dose");
+    const checkboxes = checkboxDose.querySelectorAll("input[type='checkbox']");
+
+    checkboxes.forEach((checkbox) => {
+        checkbox.addEventListener('change', function () {
+            if (this.checked) {
+                checkboxes.forEach((otherCheckbox) => {
+                    if (otherCheckbox !== this) {
+                        otherCheckbox.checked = false;
+                    }
+                });
+            } else {
+                const isAnyChecked = Array.from(checkboxes).some(cb => cb.checked);
+                if (!isAnyChecked) {
+                    this.checked = true;
+                }
+            }
+        });
+    });
+});
+
 
 // Reusable function that processes an array of Key Event labels
 async function gatherAndProcessDoseResponse(kePaths) {
+    removeGradientBarFromGraph()
     const dose = document.getElementById("dose").value;
     const chemical = document.getElementById("chemical").value;
     const keyEvetnPath = document.getElementById("kePath").value.split(",").map(path => path.trim());
+    const checkboxDose = document.getElementById("checkbox-dose");
+    const checkboxes = checkboxDose.querySelectorAll("input[type='checkbox']");
+    let handleNoneDataNodesModeCheckbox = null
+
+    checkboxes.forEach(checkbox => {
+        if (checkbox.checked) {
+            handleNoneDataNodesModeCheckbox = checkbox.id;
+        }
+    });
+
+    console.log("handleNoneDataNodesModeCheckbox", handleNoneDataNodesModeCheckbox)
 
     const formData = new FormData();
 
@@ -1763,7 +1797,7 @@ async function gatherAndProcessDoseResponse(kePaths) {
                 let foundAssay = false;
 
                 for (let edge of connectedKEs) {
-                   console.log("edge.source().data('ke_type')", edge.source())
+                    console.log("edge.source().data('ke_type')", edge.source())
                     const sourceIsAssayGene =
                         (edge.source().data('ke_type') === 'genes') &&
                         assayGenesDict &&
@@ -1814,7 +1848,7 @@ async function gatherAndProcessDoseResponse(kePaths) {
     // Make your API call with the compiled data
     const doseOfSubstance = parseFloat(dose);
     const response = await fetch(
-        `/api/dose_response?doseOfSubstance=${doseOfSubstance}&chemical=${chemical}&ke_assay_list=${encodeURIComponent(JSON.stringify(keToAssaysMap))}`
+        `/api/dose_response?doseOfSubstance=${doseOfSubstance}&chemical=${chemical}&ke_assay_list=${encodeURIComponent(JSON.stringify(keToAssaysMap))}&handleNoneDataNodesMode=${handleNoneDataNodesModeCheckbox}`,
     );
     const bioactivityAssays = await response.json();
 
@@ -1843,20 +1877,20 @@ async function gatherAndProcessDoseResponse(kePaths) {
 
     // Update node border colors based on ke_likelihoods
     // Update node border colors based on ke_likelihoods
-        if (bioactivityAssays.ke_likelihoods) {
-            for (const [keNumber, likelihood] of Object.entries(bioactivityAssays.ke_likelihoods)) {
-                const node = cy.nodes().filter(ele => ele.data('label') === `KE ${keNumber}`);
-                if (node && node.length > 0) {
-                    const borderColor = getGradientColor(likelihood);
-                    node.style({
-                        'border-width': 6,
-                        'border-color': borderColor,
-                        'border-opacity': 1,
-                        'border-padding': 20,
-                        'border-margin': 20
-                    });
-                }
-                    if (allKeyEventsActivated) {
+    if (bioactivityAssays.ke_likelihoods) {
+        for (const [keNumber, likelihood] of Object.entries(bioactivityAssays.ke_likelihoods)) {
+            const node = cy.nodes().filter(ele => ele.data('label') === `KE ${keNumber}`);
+            if (node && node.length > 0) {
+                const borderColor = getGradientColor(likelihood);
+                node.style({
+                    'border-width': 6,
+                    'border-color': borderColor,
+                    'border-opacity': 1,
+                    'border-padding': 20,
+                    'border-margin': 20
+                });
+            }
+            if (allKeyEventsActivated) {
                 const adverseNodes = cy.nodes('[ke_type = "Adverse Outcome"]');
 
                 adverseNodes.style({'background-color': 'magenta'});
@@ -2048,18 +2082,22 @@ async function gatherAndProcessDoseResponse(kePaths) {
     }
 }
 
+function removeGradientBarFromGraph() {
+    cy.remove('node[id = "gradient-bar"]');
+}
+
 function addGradientBarToGraph() {
     // Add the gradient bar as a custom node
     cy.add({
         group: 'nodes',
         data: {
-            id: 'gradientBar',
+            id: 'gradient-bar',
             label: '', // Optional label
             isLegend: true // Custom data attribute to identify this node as a legend
         },
-        position: { x: 0, y: 0 }, // Adjust position
+        position: {x: 0, y: 0}, // Adjust position
         selectable: false,
-        grabbable: false,
+        grabbable: true,
         classes: 'gradient-bar-node'
     });
 
@@ -2079,23 +2117,21 @@ function addGradientBarToGraph() {
         .update();
 }
 
+document.getElementById('runAllKeyEvents').addEventListener('click', async function () {
+    const kePaths = cy.nodes('[ke_type = "Key Event"], [ke_type = "Molecular Initiating Event"]').map(node => node.data('label'));
+    console.log("kePathskePaths", kePaths)
+    document.getElementById('doseResponseDialog').style.display = "none";
+    await gatherAndProcessDoseResponse(kePaths);
+});
 
+document.getElementById('triggerDoseResponse').addEventListener('click', async function () {
+    const kePaths = document.getElementById("kePath").value
+        .split(",")
+        .map(path => path.trim());
+    document.getElementById('doseResponseDialog').style.display = "none";
+    await gatherAndProcessDoseResponse(kePaths);
 
-        document.getElementById('runAllKeyEvents').addEventListener('click', async function () {
-            const kePaths = cy.nodes('[ke_type = "Key Event"], [ke_type = "Molecular Initiating Event"]').map(node => node.data('label'));
-            console.log("kePathskePaths", kePaths)
-            document.getElementById('doseResponseDialog').style.display = "none";
-            await gatherAndProcessDoseResponse(kePaths);
-        });
-
-        document.getElementById('triggerDoseResponse').addEventListener('click', async function () {
-            const kePaths = document.getElementById("kePath").value
-                .split(",")
-                .map(path => path.trim());
-            document.getElementById('doseResponseDialog').style.display = "none";
-            await gatherAndProcessDoseResponse(kePaths);
-
-        });
+});
 
 //document.addEventListener('click', function(event) {
 //    console.log(event.target); // See which element was clicked

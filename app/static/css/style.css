@@ -163,6 +163,60 @@ html, body {
     width: 16.5%;
     white-space: nowrap;
 }
+
+/* Arrange the checkboxes horizontally */
+#checkbox-dose {
+    display: flex;
+    align-items: center;
+    gap: 1rem; /* Adjust spacing as needed */
+    justify-self: start;
+    margin-left: 0;
+    width: 16.5%;
+    white-space: nowrap;
+}
+
+/* Custom styling for checkboxes in #checkbox-dose */
+#checkbox-dose input[type="checkbox"] {
+    /* Remove default appearance */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+
+    width: 20px;
+    height: 20px;
+    border: 2px solid #aaa;
+    border-radius: 4px;  /* Change to 50% if you prefer a circular look */
+    cursor: pointer;
+    position: relative;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+    margin-right: 5px; /* Optional: spacing between checkbox and label text */
+}
+
+/* Hover effect for a subtle change on mouseover */
+#checkbox-dose input[type="checkbox"]:hover {
+    border-color: #888;
+}
+
+/* Style for the checked state */
+#checkbox-dose input[type="checkbox"]:checked {
+    background-color: #007bff;
+    border-color: #ç007bff;
+}
+
+/* Create a custom checkmark using a pseudo-element */
+#checkbox-dose input[type="checkbox"]:checked::after {
+    content: "";
+    position: absolute;
+    left: 6px;
+    top: 2px;
+    width: 4px;
+    height: 9px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+
 .dropdown-container {
     display: flex;
     justify-content: space-between;
@@ -555,3 +609,5 @@ button:hover {
     .openDose-button:hover {
       background-color: #0056b3;
     }
+
+
