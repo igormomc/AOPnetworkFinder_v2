@@ -6,7 +6,7 @@ import requests
 from app.service.convertExcelToJsonAc50 import get_excel_data
 
 
-def run_dose_response(doseOfSubstance, chemical, ke_assay_dict, handleNoneDataNodesMode):
+def run_dose_response(doseOfSubstance, chemical, ke_assay_dict, handleDataNodesMode):
     """
     Args:
         doseOfSubstance (float): Dose in μM (or other consistent unit).
@@ -70,7 +70,7 @@ def run_dose_response(doseOfSubstance, chemical, ke_assay_dict, handleNoneDataNo
     # --------------------------------------------------
     # 4. Compute (or retrieve) the average AC50 for each KE
     # --------------------------------------------------
-    ke_avg_ac50 = {}
+    ke_values_ac50 = {}
     dsstox_substance_id = None
     for item in chem_to_dsstoxi:
         if item['chnm'] == chemical:
@@ -82,7 +82,7 @@ def run_dose_response(doseOfSubstance, chemical, ke_assay_dict, handleNoneDataNo
 
     for ke_number, assay_info_list in ke_assay_dict.items():
         if not assay_info_list:
-            ke_avg_ac50[ke_number] = None
+            ke_values_ac50[ke_number] = None
             continue
 
         ac50_values = []
@@ -111,29 +111,34 @@ def run_dose_response(doseOfSubstance, chemical, ke_assay_dict, handleNoneDataNo
 
         if ac50_values:
             print("ac50_values", ac50_values)
-            ke_avg_ac50[ke_number] = sum(ac50_values) / len(ac50_values)
+            if(handleDataNodesMode == "toggleAverage"):
+                ke_values_ac50[ke_number] = np.mean(ac50_values)
+            elif(handleDataNodesMode == "toggleMedian"):
+                ke_values_ac50[ke_number] = np.median(ac50_values)
+            elif(handleDataNodesMode == "toggleMinimum"):
+                ke_values_ac50[ke_number] = np.min(ac50_values)
         else:
-            ke_avg_ac50[ke_number] = None
+            ke_values_ac50[ke_number] = None
 
     # --------------------------------------------------
     # 5. Compute the Hill-likelihood for each KE
     # --------------------------------------------------
     ke_likelihoods = {}
     ke_with_no_ac50Data = {}
-    all_values = list(ke_avg_ac50.values()) #this looks like [0.123, 0.345, 0.567, None, 0.789]
+    all_values = list(ke_values_ac50.values()) #this looks like [0.123, 0.345, 0.567, None, 0.789]
     avg_off_all_values = np.mean([val for val in all_values if val is not None])
     median_ac50 = np.median([val for val in all_values if val is not None])
     min_ac50 = np.min([val for val in all_values if val is not None])
-    for ke_number, ac50_value in ke_avg_ac50.items():
+    for ke_number, ac50_value in ke_values_ac50.items():
         if ac50_value is not None:
             likelihood = hill_equation_likelihood(doseOfSubstance, ac50_value)
             ke_likelihoods[ke_number] = likelihood
         else:
-            if(handleNoneDataNodesMode == "toggleAverage"):
+            if(handleDataNodesMode == "toggleAverage"):
                 ke_likelihoods[ke_number] = hill_equation_likelihood(doseOfSubstance, avg_off_all_values)
-            elif(handleNoneDataNodesMode == "toggleMedian"):
+            elif(handleDataNodesMode == "toggleMedian"):
                 ke_likelihoods[ke_number] = hill_equation_likelihood(doseOfSubstance, median_ac50)
-            elif(handleNoneDataNodesMode == "toggleMinimum"):
+            elif(handleDataNodesMode == "toggleMinimum"):
                 ke_likelihoods[ke_number] = hill_equation_likelihood(doseOfSubstance, min_ac50)
             else:
                 ke_likelihoods[ke_number] = None
@@ -146,7 +151,7 @@ def run_dose_response(doseOfSubstance, chemical, ke_assay_dict, handleNoneDataNo
     with pm.Model() as model:
         # Create a Beta prior for each KE
         ke_priors = {}
-        for ke_number in ke_avg_ac50.keys():
+        for ke_number in ke_values_ac50.keys():
             ke_priors[ke_number] = pm.Beta(ke_number, alpha=2, beta=5)
         # A single Beta prior for "AO"
         ao_prior = pm.Beta("AO", alpha=5, beta=1)
@@ -158,7 +163,7 @@ def run_dose_response(doseOfSubstance, chemical, ke_assay_dict, handleNoneDataNo
     # 7. Extract means from the posterior
     # --------------------------------------------------
     ke_prior_means = {}
-    for ke_number in ke_avg_ac50.keys():
+    for ke_number in ke_values_ac50.keys():
         ke_prior_means[ke_number] = np.mean(trace.posterior[ke_number].values)
 
     mean_prior_ao = np.mean(trace.posterior["AO"].values)
