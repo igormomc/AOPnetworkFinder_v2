@@ -6,7 +6,7 @@ import requests
 from app.service.convertExcelToJsonAc50 import get_excel_data
 
 
-def run_dose_response(doseOfSubstance, chemical, ke_assay_dict):
+def run_dose_response(doseOfSubstance, chemical, ke_assay_dict, handleNoneDataNodesMode):
     """
     Args:
         doseOfSubstance (float): Dose in μM (or other consistent unit).
@@ -56,7 +56,6 @@ def run_dose_response(doseOfSubstance, chemical, ke_assay_dict):
         if assay_data is not None:
             ac50_value = assay_data.get(lookup_key)
             if ac50_value is not None:
-                print("AC DATA HERE:", ac50_value)
                 # If the value is in a list, return the first element
                 return ac50_value[0] if isinstance(ac50_value, list) else ac50_value
         return None
@@ -82,44 +81,37 @@ def run_dose_response(doseOfSubstance, chemical, ke_assay_dict):
         return None
 
     for ke_number, assay_info_list in ke_assay_dict.items():
-        # The assay_info_list can be either:
-        #   - Case A: a list of assay names, e.g., ["BSK_BT_xTNFa", "BSK_LPS_TNFa", ...]
-        #   - Case B: a list of dictionaries that already include AC50 values.
         if not assay_info_list:
             ke_avg_ac50[ke_number] = None
             continue
 
-        first_item = assay_info_list[0]
         ac50_values = []
+        print("assay_info_list", assay_info_list)
 
-        if isinstance(first_item, str):
-            # --- Case A: array of assay names --- #
-            for assay_name in assay_info_list:
-                ac50_val = get_ac50_for_assay(assay_name, dsstox_substance_id)
+        for assay in assay_info_list:
+            if isinstance(assay, str):
+                print("Processing assay name:", assay)
+                ac50_val = get_ac50_for_assay(assay, dsstox_substance_id)
                 if ac50_val is not None:
                     ac50_values.append(ac50_val)
 
-        elif isinstance(first_item, dict):
-            # --- Case B: array of objects that already contain AC50 --- #
-            for obj in assay_info_list:
-                if obj.get("chemical") == chemical:
-                    ac50_str = obj.get("ac50")
+            elif isinstance(assay, dict):
+                if assay.get("chemical") == chemical:
+                    ac50_str = assay.get("ac50")
                     try:
                         ac50_val = float(ac50_str)
                         ac50_values.append(ac50_val)
                     except (ValueError, TypeError):
                         print(f"[WARN] Could not convert '{ac50_str}' to float AC50.")
                 else:
-                    print(f"[INFO] Skipping object with different chemical: {obj.get('chemical')}")
-        else:
-            print(f"[WARN] Unexpected item type in ke_assay_dict for KE '{ke_number}'. Skipping.")
-            ke_avg_ac50[ke_number] = None
-            continue
+                    print(f"[INFO] Skipping object with different chemical: {assay.get('chemical')}")
+
+            else:
+                print(f"[WARN] Unexpected assay type ({type(assay)}) for KE '{ke_number}'. Skipping.")
 
         if ac50_values:
             print("ac50_values", ac50_values)
-            ac50_avg = sum(ac50_values) / len(ac50_values)
-            ke_avg_ac50[ke_number] = ac50_avg
+            ke_avg_ac50[ke_number] = sum(ac50_values) / len(ac50_values)
         else:
             ke_avg_ac50[ke_number] = None
 
@@ -127,13 +119,26 @@ def run_dose_response(doseOfSubstance, chemical, ke_assay_dict):
     # 5. Compute the Hill-likelihood for each KE
     # --------------------------------------------------
     ke_likelihoods = {}
+    ke_with_no_ac50Data = {}
+    all_values = list(ke_avg_ac50.values()) #this looks like [0.123, 0.345, 0.567, None, 0.789]
+    avg_off_all_values = np.mean([val for val in all_values if val is not None])
+    median_ac50 = np.median([val for val in all_values if val is not None])
+    min_ac50 = np.min([val for val in all_values if val is not None])
     for ke_number, ac50_value in ke_avg_ac50.items():
         if ac50_value is not None:
             likelihood = hill_equation_likelihood(doseOfSubstance, ac50_value)
             ke_likelihoods[ke_number] = likelihood
         else:
-            print(f"[INFO] ac50_value is None for KE '{ke_number}'. Setting likelihood to None.")
-            ke_likelihoods[ke_number] = None
+            if(handleNoneDataNodesMode == "toggleAverage"):
+                ke_likelihoods[ke_number] = hill_equation_likelihood(doseOfSubstance, avg_off_all_values)
+            elif(handleNoneDataNodesMode == "toggleMedian"):
+                ke_likelihoods[ke_number] = hill_equation_likelihood(doseOfSubstance, median_ac50)
+            elif(handleNoneDataNodesMode == "toggleMinimum"):
+                ke_likelihoods[ke_number] = hill_equation_likelihood(doseOfSubstance, min_ac50)
+            else:
+                ke_likelihoods[ke_number] = None
+            ke_with_no_ac50Data[ke_number] = "No AC50 data available"
+
 
     # --------------------------------------------------
     # 6. Build and sample the Bayesian model (illustrative)
@@ -194,4 +199,5 @@ def run_dose_response(doseOfSubstance, chemical, ke_assay_dict):
         "activated_events": activated_events,
         "ke_prior_means": rounded_ke_prior_means,
         "ao_prior_mean": round(mean_prior_ao, 3),
+        "ke_with_no_ac50Data": ke_with_no_ac50Data
     }

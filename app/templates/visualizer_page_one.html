@@ -1,268 +1,289 @@
 {% extends "base_template.html" %}
 
 {% block content %}
-    <div class="top-container">
-        <input type="hidden" id="csrf_token" value="{{ csrf_token() }}"/>
+<div class="top-container">
+    <input type="hidden" id="csrf_token" value="{{ csrf_token() }}"/>
+</div>
+
+<div class="parent-container">
+
+    <div class="leftside-container">
+        <div class="loader-container" id="loader" style="display: none;">
+            <div class="loader"></div>
+        </div>
+        <!--button for searching -->
+        <button type="submit" id="searchButtonAOP" class="search-button">Search AOP</button>
+
+        <div class="input-group">
+            <!-- <input type="text" id="searchFieldStressor" class="search-field-stressor" placeholder="Stressor Name" /> -->
+            <select id="aopDropDown">
+                <!-- Options will be added here -->
+                <option></option>
+            </select>
+            <button id="clearSelection" type="button">Clear highlighting</button>
+        </div>
+
+        <div class="checkbox-group" id="checkboxGene">
+            <label><input type="checkbox" id="toggleLabels" name="toggleGeneName"> Toggle Gene Name</label>
+            <label><input id="checkedBoxGene" type="checkbox" name="checkboxGenes"> Show Genes</label>
+            <label><input id="checkedAssayGenes" type="checkbox" name="checkboxAssayGenes"> Show Assay Genes</label>
+        </div>
+        <div class="uploadWrapper">
+            <input type="file" id="fileUpload" accept=".csv" style="display: none;">
+            <span class="info-button" id="infoButton">ℹ</span>
+            <button type="button" id="triggerUpload" class="file-button">Upload file</button>
+            <pre id="output"></pre>
+
+        </div>
+        <div class="uploadWrapper">
+            <button type="button" id="openDoseResponseDialog" class="openDose-button">Dose Response</button>
+            <pre></pre>
+        </div>
     </div>
 
-    <div class="parent-container">
+    <div class="cytoscape-container">
+        <div class="toolbar">
+            <img src="{{ url_for('static', filename='images/color_blind_not_active.drawio.svg') }}"
+                 alt="Color Blind Mode Not Active" id="colorBlindNotActive">
+            <img src="{{ url_for('static', filename='images/color_blind_active.drawio.svg') }}"
+                 alt="Color Blind Mode Active" id="colorBlindActive">
+            <img src="{{ url_for('static', filename='images/cytoscape_style_template_icon.drawio.svg') }}"
+                 alt="Save Cytoscape Style Template" id="saveStyleIcon">
+            <img src="{{ url_for('static', filename='images/save_icon_v2.drawio.svg') }}" alt="Save Graph as Image"
+                 id="saveIcon">
+            <img src="{{ url_for('static', filename='images/email.drawio.svg') }}" alt="Send mail" id="emailIcon">
+        </div>
+        <div id="cy"></div>
 
-        <div class="leftside-container">
-            <div class="loader-container" id="loader" style="display: none;">
-                <div class="loader"></div>
+    </div>
+
+    <div class="rightside-container">
+        <!-- input fields for AOP and KE (will add KE Degree later) -->
+
+        <!-- Search Field 1 -->
+        <form id="aopSearchForm" action="searchAops" method="post">
+            <div class="search-group">
+                <label for="searchFieldAOP">AOP IDs:</label>
+                <!--AOP search field -->
+                <input type="text" id="searchFieldAOP" name="searchFieldAOP" class="search-field"
+                       placeholder="17 or 17,260,107 ..."/>
             </div>
-            <!--button for searching -->
-            <button type="submit" id="searchButtonAOP" class="search-button">Search AOP</button>
+        </form>
+
+        <div class="search-group">
+            <label for="searchFieldKE">KE IDs:</label>
+            <!-- KE search field -->
+            <input type="text" id="searchFieldKE" name="searchFieldKE" class="search-field"
+                   placeholder="1253 or 1253,281,46 ..."/>
+        </div>
+
+        <form class="radio-container">
+            <label>
+                <input type="radio" name="degree" value="0" checked>
+                Default
+            </label>
+            <br>
+            <label>
+                <input type="radio" name="degree" value="1">
+                KE Degree 1
+            </label>
+            <br>
+            <label>
+                <input type="radio" name="degree" value="2">
+                KE Degree 2
+            </label>
+        </form>
+
+        <!-- Container for the dropdowns that need to be side by side -->
+        <div class="dropdown-container">
+            <div class="search-group" id="searchGroupStressor">
+                <label for="stressorDropdown">Stressor:</label>
+                <select id="stressorDropdown">
+                    <option></option>
+                </select>
+            </div>
+
+            <div class="search-group" id="searchGroupCells">
+                <label for="cellsDropdown">Cells:</label>
+                <select id="cellsDropdown" multiple="multiple"></select>
+                <option></option>
+            </div>
+        </div>
+
+        <!-- Another pair of dropdowns -->
+        <div class="dropdown-container">
+            <div class="search-group" id="searchGroupOrgans">
+                <label for="organsDropdown">Organs:</label>
+                <select id="organsDropdown" multiple="multiple"></select>
+                <option></option>
+            </div>
+
+            <div class="search-group" id="searchGroupTaxonomies">
+                <label for="taxonomiDropdown">Taxonomies:</label>
+                <select id="taxonomiDropdown" multiple="multiple"></select>
+                <option></option>
+            </div>
+        </div>
+        <!-- Another pair of dropdowns -->
+        <div class="dropdown-container">
+            <div class="search-group" id="searchGroupLifeStage">
+                <label for="lifeStageDropdown">LifeStage:</label>
+                <select id="lifeStageDropdown" multiple="multiple"></select>
+                <option></option>
+            </div>
+            <div class="search-group" id="searchGroupSex">
+                <label for="sexDropdown">Sex:</label>
+                <select id="sexDropdown" multiple="multiple"></select>
+                <option></option>
+            </div>
+        </div>
+
+        <!-- Checkboxes at the bottom -->
+        <!-- <div class="checkbox-group" id="checkbox-filter">
+             <form>
+                 <label><input type="checkbox" name="checkboxDevelopment"> OECD Under Development</label>
+                 <label><input type="checkbox" name="checkboxEndorsed"> OECD WPHA Endorsed</label>
+                 <label><input type="checkbox" name="checkboxReview"> OECD Under Review</label>
+                 <label><input type="checkbox" name="checkboxApproved"> OECD EAGMST Approved</label>
+             </form>
+         </div>-->
+
+    </div>
+</div>
+
+<div class="bottom-container">
+    <button id="exportToCytoscape">Export to Cytoscape</button>
+    <!--button for saving user Actions -->
+    <button id="saveButtonLog">Save Log</button>
+    <!--Merge Key Event Nodes -->
+    <button id="mergeButtonKeyEvent" onclick="console.log('Button clicked')">Merge KE:</button>
+</div>
+
+<div id="mergePopupInfo" class="modal">
+    <div id="mergePopup-content-Info" class="popupMerge-content-info">
+        <div class="info-section" id="infoSection">
+            <p><strong>How to Upload a CSV File:</strong></p>
+            <ul>
+                <li>Ensure the file is in CSV format (<code>.csv</code>).</li>
+                <li>The file must contain the following fields:
+                    <ul>
+                        <li><code>keid</code></li>
+                        <li><code>chemical</code></li>
+                        <li><code>ac50</code></li>
+                        <li><code>gene</code></li>
+                    </ul>
+                </li>
+                <li>You can download a template file below.</li>
+            </ul>
+            <button id="downloadTemplateButton">Download CSV Template</button>
+        </div>
+    </div>
+</div>
+
+<div id="mergePopup" class="modal">
+    <!-- popup Window for merging KE -->
+    <div id="mergePopup-content" class="popupMerge-content">
+        <!-- Top container -->
+        <div class="popup-top">
+            <div class="input-group">
+                <!-- <input type="text" id="searchFieldStressor" class="search-field-stressor" placeholder="Stressor Name" /> -->
+                <select id="keepNodeDropDown">
+                    <!-- Options will be added here -->
+                    <option></option>
+                </select>
+            </div>
 
             <div class="input-group">
                 <!-- <input type="text" id="searchFieldStressor" class="search-field-stressor" placeholder="Stressor Name" /> -->
-                <select id="aopDropDown">
-                <!-- Options will be added here -->
-                    <option></option>
-                </select>
-                <button id="clearSelection" type="button">Clear highlighting</button>
-            </div>
-
-            <div class="checkbox-group" id="checkboxGene">
-                <label><input type="checkbox" id="toggleLabels" name="toggleGeneName"> Toggle Gene Name</label>
-                <label><input id="checkedBoxGene" type="checkbox" name="checkboxGenes"> Show Genes</label>
-                <label><input id="checkedAssayGenes" type="checkbox" name="checkboxAssayGenes"> Show Assay Genes</label>
-            </div>
-            <div class="uploadWrapper">
-                <input type="file" id="fileUpload" accept=".csv" style="display: none;">
-                <span class="info-button" id="infoButton">ℹ</span>
-                <button type="button" id="triggerUpload" class="file-button">Upload file</button>
-                <pre id="output"></pre>
-                
-            </div>
-            <div class="uploadWrapper">
-                <button type="button" id="openDoseResponseDialog" class="openDose-button">Dose Response</button>
-                <pre></pre>
-            </div>
-        </div>
-
-        <div class="cytoscape-container">
-            <div class="toolbar">
-                <img src="{{ url_for('static', filename='images/color_blind_not_active.drawio.svg') }}" alt="Color Blind Mode Not Active" id="colorBlindNotActive">
-                <img src="{{ url_for('static', filename='images/color_blind_active.drawio.svg') }}" alt="Color Blind Mode Active" id="colorBlindActive">
-                <img src="{{ url_for('static', filename='images/cytoscape_style_template_icon.drawio.svg') }}" alt="Save Cytoscape Style Template" id="saveStyleIcon">
-                <img src="{{ url_for('static', filename='images/save_icon_v2.drawio.svg') }}" alt="Save Graph as Image" id="saveIcon">
-                <img src="{{ url_for('static', filename='images/email.drawio.svg') }}" alt="Send mail" id="emailIcon">
-            </div>
-            <div id="cy"></div>
-            
-        </div>
-
-        <div class="rightside-container">
-            <!-- input fields for AOP and KE (will add KE Degree later) -->
-
-            <!-- Search Field 1 -->
-            <form id="aopSearchForm" action="searchAops" method="post">
-                <div class="search-group">
-                    <label for="searchFieldAOP">AOP IDs:</label>
-                    <!--AOP search field -->
-                    <input type="text" id="searchFieldAOP" name="searchFieldAOP" class="search-field" placeholder="17 or 17,260,107 ..." />
-                </div>
-            </form>
-
-            <div class="search-group">
-                <label for="searchFieldKE">KE IDs:</label>
-                <!-- KE search field -->
-                <input type="text" id="searchFieldKE" name="searchFieldKE" class="search-field" placeholder="1253 or 1253,281,46 ..." />
-            </div>
-
-            <form class="radio-container">
-              <label>
-                <input type="radio" name="degree" value="0" checked>
-                Default
-              </label>
-              <br>
-              <label>
-                <input type="radio" name="degree" value="1">
-                KE Degree 1
-              </label>
-              <br>
-              <label>
-                <input type="radio" name="degree" value="2">
-                KE Degree 2
-              </label>
-            </form>
-
-            <!-- Container for the dropdowns that need to be side by side -->
-<div class="dropdown-container">
-    <div class="search-group" id="searchGroupStressor">
-        <label for="stressorDropdown">Stressor:</label>
-        <select id="stressorDropdown">
-            <option></option>
-        </select>
-    </div>
-
-    <div class="search-group" id="searchGroupCells">
-        <label for="cellsDropdown">Cells:</label>
-        <select id="cellsDropdown" multiple="multiple"></select>
-            <option></option>
-    </div>
-</div>
-
-<!-- Another pair of dropdowns -->
-<div class="dropdown-container">
-    <div class="search-group" id="searchGroupOrgans">
-        <label for="organsDropdown">Organs:</label>
-        <select id="organsDropdown" multiple="multiple"></select>
-            <option></option>
-    </div>
-
-    <div class="search-group" id="searchGroupTaxonomies">
-        <label for="taxonomiDropdown">Taxonomies:</label>
-        <select id="taxonomiDropdown" multiple="multiple"></select>
-            <option></option>
-    </div>
-</div>
-<!-- Another pair of dropdowns -->
-<div class="dropdown-container">
-         <div class="search-group" id="searchGroupLifeStage">
-                <label for="lifeStageDropdown">LifeStage:</label>
-                <select id="lifeStageDropdown" multiple="multiple"></select>
-                    <option></option>
-            </div>
-    <div class="search-group" id="searchGroupSex">
-                <label for="sexDropdown">Sex:</label>
-                    <select id="sexDropdown" multiple="multiple"></select>
-                    <option></option>
-            </div>
-</div>
-
-            <!-- Checkboxes at the bottom -->
-           <!-- <div class="checkbox-group" id="checkbox-filter">
-                <form>
-                    <label><input type="checkbox" name="checkboxDevelopment"> OECD Under Development</label>
-                    <label><input type="checkbox" name="checkboxEndorsed"> OECD WPHA Endorsed</label>
-                    <label><input type="checkbox" name="checkboxReview"> OECD Under Review</label>
-                    <label><input type="checkbox" name="checkboxApproved"> OECD EAGMST Approved</label>
-                </form>
-            </div>-->
-
-        </div>
-    </div>
-
-    <div class="bottom-container">
-        <button id="exportToCytoscape">Export to Cytoscape</button>
-        <!--button for saving user Actions -->
-        <button id="saveButtonLog">Save Log</button>
-        <!--Merge Key Event Nodes -->
-        <button id="mergeButtonKeyEvent" onclick="console.log('Button clicked')">Merge KE:</button>
-    </div>
-
-    <div id="mergePopupInfo" class="modal">
-        <div id="mergePopup-content-Info" class="popupMerge-content-info">
-                <div class="info-section" id="infoSection">
-                    <p><strong>How to Upload a CSV File:</strong></p>
-                    <ul>
-                        <li>Ensure the file is in CSV format (<code>.csv</code>).</li>
-                        <li>The file must contain the following fields:
-                            <ul>
-                                <li><code>keid</code></li>
-                                <li><code>chemical</code></li>
-                                <li><code>ac50</code></li>
-                                <li><code>gene</code></li>
-                            </ul>
-                        </li>
-                        <li>You can download a template file below.</li>
-                    </ul>
-                    <button id="downloadTemplateButton">Download CSV Template</button>
-                </div>
-        </div>
-    </div>
-
-    <div id="mergePopup" class="modal">
-        <!-- popup Window for merging KE -->
-        <div id="mergePopup-content" class="popupMerge-content">
-    <!-- Top container -->
-            <div class="popup-top">
-              <div class="input-group">
-                <!-- <input type="text" id="searchFieldStressor" class="search-field-stressor" placeholder="Stressor Name" /> -->
-                <select id="keepNodeDropDown">
-                <!-- Options will be added here -->
-                    <option></option>
-                </select>
-              </div>
-
-              <div class="input-group">
-                <!-- <input type="text" id="searchFieldStressor" class="search-field-stressor" placeholder="Stressor Name" /> -->
                 <select id="loseNodeDropDown">
-                <!-- Options will be added here -->
+                    <!-- Options will be added here -->
                     <option></option>
                 </select>
-              </div>
-
-              <button id="processButton">Process</button>
             </div>
 
-
-            <!-- Second container -->
-            <div class="modal-second"><!-- Content for the second container -->
-                <div id="dynamicButtons"></div> <!-- Container for dynamic buttons -->
-            </div>
-
-            <!-- <span class="close">&times;</span> -->
+            <button id="processButton">Process</button>
         </div>
+
+
+        <!-- Second container -->
+        <div class="modal-second"><!-- Content for the second container -->
+            <div id="dynamicButtons"></div> <!-- Container for dynamic buttons -->
+        </div>
+
+        <!-- <span class="close">&times;</span> -->
     </div>
+</div>
 
 <div id="doseResponseDialog" class="modal">
-  <div class="doseResponseDialog-content">
-    <span class="close" onclick="document.getElementById('doseResponseDialog').style.display='none'">&times;</span>
-    <h2>Dose Response Calculation</h2>
-    <div class="doseResponseWrapper">
-      <div class="input-group">
-        <label for="dose">Dose</label>
-        <input type="text" id="dose" placeholder="Enter Dose" />
-      </div>
-      <div class="input-group">
-        <label for="chemical">Chemical</label>
-        <input type="text" id="chemical" placeholder="Enter Chemical" />
-      </div>
-      <div class="input-group">
-        <label for="kePath">Key Events</label>
-        <input type="text" id="kePath" placeholder="Enter Key Events" />
-      </div>
+    <div class="doseResponseDialog-content">
+        <span class="close" onclick="document.getElementById('doseResponseDialog').style.display='none'">&times;</span>
+        <h2>Dose Response Calculation</h2>
+        <div class="doseResponseWrapper">
+            <div class="input-group">
+                <label for="dose">Dose</label>
+                <input type="text" id="dose" placeholder="Enter Dose"/>
+            </div>
+            <div class="input-group">
+                <label for="chemical">Chemical</label>
+                <input type="text" id="chemical" placeholder="Enter Chemical"/>
+            </div>
+            <div class="checkbox-group" id="checkbox-dose">
+                <label>
+                    <input type="checkbox" id="toggleMedian" name="toggleMedian" checked>
+                    Median
+                </label>
+                <label>
+                    <input type="checkbox" id="toggleAverage" name="toggleAverage">
+                    Average
+                </label>
+                <label>
+                    <input type="checkbox" id="toggleMinimum" name="toggleMinimum">
+                    Minimum
+                </label>
+            </div>
 
-      <div class="button-group">
-        <button type="button" id="triggerDoseResponse" class="openDose-button">
-          Run Dose Response
-        </button>
-        <button type="button" id="runAllKeyEvents" class="openDose-button">
-          Run on All Key Events
-        </button>
-      </div>
+            <div class="input-group">
+                <label for="kePath">Key Events</label>
+                <input type="text" id="kePath" placeholder="Enter Key Events"/>
+            </div>
+
+            <div class="button-group">
+                <button type="button" id="triggerDoseResponse" class="openDose-button">
+                    Run Dose Response
+                </button>
+                <button type="button" id="runAllKeyEvents" class="openDose-button">
+                    Run on All Key Events
+                </button>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
 
-    <!-- Popup Container -->
-    <div id="nodePopup">
-        <!-- Content will be dynamically inserted here -->
-        <div id="nodeInfo"></div>
-    </div>
+<!-- Popup Container -->
+<div id="nodePopup">
+    <!-- Content will be dynamically inserted here -->
+    <div id="nodeInfo"></div>
+</div>
 
-    <!-- Cytoscape.js CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.19.0/cytoscape.min.js"></script>
+<!-- Cytoscape.js CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.19.0/cytoscape.min.js"></script>
 
-    <!-- Custom Cytoscape Script -->
-    <script src="{{ url_for('static', filename='javascript/cytoscape_scripts.js') }}"></script>
+<!-- Custom Cytoscape Script -->
+<script src="{{ url_for('static', filename='javascript/cytoscape_scripts.js') }}"></script>
 
-    <!-- Custom Cytoscape Script -->
-    <script src="{{ url_for('static', filename='javascript/visualizer_script.js') }}"></script>
+<!-- Custom Cytoscape Script -->
+<script src="{{ url_for('static', filename='javascript/visualizer_script.js') }}"></script>
 
-    <script src="{{ url_for('static', filename='javascript/scripts/fetchAliasSymbols.js') }}"></script>
-    <script src="{{ url_for('static', filename='javascript/scripts/fetchAllAssays.js') }}"></script>
-    <script src="{{ url_for('static', filename='javascript/scripts/fetchDoseResponse.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/scripts/fetchAliasSymbols.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/scripts/fetchAllAssays.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/scripts/fetchDoseResponse.js') }}"></script>
 
-    <!-- Include xlsx library -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<!-- Include xlsx library -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 
- <!-- Custom Validator Script
-    <script src="{{ url_for('static', filename='javascript/input_validator_script.js') }}"></script>-->
+<!-- Custom Validator Script
+   <script src="{{ url_for('static', filename='javascript/input_validator_script.js') }}"></script>-->
 
 {% endblock %}
 
