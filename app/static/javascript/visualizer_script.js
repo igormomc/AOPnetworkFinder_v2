@@ -30,6 +30,32 @@ let userUploadedData = null;
 let lastClickTime = 0;
 const doubleClickThreshold = 300; // Milliseconds
 
+let toastTimeout;
+
+function ShowToaster(message, color, autoRemove = true) {
+    var x = document.getElementById("ShowToaster");
+
+    if (toastTimeout) {
+        clearTimeout(toastTimeout);
+        toastTimeout = null;
+    }
+
+    x.querySelector("span").textContent = message;
+    x.style.backgroundColor = color;
+    x.classList.add("show");
+
+    if (autoRemove) {
+        toastTimeout = setTimeout(function () {
+            x.classList.remove("show");
+        }, 5000);
+    }
+
+    x.querySelector(".close-toast").onclick = function () {
+        x.classList.remove("show");
+    };
+}
+
+
 // Function to update gene visibility based on checkbox states
 function updateGeneVisibility() {
     const showGenes = document.getElementById('checkedBoxGene').checked;
@@ -430,19 +456,13 @@ function render_graph(url_string, formData) {
                                 contentHtml += `<tr><td>KE in AOPs:</td><td>${keAopLinksHtml}</td></tr>`;
                             }
                             let keyEvent = node.data('label').replace("KE", "").trim();
-                            if (doseKeyeventsWithInfo.length > 0) {
-                                let doseKeyEvents;
-                                for (let i = 0; i < doseKeyeventsWithInfo.length; i++) {
-                                    if (doseKeyeventsWithInfo[i].ke === keyEvent) {
-                                        doseKeyEvents = doseKeyeventsWithInfo[i].likelihood;
-                                    }
-                                }
-                                if (doseKeyEvents) {
-                                    let doseKeyEventsToDisplay = (doseKeyEvents * 100).toFixed(3);
-                                    contentHtml += `<tr><td>Key Event Likelihood:</td><td>${doseKeyEventsToDisplay}%</td></tr>`;
-                                } else if (doseKeyEvents === null) {
-                                    contentHtml += `<tr><td>Key Event Likelihood:</td><td>N/A</td></tr>`;
-                                }
+                            const doseKeyEvent = doseKeyeventsWithInfo.find(event => event.ke === keyEvent);
+                            if (doseKeyEvent) {
+                                const doseKeyEventsToDisplay = (doseKeyEvent.likelihood * 100).toFixed(3);
+                                const imputatedText = doseKeyEvent.isImputated ? " (Imputated Data)" : "";
+                                contentHtml += `<tr><td>Key Event Likelihood:</td><td>${doseKeyEventsToDisplay}%${imputatedText}</td></tr>`;
+                            } else {
+                                contentHtml += `<tr><td>Key Event Likelihood:</td><td>N/A</td></tr>`;
                             }
 
                         }
@@ -560,7 +580,7 @@ function addDataToGraph(data) {
         }
     });
 
-    alert("Uploaded data added to the graph!");
+    ShowToaster("File with Assays uploaded successfully!", "green");
     console.log("All Nodes in Graph:", cy.nodes().map(node => node.data('id')));
 }
 
@@ -583,42 +603,34 @@ function getInsensitiveKeyValue(obj, keys) {
 }
 
 function uploadFile() {
-    // Check if the user has entered an AOP search value
     const searchValueAop = document.getElementById("searchFieldAOP").value.trim();
     if (!searchValueAop) {
         alert('Please search for an AOP before uploading a file.');
-        return; // Stop execution if no AOP search value is provided
+        return;
     }
 
     const fileInput = document.getElementById('fileUpload');
 
-    // Reset file input to allow selecting the same file again
     fileInput.value = "";
 
-    // Remove previous event listener to avoid multiple triggers
     fileInput.removeEventListener('change', handleFileUpload);
 
-    // Add the event listener again
     fileInput.addEventListener('change', handleFileUpload);
 
-    // Trigger file selection dialog
     fileInput.click();
 }
 
-// Function to handle file upload
 function handleFileUpload(event) {
     const file = event.target.files[0];
     if (file) {
         const fileName = file.name;
         console.log(`Selected file: ${fileName}`);
 
-        // Validate file type
         if (!fileName.endsWith('.csv')) {
             alert('Invalid file format. Please upload a CSV file.');
             return;
         }
 
-        // Validate file size (max 1MB)
         const maxFileSize = 1048576; // 1MB in bytes
         if (file.size > maxFileSize) {
             alert('File is too large. Please upload a file smaller than 1MB.');
@@ -630,7 +642,6 @@ function handleFileUpload(event) {
         reader.onload = function (event) {
             const fileContent = event.target.result;
 
-            // Process and sanitize the CSV content
             try {
                 if (!isUtf8(fileContent)) {
                     throw new Error('Invalid file encoding. Please upload a UTF-8 encoded CSV file.');
@@ -645,7 +656,6 @@ function handleFileUpload(event) {
             const headers = rows.shift().split(',').map(header => header.trim().toLowerCase());
             console.log('Headers in uploaded file:', headers);
 
-            // Check for required headers
             const requiredHeaders = ['keid', 'chemical', 'ac50', 'gene'];
             const missingHeaders = requiredHeaders.filter(header => !headers.includes(header));
             if (missingHeaders.length > 0) {
@@ -674,7 +684,6 @@ function handleFileUpload(event) {
 
             console.log('Sanitized Data:', sanitizedData);
 
-            // Check for missing keys in rows
             const requiredKeys = {
                 keid: ['keid'],
                 chemical: ['chemical', 'chem'],
@@ -697,7 +706,7 @@ function handleFileUpload(event) {
 
             if (missingRows.length > 0) {
                 console.error("Validation failed for the following rows:", missingRows);
-                alert(`Validation failed. Missing keys in rows:\n${missingRows.map(r => `Row ${r.row}: ${r.missingKeys.join(', ')}`).join('\n')}`);
+                ShowToaster("Validation failed. Missing keys in rows:\n" + missingRows.map(r => `Row ${r.row}: ${r.missingKeys.join(', ')}`).join('\n'), "red", false);
                 return;
             }
 
@@ -706,19 +715,15 @@ function handleFileUpload(event) {
             userUploadedData = sanitizedData;
             console.log("userUploadedData", userUploadedData);
 
-            // Append details to FormData
             const formData = new FormData();
             formData.append('file_name', file.name);
             formData.append('file_size', file.size);
             formData.append('sanitized_data', JSON.stringify(sanitizedData));
 
-            // Log user inputs
             logUserInput(formData);
 
-            // Add data to the graph
             addDataToGraph(userUploadedData);
 
-            // Reset file input so user can upload another file
             document.getElementById('fileUpload').value = "";
         };
 
@@ -1770,6 +1775,11 @@ async function gatherAndProcessDoseResponse(kePaths) {
     const checkboxes = checkboxDose.querySelectorAll("input[type='checkbox']");
     let handleNoneDataNodesModeCheckbox = null
 
+    if (dose === "" || chemical === "") {
+        ShowToaster("Please fill inn all fields before running the dose response", "error")
+        return
+    }
+
     checkboxes.forEach(checkbox => {
         if (checkbox.checked) {
             handleNoneDataNodesModeCheckbox = checkbox.id;
@@ -1870,9 +1880,18 @@ async function gatherAndProcessDoseResponse(kePaths) {
     if (bioactivityAssays.ke_likelihoods) {
         doseKeyeventsWithInfo = [];
         for (const [keNumber, likelihood] of Object.entries(bioactivityAssays.ke_likelihoods)) {
-            doseKeyeventsWithInfo.push({ke: keNumber, likelihood: likelihood});
+            doseKeyeventsWithInfo.push({ke: keNumber, likelihood: likelihood, isImputated: false});
         }
     }
+    if (bioactivityAssays.ke_with_no_ac50Data) {
+        for (const [keNumber, desc] of Object.entries(bioactivityAssays.ke_with_no_ac50Data)) {
+            const keIndex = doseKeyeventsWithInfo.findIndex(ke => ke.ke === keNumber);
+            if (keIndex !== -1) {
+                doseKeyeventsWithInfo[keIndex].isImputated = true;
+            }
+        }
+    }
+
     allKeyEventsActivated = doseKeyeventsWithInfo.every(ke => ke.likelihood >= 0.8);
 
     // Update node border colors based on ke_likelihoods
@@ -2069,7 +2088,7 @@ async function gatherAndProcessDoseResponse(kePaths) {
                                             }
                                         }
                                     );
-                                }, depth * 400); // wave delay from the center (adjust as desired)
+                                }, depth * 400);
                             }
                         }
                     });
@@ -2080,6 +2099,14 @@ async function gatherAndProcessDoseResponse(kePaths) {
 
         }
     }
+    const allImputatedFalse = doseKeyeventsWithInfo.every(ke => !ke.isImputated);
+
+    if (allImputatedFalse) {
+        ShowToaster("Dose response has been successfully processed.", "green");
+    } else {
+        const imputatedKEs = doseKeyeventsWithInfo.filter(ke => ke.isImputated).map(ke => ke.ke).join(", ");
+        ShowToaster(`The dose response has successfully been processed, But the following Key Events have no AC50 data and have been imputated: ${imputatedKEs}. This means that the result will be less accurate.`, "red", false);
+    }
 }
 
 function removeGradientBarFromGraph() {
@@ -2087,38 +2114,40 @@ function removeGradientBarFromGraph() {
 }
 
 function addGradientBarToGraph() {
-    // Add the gradient bar as a custom node
     cy.add({
         group: 'nodes',
         data: {
             id: 'gradient-bar',
-            label: '', // Optional label
-            isLegend: true // Custom data attribute to identify this node as a legend
+            label: '',
+            isLegend: true
         },
-        position: {x: 0, y: 0}, // Adjust position
+        position: {x: 0, y: 0},
         selectable: false,
         grabbable: true,
         classes: 'gradient-bar-node'
     });
 
-    // Style the gradient bar node with the Base64 image
     cy.style()
         .selector('.gradient-bar-node')
         .style({
             'background-image': "/static/images/bar-gradient.png",
-            'background-fit': 'contain', // Ensure the image fits within the node
-            'background-opacity': 1, // Make the image fully visible
-            'shape': 'rectangle', // Keep the shape as a rectangle
-            'width': 470, // Match the image width
-            'height': 50, // Match the image height
-            'border-width': 0, // Remove border
-            'border-opacity': 0 // Ensure no border is visible
+            'background-fit': 'contain',
+            'background-opacity': 1,
+            'shape': 'rectangle',
+            'width': 470,
+            'height': 50,
+            'border-width': 0,
+            'border-opacity': 0
         })
         .update();
 }
 
 document.getElementById('runAllKeyEvents').addEventListener('click', async function () {
-    const kePaths = cy.nodes('[ke_type = "Key Event"], [ke_type = "Molecular Initiating Event"]').map(node => node.data('label'));
+    const kePaths = cy?.nodes('[ke_type = "Key Event"], [ke_type = "Molecular Initiating Event"]').map(node => node.data('label'));
+    if (!kePaths) {
+        ShowToaster("You have to search for an AOP before you can run the dose response", "error")
+        return;
+    }
     console.log("kePathskePaths", kePaths)
     document.getElementById('doseResponseDialog').style.display = "none";
     await gatherAndProcessDoseResponse(kePaths);

@@ -346,14 +346,16 @@ def dose_response():
     # Parse the query parameters
     ke_assay_dict = json.loads(ke_assay_dict_str)  # Convert JSON string to dict
     doseOfSubstance = float(doseOfSubstance)
-    print("HER ER ke_assay_dict: ", ke_assay_dict)
 
     print("-------------------------")
+    print("ke_assay_dict: ", ke_assay_dict)
     print("doseOfSubstance", doseOfSubstance)
     print("chemical", chemical)
-    print("ke_assay_dict", ke_assay_dict)
+    print("handleDataNodesMode", handleDataNodesMode)
+    print("-------------------------")
 
     # Call the run_dose_response function with the dictionary
     results = run_dose_response(doseOfSubstance, chemical, ke_assay_dict, handleDataNodesMode)
 
+    print("results:::::::::", results)
     return jsonify(results)

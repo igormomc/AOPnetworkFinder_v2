@@ -30,11 +30,16 @@
         </div>
         <div class="uploadWrapper">
             <input type="file" id="fileUpload" accept=".csv" style="display: none;">
-            <span class="info-button" id="infoButton">ℹ</span>
-            <button type="button" id="triggerUpload" class="file-button">Upload file</button>
+            <!-- Wrap the button and info icon in a container -->
+            <div class="button-container">
+                <button type="button" id="triggerUpload" class="file-button">Upload file</button>
+                <span class="info-button" id="infoButton">
+                    <img src="{{ url_for('static', filename='images/infoIcon.svg') }}" alt="Info Icon" id="infoIcon">
+                </span>
+            </div>
             <pre id="output"></pre>
-
         </div>
+
         <div class="uploadWrapper">
             <button type="button" id="openDoseResponseDialog" class="openDose-button">Dose Response</button>
             <pre></pre>
@@ -259,6 +264,10 @@
     </div>
 </div>
 
+<div id="ShowToaster">
+    <span></span>
+    <button class="close-toast">&times;</button>
+</div>
 <!-- Popup Container -->
 <div id="nodePopup">
     <!-- Content will be dynamically inserted here -->

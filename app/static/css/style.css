@@ -43,6 +43,7 @@ html, body {
     border-bottom-left-radius: 15px;
     border-bottom-right-radius: 15px;
 }
+
 .parent-container {
     display: flex;
     justify-content: center;
@@ -81,18 +82,19 @@ html, body {
     height: 75vh;
 }
 
-.leftside-container #searchButtonAOP{
+.leftside-container #searchButtonAOP {
     border-radius: 10px;
 }
 
-.leftside-container #clearSelection{
+.leftside-container #clearSelection {
     border-radius: 10px;
 }
 
-.uploadWrapper{
+.uploadWrapper {
     width: 100%;
 }
-#triggerUpload, #openDoseResponseDialog{
+
+#triggerUpload, #openDoseResponseDialog {
     border-radius: 10px;
     width: 100%;
 }
@@ -123,41 +125,49 @@ html, body {
     width: 100%;
     height: 7vh;
 }
+
 .search-group {
     margin-right: auto;
     width: 100%;
     margin-bottom: 8%;
 }
+
 .search-group label {
     margin-right: 4%;
     white-space: nowrap;
 }
+
 .search-field {
     margin-left: auto;
     width: 63%;
     margin-bottom: 8%;
 }
+
 .rightside-container label[for="searchFieldKe"],
 .rightside-container #searchFieldKE {
-  align-self: stretch;
-  width: 100%;
+    align-self: stretch;
+    width: 100%;
 }
+
 .rightside-container label[for="searchFieldAOP"],
 .rightside-container #searchFieldAOP {
-  align-self: stretch;
-  width: 100%;
+    align-self: stretch;
+    width: 100%;
 }
+
 /* Styles for the search button */
 .search-button {
     margin-left: auto;
     width: 100%;
 }
+
 #exportToCytoscape {
     justify-self: start;
     /*margin-left: 16.5%;*/
     width: 100%;
 }
-#checkboxGene{
+
+#checkboxGene {
     justify-self: start;
     margin-left: 0%;
     width: 16.5%;
@@ -185,7 +195,7 @@ html, body {
     width: 20px;
     height: 20px;
     border: 2px solid #aaa;
-    border-radius: 4px;  /* Change to 50% if you prefer a circular look */
+    border-radius: 4px; /* Change to 50% if you prefer a circular look */
     cursor: pointer;
     position: relative;
     transition: background-color 0.2s ease, border-color 0.2s ease;
@@ -233,6 +243,7 @@ html, body {
     white-space: nowrap;
     margin-bottom: 8px; /* Add space below the label */
 }
+
 .search-group select {
     width: 100%;
     padding: 5px;
@@ -245,23 +256,28 @@ html, body {
     margin-right: auto;
     text-align: left;
 }
-#searchGroupStressor, #searchGroupCells, #searchGroupOrgans #searchGroupTaxonomies #searchGroupSex #searchGroupLifeStage{
+
+#searchGroupStressor, #searchGroupCells, #searchGroupOrgans #searchGroupTaxonomies #searchGroupSex #searchGroupLifeStage {
     width: 100%;
     margin-bottom: 5%;
     flex: 1
 }
+
 #searchFieldStressor {
     margin: auto;
     width: 73.5%;
 }
+
 #saveButtonLog {
     margin-left: auto;
     width: 90%;
 }
+
 #mergeButtonKeyEvent {
     margin-left: auto;
     width: 90%;
 }
+
 #stressorDropdown {
     width: 100%;
 }
@@ -280,7 +296,7 @@ nav img {
     top: 0;
     width: 100vw;
     height: 100vh;
-    background-color: rgba(0,0,0,0.4);
+    background-color: rgba(0, 0, 0, 0.4);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -299,6 +315,7 @@ nav img {
     top: 50%;
     transform: translateY(-50%);
 }
+
 .popup-top {
     display: grid;
     grid-template-columns: 1fr 1fr 0.3fr;
@@ -308,77 +325,90 @@ nav img {
     width: 100%;
     height: 3vh;
 }
+
 .input-group select {
     width: 175px;
     max-width: 200%;
     overflow: hidden;
 }
+
 .search-group select {
     width: 100%;
     padding: 5px;
     box-sizing: border-box;
 }
+
 .search-group-sex select {
     width: 100%;
     padding: 5px;
     box-sizing: border-box;
 }
+
 .modal-second {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  overflow-y: auto;
-  padding: 10px;
-  text-align: center;
-  height: 35vh;
-  width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow-y: auto;
+    padding: 10px;
+    text-align: center;
+    height: 35vh;
+    width: 100%;
 }
+
 .modal-second button {
-  width: calc(50%);
-  margin: 5px 0;
+    width: calc(50%);
+    margin: 5px 0;
 }
+
 #dynamicButtons {
     height: auto;
     width: 100%;
 }
+
 /* The Close Button */
 .close {
-/*    color: #aaa;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-*/
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  cursor: pointer;
+    /*    color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    */
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    cursor: pointer;
 }
+
 .close:hover,
 .close:focus {
     color: black;
     text-decoration: none;
     cursor: pointer;
 }
+
 .merge-option-group {
     width: 100%;
 }
+
 .merge-option-button {
     /* Default styles */
     border-radius: 10px;
     width: 100%;
     gap: 5px;
 }
+
 .merge-option-button.active {
     background-color: #4CAF50; /* Green background for active button */
     color: white;
 }
+
 .radio-container {
-  text-align: left;
-  width: 100%;
-  position: relative;
-  top: -2vh;
+    text-align: left;
+    width: 100%;
+    position: relative;
+    top: -2vh;
 }
+
 #nodePopup {
     display: none;
     position: fixed;
@@ -394,9 +424,11 @@ nav img {
     box-sizing: border-box;
     border-radius: 10px;
 }
+
 button:hover {
     background-color: #66b3ff;
 }
+
 .toolbar {
     position: absolute;
     top: 0;
@@ -414,18 +446,21 @@ button:hover {
     border-top-left-radius: 15px;
     border-top-right-radius: 15px;
 }
+
 #saveIcon {
     cursor: pointer;
     width: 4%;
     height: auto;
     margin-right: 2%;
 }
+
 #saveStyleIcon {
     cursor: pointer;
     width: 3.3%;
     height: auto;
     margin-right: 2%;
 }
+
 #colorBlindActive {
     cursor: pointer;
     width: 4%;
@@ -433,24 +468,29 @@ button:hover {
     margin-right: 2%;
     display: none;
 }
+
 #colorBlindNotActive {
     cursor: pointer;
     width: 4%;
     height: auto;
     margin-right: 2%;
 }
+
 #emailIcon {
     cursor: pointer;
     width: 6%;
     height: auto;
     margin-right: 4%;
 }
+
 .nav-link.active {
     font-weight: bold;
 }
+
 #processButton {
     border-radius: 10px;
 }
+
 .loader-container {
     position: fixed;
     top: 0;
@@ -474,57 +514,62 @@ button:hover {
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
 }
-.popupMerge-content-info{
-  background-color: #fff;
-  margin: 10% auto; /* Position roughly 10% from the top */
-  padding: 20px;
-  border-radius: 5px;
-  width: 70%;
-  max-width: 600px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-  font-family: Arial, sans-serif;
+
+.popupMerge-content-info {
+    background-color: #fff;
+    margin: 10% auto; /* Position roughly 10% from the top */
+    padding: 20px;
+    border-radius: 5px;
+    width: 70%;
+    max-width: 600px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    font-family: Arial, sans-serif;
     min-height: 30vh;
 }
 
 /* Info section styling */
 #infoSection p {
-  font-size: 1.1rem;
-  margin-bottom: 10px;
-  color: #333;
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+    color: #333;
 }
 
 #infoSection ul {
-  list-style: disc;
-  margin: 10px 0;
-  padding-left: 40px;
+    list-style: disc;
+    margin: 10px 0;
+    padding-left: 40px;
 }
 
 #infoSection li {
-  margin-bottom: 8px;
+    margin-bottom: 8px;
 }
 
 #infoSection code {
-  background: #f8f8f8;
-  padding: 2px 4px;
-  font-size: 0.9rem;
-  border-radius: 3px;
+    background: #f8f8f8;
+    padding: 2px 4px;
+    font-size: 0.9rem;
+    border-radius: 3px;
 }
 
 /* Button styling */
 #downloadTemplateButton {
-  padding: 10px 20px;
-  background: #007bff;
-  color: #ffffff;
-  border: none;
-  border-radius: 3px;
-  cursor: pointer;
+    padding: 10px 20px;
+    background: #007bff;
+    color: #ffffff;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
 }
 
 #downloadTemplateButton:hover {
-  background: #0056b3;
+    background: #0056b3;
 }
 
 .info-button {
@@ -544,70 +589,161 @@ button:hover {
 
 
 .doseResponseDialog-content {
-      background-color: #fff;
-      margin: 10% auto; /* 10% from the top and centered */
-      padding: 20px;
-      border-radius: 8px;
-      width: 400px;
-      max-width: 90%;
-      position: relative;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-    }
+    background-color: #fff;
+    margin: 10% auto; /* 10% from the top and centered */
+    padding: 20px;
+    border-radius: 8px;
+    width: 400px;
+    max-width: 90%;
+    position: relative;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
 
 
+/* Title inside the modal */
+.doseResponseDialog-content h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-weight: 600;
+    color: #333;
+    text-align: center;
+}
 
-    /* Title inside the modal */
-    .doseResponseDialog-content h2 {
-      margin-top: 0;
-      margin-bottom: 20px;
-      font-weight: 600;
-      color: #333;
-      text-align: center;
-    }
+/* Wrapper to hold inputs and buttons */
+.doseResponseWrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
 
-    /* Wrapper to hold inputs and buttons */
-    .doseResponseWrapper {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
+/* Input groups */
+.input-group {
+    display: flex;
+    flex-direction: column;
+}
 
-    /* Input groups */
-    .input-group {
-      display: flex;
-      flex-direction: column;
-    }
-    .input-group label {
-      font-size: 14px;
-      margin-bottom: 6px;
-      color: #555;
-    }
-    .input-group input[type="text"] {
-      padding: 8px 10px;
-      font-size: 14px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
+.input-group label {
+    font-size: 14px;
+    margin-bottom: 6px;
+    color: #555;
+}
 
-    /* Button group */
-    .button-group {
-      display: flex;
-      justify-content: space-between;
-      gap: 0.5rem;
-    }
+.input-group input[type="text"] {
+    padding: 8px 10px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
 
-    /* Buttons */
-    .openDose-button {
-      padding: 10px 15px;
-      background-color: #007bff;
-      border: none;
-      border-radius: 4px;
-      color: #fff;
-      cursor: pointer;
-      font-size: 14px;
-    }
-    .openDose-button:hover {
-      background-color: #0056b3;
-    }
+/* Button group */
+.button-group {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
 
+/* Buttons */
+.openDose-button {
+    padding: 10px 15px;
+    background-color: #007bff;
+    border: none;
+    border-radius: 4px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.openDose-button:hover {
+    background-color: #0056b3;
+}
+
+#ShowToaster {
+    visibility: hidden;
+    min-width: 250px;
+    max-width: 350px;
+    background-color: #E91E63;
+    color: #fff;
+    font-family: 'Roboto', sans-serif;
+    padding: 16px 20px;
+    border-radius: 8px;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 9999;
+    opacity: 0;
+}
+
+#ShowToaster span {
+    flex: 1;
+    margin-right: 12px;
+    font-size: 14px;
+}
+
+#ShowToaster .close-toast {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+    outline: none;
+}
+
+#ShowToaster.show {
+    visibility: visible;
+    opacity: 1;
+    animation: slideIn 0.4s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+    }
+}
+
+.button-container {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+.file-button {
+    padding: 12px 24px;
+    font-size: 16px;
+    color: #fff;
+    background-color: #007BFF;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.info-button {
+    position: absolute;
+    top: -16px;
+    right: -16px;
+    background-color: #fff;
+    border-radius: 50%;
+    padding: 3px;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    z-index: 1000;
+}
+
+#infoIcon {
+    width: 20px;
+    height: 20px;
+}
 
