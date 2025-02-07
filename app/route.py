@@ -18,6 +18,8 @@ from .security_config.AopKeFormValidation import AopKeFormValidation, sanitize_f
 from .service.dose_response import run_dose_response
 import json
 
+from .service.get_chemical_suggestions_for_AOP import get_chemical_suggestions_for_aop
+
 
 # Page Routing
 @app.route("/")
@@ -36,11 +38,9 @@ def page_three():
     return render_template('part2.html')
 
 
-
 # Post requests
 @app.route("/searchAops", methods=['POST'])
 def search_aops():
-
     unique_ke_set = set()
     tmp_ke_id_set = set()
     filtered_aop_list = []
@@ -149,24 +149,24 @@ def search_aops():
         else:
             aop_list = visualizer_sv.extract_all_aops_given_ke_ids(ke_query)
 
-        #merge aop_list with aop_query
+        # merge aop_list with aop_query
         aop_query_list.extend(aop_list)
         if len(aop_query_list) > 0:
             for aop_id in aop_query_list:
                 all_filters_match = True
-                if(len(life_stage_query) > 0):
+                if (len(life_stage_query) > 0):
                     all_filters_match = False
                     for life_stage in life_stage_query.split(','):
                         if visualizer_sv.check_if_life_stage_exist_in_aop(aop_id, life_stage):
                             all_filters_match = True
 
-                if(len(sex_query) > 0):
+                if (len(sex_query) > 0):
                     all_filters_match = False
                     for sex in sex_query.split(','):
                         if visualizer_sv.check_if_sex_exist_in_aop(aop_id, sex):
                             all_filters_match = True
 
-                if(len(organ_query) > 0):
+                if (len(organ_query) > 0):
                     all_filters_match = False
                     for organ in organ_query.split(','):
                         if visualizer_sv.check_if_organ_exist_in_aop(aop_id, organ):
@@ -190,9 +190,6 @@ def search_aops():
             if len(filtered_aop_list) == 0:
                 return render_template('visualizer_page_one.html', data=None)
 
-
-
-
         aop_query_list = aop_query.split(',')
         aop_stressor_list = visualizer_sv.extract_all_aop_id_from_given_stressor_name(stressor_query)
         aop_list.extend(aop_query_list)
@@ -205,7 +202,8 @@ def search_aops():
         else:
             aop_cytoscape, aop_after_filter = visualizer_sv.visualize_aop_user_input(aop_list_filtered, gene_checkbox,
                                                                                      filter_development_chx,
-                                                                                     filter_endorsed_chx, filter_review_chx,
+                                                                                     filter_endorsed_chx,
+                                                                                     filter_review_chx,
                                                                                      filter_approved_chx, unique_ke_set)
         if aop_cytoscape is None:
             # Happens if all the aops the user inputted gets filtered out.
@@ -228,7 +226,6 @@ def search_aops():
 
 @app.route("/data-extraction-submit", methods=['POST'])
 def extract_from_aop_wiki():
-
     form = AopKeFormDataExtractionValidation(formdata=request.form)
     if form.validate_on_submit():
         aop_input = form.searchFieldAOPs.data
@@ -260,6 +257,7 @@ def extract_from_aop_wiki():
             return jsonify(json_file)
     return render_template('data_displayer_page_two.html', data=None)
 
+
 @app.route('/get_stressors')
 @cache.cached(timeout=6000)
 def get_stressors():
@@ -267,6 +265,7 @@ def get_stressors():
     stressor_list = visualizer_sv.get_all_stressors_from_aop_wiki()
 
     return jsonify(stressor_list)
+
 
 @app.route('/get_cells')
 @cache.cached(timeout=6000)
@@ -285,6 +284,7 @@ def get_organs():
 
     return jsonify(organ_list)
 
+
 @app.route('/get_taxonomies')
 @cache.cached(timeout=6000)
 def get_taxonomies():
@@ -292,17 +292,20 @@ def get_taxonomies():
 
     return jsonify(taxonomy_list)
 
+
 @app.route('/get_sexes')
 @cache.cached(timeout=6000)
 def get_sexes():
     sex_list = visualizer_sv.get_all_sex_from_aop_wiki()
     return jsonify(sex_list)
 
+
 @app.route('/get_life_stages')
 @cache.cached(timeout=6000)
 def get_life_stages():
     life_stage_list = visualizer_sv.get_all_life_stage_from_aop_wiki()
     return jsonify(life_stage_list)
+
 
 @app.route('/download/<filename>')
 def download_style_file(filename):
@@ -312,6 +315,8 @@ def download_style_file(filename):
 
 
 ASSAY_CACHE = None
+
+
 @app.route('/api/bioactivity-assays', methods=['GET'])
 def fetch_bioactivity_assays():
     global ASSAY_CACHE
@@ -359,3 +364,13 @@ def dose_response():
 
     print("results:::::::::", results)
     return jsonify(results)
+
+
+@app.route('/api/get_chemical_suggestions', methods=['GET'])
+def get_chemical_suggestions():
+    """
+    Endpoint to return a list of chemical suggestions based on the query string.
+    """
+    aop_id = request.args.get('aop_id')
+    result = get_chemical_suggestions_for_aop(aop_id)
+    return jsonify(result)

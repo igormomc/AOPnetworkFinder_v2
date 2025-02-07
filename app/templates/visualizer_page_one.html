@@ -231,6 +231,7 @@
             <div class="input-group">
                 <label for="chemical">Chemical</label>
                 <input type="text" id="chemical" placeholder="Enter Chemical"/>
+                <small id="chemicalHelp" class="form-text text-muted"></small>
             </div>
             <div class="checkbox-group" id="checkbox-dose">
                 <label>
@@ -247,15 +248,15 @@
                 </label>
             </div>
 
-            <div class="input-group">
-                <label for="kePath">Key Events</label>
-                <input type="text" id="kePath" placeholder="Enter Key Events"/>
-            </div>
+            <!-- <div class="input-group">
+                 <label for="kePath">Key Events</label>
+                 <input type="text" id="kePath" placeholder="Enter Key Events"/>
+             </div>-->
 
             <div class="button-group">
-                <button type="button" id="triggerDoseResponse" class="openDose-button">
+                <!--<button type="button" id="triggerDoseResponse" class="openDose-button">
                     Run Dose Response
-                </button>
+                </button>-->
                 <button type="button" id="runAllKeyEvents" class="openDose-button">
                     Run on All Key Events
                 </button>
@@ -286,6 +287,8 @@
 <script src="{{ url_for('static', filename='javascript/scripts/fetchAliasSymbols.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/scripts/fetchAllAssays.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/scripts/fetchDoseResponse.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/scripts/getChemicalSuggestions.js') }}"></script>
+
 
 <!-- Include xlsx library -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>

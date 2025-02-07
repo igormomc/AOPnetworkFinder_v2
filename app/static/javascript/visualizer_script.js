@@ -7,6 +7,7 @@ let allowHidePopup = false; // Flag to control the hiding of the popup
 var cy;
 let geneHGNCurl = 'https://www.genenames.org/data/gene-symbol-report/#!/symbol/';
 let doseKeyeventsWithInfo = [];
+let chemicalSuggestions = [];
 
 let isColorBlindMode = false; // Track the color mode state
 const defaultColors = {
@@ -489,6 +490,7 @@ function render_graph(url_string, formData) {
                 alert("Error: Unable to fetch this AOP, please check the AOP ID and try again.");
             }
         );
+    chemicalSuggestions = [];
 }
 
 function addDataToGraph(data) {
@@ -756,7 +758,7 @@ document.getElementById('infoButton').addEventListener('click', function () {
     }
 });
 
-document.getElementById('openDoseResponseDialog').addEventListener('click', function () {
+document.getElementById('openDoseResponseDialog').addEventListener('click', async function () {
     const modal = document.getElementById("doseResponseDialog");
     modal.style.display = 'block'
 
@@ -765,20 +767,24 @@ document.getElementById('openDoseResponseDialog').addEventListener('click', func
             modal.style.display = "none";
         }
     }
+    const aop_id = document.getElementById('searchFieldAOP').value;
+    const nodes = cy?.nodes();
+    if (aop_id && aop_id !== "" && chemicalSuggestions.length === 0 && nodes?.length > 0) {
+        chemicalSuggestions = await getChemicalSuggestions(`AOP ${aop_id}`);
+    }
+    updateChemicalSuggestions();
 });
 
-document.getElementById('downloadTemplateButton').addEventListener('click', function () {
-    const csvContent = "keid,chemical,ac50,gene\n"; // Template header
-    const blob = new Blob([csvContent], {type: 'text/csv;charset=utf-8;'});
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = "template.csv";
-    link.style.display = 'none';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-});
+function updateChemicalSuggestions() {
+    if (typeof chemicalSuggestions !== 'undefined' && chemicalSuggestions.length > 0) {
+        const chemicalHelpElement = document.getElementById('chemicalHelp');
+        const suggestionsToShow = chemicalSuggestions.slice(0, 3).join(', ');
+        chemicalHelpElement.innerHTML = `<strong>Suggested chemicals:</strong> ${suggestionsToShow}`;
+        chemicalHelpElement.title = 'These are the chemicals that we have the most data on for this AOP.';
 
+        console.log('Chemical Suggestions:', chemicalSuggestions);
+    }
+}
 
 function getColorByType(ke_type) {
     if (!isColorBlindMode) {
@@ -1770,7 +1776,7 @@ async function gatherAndProcessDoseResponse(kePaths) {
     removeGradientBarFromGraph()
     const dose = document.getElementById("dose").value;
     const chemical = document.getElementById("chemical").value;
-    const keyEvetnPath = document.getElementById("kePath").value.split(",").map(path => path.trim());
+    //const keyEvetnPath = document.getElementById("kePath").value.split(",").map(path => path.trim());
     const checkboxDose = document.getElementById("checkbox-dose");
     const checkboxes = checkboxDose.querySelectorAll("input[type='checkbox']");
     let handleNoneDataNodesModeCheckbox = null
@@ -1792,7 +1798,7 @@ async function gatherAndProcessDoseResponse(kePaths) {
 
     formData.append('dose', dose);
     formData.append('chemical', chemical);
-    formData.append('KePath', keyEvetnPath);
+    //formData.append('KePath', keyEvetnPath);
 
 
     const graph = cy.nodes();
@@ -2153,14 +2159,14 @@ document.getElementById('runAllKeyEvents').addEventListener('click', async funct
     await gatherAndProcessDoseResponse(kePaths);
 });
 
-document.getElementById('triggerDoseResponse').addEventListener('click', async function () {
+/*document.getElementById('triggerDoseResponse').addEventListener('click', async function () {
     const kePaths = document.getElementById("kePath").value
         .split(",")
         .map(path => path.trim());
     document.getElementById('doseResponseDialog').style.display = "none";
     await gatherAndProcessDoseResponse(kePaths);
 
-});
+});*/
 
 //document.addEventListener('click', function(event) {
 //    console.log(event.target); // See which element was clicked
