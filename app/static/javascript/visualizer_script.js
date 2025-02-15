@@ -459,7 +459,7 @@ function render_graph(url_string, formData) {
                             let keyEvent = node.data('label').replace("KE", "").trim();
                             const doseKeyEvent = doseKeyeventsWithInfo.find(event => event.ke === keyEvent);
                             if (doseKeyEvent) {
-                                const doseKeyEventsToDisplay = (doseKeyEvent.likelihood * 100).toFixed(3);
+                                const doseKeyEventsToDisplay = (doseKeyEvent.cumulativeProbability * 100).toFixed(0);
                                 const imputatedText = doseKeyEvent.isImputated ? " (Imputated Data)" : "";
                                 contentHtml += `<tr><td>Key Event Likelihood:</td><td>${doseKeyEventsToDisplay}%${imputatedText}</td></tr>`;
                             } else {
@@ -1776,6 +1776,7 @@ async function gatherAndProcessDoseResponse(kePaths) {
     removeGradientBarFromGraph()
     const dose = document.getElementById("dose").value;
     const chemical = document.getElementById("chemical").value;
+    const aopId = document.getElementById("searchFieldAOP").value.toString();
     //const keyEvetnPath = document.getElementById("kePath").value.split(",").map(path => path.trim());
     const checkboxDose = document.getElementById("checkbox-dose");
     const checkboxes = checkboxDose.querySelectorAll("input[type='checkbox']");
@@ -1864,7 +1865,7 @@ async function gatherAndProcessDoseResponse(kePaths) {
     // Make your API call with the compiled data
     const doseOfSubstance = parseFloat(dose);
     const response = await fetch(
-        `/api/dose_response?doseOfSubstance=${doseOfSubstance}&chemical=${chemical}&ke_assay_list=${encodeURIComponent(JSON.stringify(keToAssaysMap))}&handleNoneDataNodesMode=${handleNoneDataNodesModeCheckbox}`,
+        `/api/dose_response?doseOfSubstance=${doseOfSubstance}&chemical=${chemical}&ke_assay_list=${encodeURIComponent(JSON.stringify(keToAssaysMap))}&handleNoneDataNodesMode=${handleNoneDataNodesModeCheckbox}&aop_id=${aopId}`,
     );
     const bioactivityAssays = await response.json();
 
@@ -1878,15 +1879,21 @@ async function gatherAndProcessDoseResponse(kePaths) {
         });
     });
 
-    formData.append('result', JSON.stringify(bioactivityAssays.ke_likelihoods));
+    formData.append('result', JSON.stringify(bioactivityAssays.AOP));
 
     // Log user inputs
     logUserInput(formData);
 
-    if (bioactivityAssays.ke_likelihoods) {
+    if (bioactivityAssays.AOP) {
         doseKeyeventsWithInfo = [];
-        for (const [keNumber, likelihood] of Object.entries(bioactivityAssays.ke_likelihoods)) {
-            doseKeyeventsWithInfo.push({ke: keNumber, likelihood: likelihood, isImputated: false});
+        for (const [_, eventObj] of Object.entries(bioactivityAssays.AOP)) {
+            let cumulativeProbability = eventObj["cumulative probability"];
+            let keNumber = eventObj.KE_id
+            doseKeyeventsWithInfo.push({
+                ke: keNumber,
+                cumulativeProbability: cumulativeProbability,
+                isImputated: false
+            });
         }
     }
     if (bioactivityAssays.ke_with_no_ac50Data) {
@@ -1898,15 +1905,27 @@ async function gatherAndProcessDoseResponse(kePaths) {
         }
     }
 
-    allKeyEventsActivated = doseKeyeventsWithInfo.every(ke => ke.likelihood >= 0.8);
+    let aoIsActivated = bioactivityAssays.AOP.AO0;
+    let cumulativeProbability = aoIsActivated["cumulative probability"];
 
     // Update node border colors based on ke_likelihoods
-    // Update node border colors based on ke_likelihoods
-    if (bioactivityAssays.ke_likelihoods) {
-        for (const [keNumber, likelihood] of Object.entries(bioactivityAssays.ke_likelihoods)) {
-            const node = cy.nodes().filter(ele => ele.data('label') === `KE ${keNumber}`);
+    if (bioactivityAssays.AOP) {
+        for (const eventObj of Object.values(bioactivityAssays.AOP)) {
+            // Retrieve the KE_id from the event object
+            const keId = eventObj.KE_id;
+            if (!keId) continue; // Skip if no KE_id is provided
+
+            // Find the corresponding node by matching the node's data 'KE_id'
+            const node = cy.nodes().filter(ele => ele.data('label') === `KE ${keId}`);
             if (node && node.length > 0) {
-                const borderColor = getGradientColor(likelihood);
+                // Get the individual event probability
+                const probability = eventObj["cumulative probability"];
+
+                // Calculate the color using your gradient function
+                console.log("probability", probability)
+                const borderColor = getGradientColor(probability);
+
+                // Set the node's style with the determined border color and other styling properties
                 node.style({
                     'border-width': 6,
                     'border-color': borderColor,
@@ -1915,196 +1934,198 @@ async function gatherAndProcessDoseResponse(kePaths) {
                     'border-margin': 20
                 });
             }
-            if (allKeyEventsActivated) {
-                const adverseNodes = cy.nodes('[ke_type = "Adverse Outcome"]');
+        }
 
-                adverseNodes.style({'background-color': 'magenta'});
+        if (cumulativeProbability > 0.8) {
+            const adverseNodes = cy.nodes('[ke_type = "Adverse Outcome"]');
 
-                const createBigCrazyExplosion = (node) => {
-                    const centerPos = node.position();
+            adverseNodes.style({'background-color': 'magenta'});
 
-                    const shakes = 3;
-                    let shakeSequence = [];
-                    for (let i = 0; i < shakes; i++) {
-                        const offsetX = (Math.random() - 0.5) * 10;
-                        const offsetY = (Math.random() - 0.5) * 10;
-                        shakeSequence.push({
-                            position: {
-                                x: centerPos.x + offsetX,
-                                y: centerPos.y + offsetY
-                            },
-                            duration: 100,
-                            easing: 'ease-in-out'
-                        });
-                    }
+            const createBigCrazyExplosion = (node) => {
+                const centerPos = node.position();
+
+                const shakes = 3;
+                let shakeSequence = [];
+                for (let i = 0; i < shakes; i++) {
+                    const offsetX = (Math.random() - 0.5) * 10;
+                    const offsetY = (Math.random() - 0.5) * 10;
                     shakeSequence.push({
-                        position: {x: centerPos.x, y: centerPos.y},
+                        position: {
+                            x: centerPos.x + offsetX,
+                            y: centerPos.y + offsetY
+                        },
                         duration: 100,
                         easing: 'ease-in-out'
                     });
+                }
+                shakeSequence.push({
+                    position: {x: centerPos.x, y: centerPos.y},
+                    duration: 100,
+                    easing: 'ease-in-out'
+                });
 
-                    node.animate(
-                        {
-                            queue: true,
-                            complete: () => {
-                                const shockwave = cy.add({
-                                    group: 'nodes',
-                                    data: {id: 'shockwave-' + node.id() + '-' + Math.random()},
+                node.animate(
+                    {
+                        queue: true,
+                        complete: () => {
+                            const shockwave = cy.add({
+                                group: 'nodes',
+                                data: {id: 'shockwave-' + node.id() + '-' + Math.random()},
+                                style: {
+                                    'background-color': 'rgba(255, 165, 0, 0.2)',
+                                    'border-color': 'red',
+                                    'border-width': 2,
+                                    'border-opacity': 0.8,
+                                    width: 1,
+                                    height: 1
+                                },
+                                position: centerPos
+                            });
+
+                            shockwave.animate(
+                                {
                                     style: {
-                                        'background-color': 'rgba(255, 165, 0, 0.2)',
-                                        'border-color': 'red',
-                                        'border-width': 2,
-                                        'border-opacity': 0.8,
-                                        width: 1,
-                                        height: 1
+                                        width: 200,
+                                        height: 200,
+                                        'border-opacity': 0,
+                                        'background-opacity': 0
+                                    }
+                                },
+                                {
+                                    duration: 1000,
+                                    easing: 'ease-out',
+                                    complete: () => shockwave.remove()
+                                }
+                            );
+
+                            node.animate(
+                                {style: {'background-color': 'yellow'}},
+                                {
+                                    duration: 300,
+                                    easing: 'ease-in-out',
+                                    complete: () => {
+                                        node.animate(
+                                            {style: {'background-color': 'red'}},
+                                            {
+                                                duration: 300,
+                                                easing: 'ease-in-out',
+                                                complete: () => {
+                                                    node.animate(
+                                                        {style: {'background-color': 'orange'}},
+                                                        {
+                                                            duration: 300,
+                                                            easing: 'ease-in-out',
+                                                            complete: () => {
+                                                                node.style('background-color', 'magenta');
+                                                                triggerElectricWave(node);
+                                                            }
+                                                        }
+                                                    );
+                                                }
+                                            }
+                                        );
+                                    }
+                                }
+                            );
+
+                            const shrapnelCount = 16;
+                            for (let i = 0; i < shrapnelCount; i++) {
+                                const shrapnelNode = cy.add({
+                                    group: 'nodes',
+                                    data: {
+                                        id: 'boom-' + node.id() + '-' + i + '-' + Math.random()
                                     },
-                                    position: centerPos
+                                    style: {
+                                        'background-color': 'orange',
+                                        width: 10,
+                                        height: 10,
+                                        label: '💥'
+                                    },
+                                    position: {
+                                        x: centerPos.x,
+                                        y: centerPos.y
+                                    }
                                 });
 
-                                shockwave.animate(
-                                    {
-                                        style: {
-                                            width: 200,
-                                            height: 200,
-                                            'border-opacity': 0,
-                                            'background-opacity': 0
-                                        }
-                                    },
-                                    {
-                                        duration: 1000,
-                                        easing: 'ease-out',
-                                        complete: () => shockwave.remove()
-                                    }
-                                );
+                                // Random direction & distance
+                                const angle = Math.random() * 2 * Math.PI;
+                                const distance = 80 + Math.random() * 80; // fling them further
 
-                                node.animate(
-                                    {style: {'background-color': 'yellow'}},
+                                const targetX = centerPos.x + distance * Math.cos(angle);
+                                const targetY = centerPos.y + distance * Math.sin(angle);
+
+                                shrapnelNode.animate(
+                                    {position: {x: targetX, y: targetY}},
                                     {
-                                        duration: 300,
-                                        easing: 'ease-in-out',
+                                        duration: 800, // slower fling for drama
+                                        easing: 'ease-out',
                                         complete: () => {
-                                            node.animate(
-                                                {style: {'background-color': 'red'}},
+                                            // Fade out & shrink them
+                                            shrapnelNode.animate(
                                                 {
-                                                    duration: 300,
-                                                    easing: 'ease-in-out',
-                                                    complete: () => {
-                                                        node.animate(
-                                                            {style: {'background-color': 'orange'}},
-                                                            {
-                                                                duration: 300,
-                                                                easing: 'ease-in-out',
-                                                                complete: () => {
-                                                                    node.style('background-color', 'magenta');
-                                                                    triggerElectricWave(node);
-                                                                }
-                                                            }
-                                                        );
+                                                    style: {
+                                                        opacity: 0,
+                                                        width: 1,
+                                                        height: 1
                                                     }
+                                                },
+                                                {
+                                                    duration: 800,
+                                                    complete: () => shrapnelNode.remove()
                                                 }
                                             );
                                         }
                                     }
                                 );
-
-                                const shrapnelCount = 16;
-                                for (let i = 0; i < shrapnelCount; i++) {
-                                    const shrapnelNode = cy.add({
-                                        group: 'nodes',
-                                        data: {
-                                            id: 'boom-' + node.id() + '-' + i + '-' + Math.random()
-                                        },
-                                        style: {
-                                            'background-color': 'orange',
-                                            width: 10,
-                                            height: 10,
-                                            label: '💥'
-                                        },
-                                        position: {
-                                            x: centerPos.x,
-                                            y: centerPos.y
-                                        }
-                                    });
-
-                                    // Random direction & distance
-                                    const angle = Math.random() * 2 * Math.PI;
-                                    const distance = 80 + Math.random() * 80; // fling them further
-
-                                    const targetX = centerPos.x + distance * Math.cos(angle);
-                                    const targetY = centerPos.y + distance * Math.sin(angle);
-
-                                    shrapnelNode.animate(
-                                        {position: {x: targetX, y: targetY}},
-                                        {
-                                            duration: 800, // slower fling for drama
-                                            easing: 'ease-out',
-                                            complete: () => {
-                                                // Fade out & shrink them
-                                                shrapnelNode.animate(
-                                                    {
-                                                        style: {
-                                                            opacity: 0,
-                                                            width: 1,
-                                                            height: 1
-                                                        }
-                                                    },
-                                                    {
-                                                        duration: 800,
-                                                        complete: () => shrapnelNode.remove()
-                                                    }
-                                                );
-                                            }
-                                        }
-                                    );
-                                }
-                            }
-                        },
-                        shakeSequence
-                    );
-                };
-
-                const triggerElectricWave = (startNode) => {
-                    const electricColor = '#00ffc3';
-                    const defaultEdgeColor = '#999';
-                    const defaultEdgeWidth = 2;
-
-                    cy.elements().bfs({
-                        roots: startNode,
-                        directed: false,
-                        visit: (v, e, u, i, depth) => {
-                            if (e) {
-                                setTimeout(() => {
-                                    // "Light up" the edge
-                                    e.animate(
-                                        {
-                                            style: {'line-color': electricColor, width: 4}
-                                        },
-                                        {
-                                            duration: 300,
-                                            complete: () => {
-                                                // Then revert it
-                                                e.animate(
-                                                    {
-                                                        style: {'line-color': defaultEdgeColor, width: defaultEdgeWidth}
-                                                    },
-                                                    {
-                                                        duration: 300
-                                                    }
-                                                );
-                                            }
-                                        }
-                                    );
-                                }, depth * 400);
                             }
                         }
-                    });
-                };
+                    },
+                    shakeSequence
+                );
+            };
 
-                adverseNodes.forEach((node) => createBigCrazyExplosion(node));
-            }
+            const triggerElectricWave = (startNode) => {
+                const electricColor = '#00ffc3';
+                const defaultEdgeColor = '#999';
+                const defaultEdgeWidth = 2;
 
+                cy.elements().bfs({
+                    roots: startNode,
+                    directed: false,
+                    visit: (v, e, u, i, depth) => {
+                        if (e) {
+                            setTimeout(() => {
+                                // "Light up" the edge
+                                e.animate(
+                                    {
+                                        style: {'line-color': electricColor, width: 4}
+                                    },
+                                    {
+                                        duration: 300,
+                                        complete: () => {
+                                            // Then revert it
+                                            e.animate(
+                                                {
+                                                    style: {'line-color': defaultEdgeColor, width: defaultEdgeWidth}
+                                                },
+                                                {
+                                                    duration: 300
+                                                }
+                                            );
+                                        }
+                                    }
+                                );
+                            }, depth * 400);
+                        }
+                    }
+                });
+            };
+
+            adverseNodes.forEach((node) => createBigCrazyExplosion(node));
         }
+
     }
+
     const allImputatedFalse = doseKeyeventsWithInfo.every(ke => !ke.isImputated);
 
     if (allImputatedFalse) {
