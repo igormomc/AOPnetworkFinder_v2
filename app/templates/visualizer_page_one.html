@@ -233,37 +233,45 @@
                 <input type="text" id="chemical" placeholder="Enter Chemical"/>
                 <small id="chemicalHelp" class="form-text text-muted"></small>
             </div>
-            <div class="checkbox-group" id="checkbox-dose">
-                <label>
-                    <input type="checkbox" id="toggleMedian" name="toggleMedian" checked>
-                    Median
-                </label>
-                <label>
-                    <input type="checkbox" id="toggleAverage" name="toggleAverage">
-                    Average
-                </label>
-                <label>
-                    <input type="checkbox" id="toggleMinimum" name="toggleMinimum">
-                    Minimum
-                </label>
+            <!-- Checkbox group for Median, Average, Minimum with helper icon -->
+            <!-- Checkbox group with help icon in a flex container -->
+            <div class="dose-metrics-container">
+                <div class="checkbox-group" id="checkbox-dose">
+                    <label>
+                        <input type="checkbox" id="toggleMedian" name="toggleMedian" checked>
+                        Median
+                    </label>
+                    <label>
+                        <input type="checkbox" id="toggleAverage" name="toggleAverage">
+                        Average
+                    </label>
+                    <label>
+                        <input type="checkbox" id="toggleMinimum" name="toggleMinimum">
+                        Minimum
+                    </label>
+                </div>
+                <span class="group-help" title="Choose one or more metrics for dose response calculations:
+• Median: uses the middle value of all the AC50 values.
+• Average: computes the mean of all the AC50 values.
+• Minimum: selects the lowest value of all the AC50 values.">?</span>
             </div>
-
-            <!-- <div class="input-group">
-                 <label for="kePath">Key Events</label>
-                 <input type="text" id="kePath" placeholder="Enter Key Events"/>
-             </div>-->
-
             <div class="button-group">
-                <!--<button type="button" id="triggerDoseResponse" class="openDose-button">
-                    Run Dose Response
-                </button>-->
                 <button type="button" id="runAllKeyEvents" class="openDose-button">
                     Run on All Key Events
                 </button>
+                <div class="checkbox-enrichment" id="checkbox-enrichment">
+                    <label>
+                        <input type="checkbox" id="toggleEnrichment" name="toggleEnrichment">
+                        Enrichment Mode
+                        <span class="group-help"
+                              title="When enabled, the dose response calculation will incorporate gene enrichment analysis to refine the results.">?</span>
+                    </label>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
 
 <div id="ShowToaster">
     <span></span>
@@ -288,6 +296,7 @@
 <script src="{{ url_for('static', filename='javascript/scripts/fetchAllAssays.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/scripts/fetchDoseResponse.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/scripts/getChemicalSuggestions.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/scripts/fetchGeneEnrichment.js') }}"></script>
 
 
 <!-- Include xlsx library -->

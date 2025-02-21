@@ -315,6 +315,26 @@ def download_style_file(filename):
 
 
 ASSAY_CACHE = None
+ENRICH_GENES_CACHE = None
+
+
+def fetch_bioactivity_assays_intern():
+    global ASSAY_CACHE
+    if ASSAY_CACHE:
+        return ASSAY_CACHE
+    EPA_API_URL = "https://api-ccte.epa.gov/bioactivity/assay/"
+    HEADERS = {
+        'Accept': 'application/hal+json',
+        'x-api-key': os.getenv('EPA_API_KEY')
+    }
+    try:
+        response = requests.get(EPA_API_URL, headers=HEADERS)
+        response.raise_for_status()  # Raise an exception for bad status codes
+        data = response.json()
+        ASSAY_CACHE = data
+        return data
+    except requests.exceptions.RequestException as e:
+        return jsonify({'error': str(e)}), 500  # Return error message with 500 status code
 
 
 @app.route('/api/bioactivity-assays', methods=['GET'])
@@ -337,32 +357,29 @@ def fetch_bioactivity_assays():
         return jsonify({'error': str(e)}), 500  # Return error message with 500 status code
 
 
-@app.route('/api/dose_response', methods=['GET'])
+@app.route('/api/dose_response', methods=['POST'])
 def dose_response():
-    """
-    Endpoint to run the Bayesian dose-response code and return the result.
-    """
-    # Get parameters from query string
-    ke_assay_dict_str = request.args.get('ke_assay_list')  # Stringified JSON
-    doseOfSubstance = request.args.get('doseOfSubstance')
-    chemical = request.args.get('chemical')
-    handleDataNodesMode = request.args.get('handleNoneDataNodesMode')
-    aop_id = request.args.get('aop_id')
+    data = request.get_json()
+    ke_assay_dict = data.get('ke_assay_list')
+    if isinstance(ke_assay_dict, str):
+        try:
+            ke_assay_dict = json.loads(ke_assay_dict)
+        except Exception as e:
+            return jsonify({'error': f'Invalid ke_assay_list data: {str(e)}'}), 400
 
-    # Parse the query parameters
-    ke_assay_dict = json.loads(ke_assay_dict_str)  # Convert JSON string to dict
-    doseOfSubstance = float(doseOfSubstance)
+    doseOfSubstance = float(data.get('doseOfSubstance'))
+    chemical = data.get('chemical')
+    handleDataNodesMode = data.get('handleNoneDataNodesMode')
+    aop_id = data.get('aop_id')
 
     print("-------------------------")
-    print("ke_assay_dict: ", ke_assay_dict)
-    print("doseOfSubstance", doseOfSubstance)
-    print("chemical", chemical)
-    print("handleDataNodesMode", handleDataNodesMode)
+    print("ke_assay_dict:", ke_assay_dict)
+    print("doseOfSubstance:", doseOfSubstance)
+    print("chemical:", chemical)
+    print("handleDataNodesMode:", handleDataNodesMode)
     print("-------------------------")
 
-    # Call the run_dose_response function with the dictionary
     results = run_dose_response(doseOfSubstance, chemical, ke_assay_dict, handleDataNodesMode, aop_id)
-
     print("results:::::::::", results)
     return jsonify(results)
 
@@ -375,3 +392,47 @@ def get_chemical_suggestions():
     aop_id = request.args.get('aop_id')
     result = get_chemical_suggestions_for_aop(aop_id)
     return jsonify(result)
+
+
+def gene_enrichment2():
+    global ENRICH_GENES_CACHE
+    if ENRICH_GENES_CACHE:
+        return ENRICH_GENES_CACHE
+
+    with open('app/localDataFiles/GenesToKe_minified.json') as f:
+        data = json.load(f)
+        ENRICH_GENES_CACHE = data
+        return data
+
+
+@app.route('/api/gene_enrichment', methods=['GET'])
+def gene_enrichment():
+    emptyKeEventsValues = request.args.get('keList').split(',')
+
+    ke_to_genes = gene_enrichment2()  # Now returns a dictionary
+    assaysIntern = fetch_bioactivity_assays_intern()
+
+    results = {}
+    for ke in emptyKeEventsValues:
+        keName = 'KE' + ke
+        genes = ke_to_genes.get(keName, [])
+        matching_assays = []
+
+        for gene in genes:
+            for assay in assaysIntern:
+                assay_gene = (assay.get("gene") or {}).get("geneSymbol", "")
+                if assay_gene and assay_gene.upper() == gene.upper():
+                    assay_endpoint = assay.get("assayComponentEndpointName")
+                    if assay_endpoint and assay_endpoint not in matching_assays:
+                        matching_assays.append(assay_endpoint)
+
+        if matching_assays:
+            results[ke] = {
+                "KE": ke,
+                "assays": matching_assays
+            }
+        else:
+            results[ke] = None
+
+    print("Gene Enrichment Results:", results)
+    return jsonify(results)

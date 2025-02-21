@@ -129,6 +129,14 @@ function groupAssaysByGeneSymbol(assays) {
 //sending the user inputted values to the backend for processing
 // Add the bioactivity call within the searchButtonAOP click event listener
 document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById("searchFieldAOP").addEventListener("keydown", function (event) {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            document.getElementById("searchButtonAOP").click();
+        }
+    });
+
+
     document.getElementById("searchButtonAOP").addEventListener("click", async function (event) {
         event.preventDefault();
         document.getElementById("loader").style.display = "flex";
@@ -160,7 +168,6 @@ document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll('#checkbox-filter input[type="checkbox"]').forEach(function (checkbox) {
             formData.append(checkbox.name, checkbox.checked ? "1" : "0");
         });
-        console.log("FormData: ", formData.values());
 
         formData.append("checkboxGene", genesChecked ? "1" : "0");
         formData.append("keDegree", keDegreeSelection);
@@ -186,7 +193,6 @@ document.addEventListener('DOMContentLoaded', function () {
             const bioactivityAssays = await fetchBioactivityAssays();
             if (bioactivityAssays) {
                 assayGenesDict = groupAssaysByGeneSymbol(bioactivityAssays);
-                console.log("Assays Data Ready for Use:testtest", assayGenesDict);
             }
 
             render_graph('/searchAops', formData);
@@ -200,21 +206,16 @@ document.addEventListener('DOMContentLoaded', function () {
 async function displayNodeInfo(geneSymbol, node, keTypeColor) {
     try {
         const aliasSymbols = (await fetchAliasSymbols(geneSymbol)).flat().filter(symb => symb !== undefined);
-        console.log('Alias symbols:', aliasSymbols);
         const assayInfo = assayGenesDict[geneSymbol];
-        console.log('Assay Info:', assayInfo);
         let connectedKEs = node.connectedEdges().map(edge => {
-            console.log("Edge", edge);
             // Check connected nodes
             const connectedNode = edge.source().id() === node.id() ? edge.target() : edge.source();
             if (connectedNode.data().ke_type !== 'genes') {
-                console.log("Connected Node", connectedNode);
                 // Format as clickable link
                 let keId = connectedNode.data('ke_identifier').split('/').pop();
                 return `<a href="${connectedNode.data('ke_identifier')}" target="_blank">${keId}</a>`;
             }
         }).filter(ke => ke !== undefined).join(', '); // Filter out undefined and join
-        console.log("Data", node.data());
         // Correctly format the table rows and cells for each piece of data
         let contentHtml = `<strong>Node Data: (<span style="color: ${keTypeColor};">${node.data().ke_type}</span>)</strong><br><div><table>`;
         const geneName = node.data('name');
@@ -498,8 +499,6 @@ function addDataToGraph(data) {
         console.error("No data to add to the graph.");
         return;
     }
-
-    console.log("Adding data to the graph:", data);
 
     data.forEach((entry, index) => {
         const keid = getInsensitiveKeyValue(entry, ['KEID', 'keid']);
@@ -1770,7 +1769,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
-
 // Reusable function that processes an array of Key Event labels
 async function gatherAndProcessDoseResponse(kePaths) {
     removeGradientBarFromGraph()
@@ -1793,7 +1791,6 @@ async function gatherAndProcessDoseResponse(kePaths) {
         }
     });
 
-    console.log("handleNoneDataNodesModeCheckbox", handleNoneDataNodesModeCheckbox)
 
     const formData = new FormData();
 
@@ -1810,11 +1807,9 @@ async function gatherAndProcessDoseResponse(kePaths) {
         graph.forEach(node => {
             if (node.data('label') === path) {
                 const connectedKEs = node.connectedEdges();
-                console.log("connectedKEs", connectedKEs)
                 let foundAssay = false;
 
                 for (let edge of connectedKEs) {
-                    console.log("edge.source().data('ke_type')", edge.source())
                     const sourceIsAssayGene =
                         (edge.source().data('ke_type') === 'genes') &&
                         assayGenesDict &&
@@ -1834,10 +1829,8 @@ async function gatherAndProcessDoseResponse(kePaths) {
                 }
 
                 if (!foundAssay) {
-                    console.log("No assay found in graph for KE", node.data('label'));
 
                     const excelAssayData = checkUploadedFileForAssay(node.data('label'));
-                    console.log("CSV assay data:", excelAssayData);
 
                     if (excelAssayData) {
                         const keNumber = node.data('label').replace("KE ", "");
@@ -1858,18 +1851,56 @@ async function gatherAndProcessDoseResponse(kePaths) {
     });
     addGradientBarToGraph()
 
-    console.log("Final KE-to-Assays Map:", keToAssaysMap);
+    //get value of checkbox-enrichment
+    const checkboxEnrichment = document.getElementById("checkbox-enrichment");
+    const checkboxEnrichmentValue = checkboxEnrichment.querySelector("input[type='checkbox']").checked;
+
+    if (checkboxEnrichmentValue) {
+        let nullKeList = []
+        for (const key in keToAssaysMap) {
+            if (keToAssaysMap[key] === null) {
+                nullKeList.push(key)
+            }
+        }
+
+        const geneEnrichment = await fetchGeneEnrichment(nullKeList);
+
+        for (const key in keToAssaysMap) {
+            // If keToAssaysMap for the key is null and geneEnrichment has data,
+            // update it with the array of assays from geneEnrichment.
+            if (keToAssaysMap[key] === null && geneEnrichment[key]) {
+                keToAssaysMap[key] = geneEnrichment[key].assays;
+            }
+        }
+    }
+
+
     const jsonIfy = JSON.stringify(keToAssaysMap);
-    console.log("jsonIfy", jsonIfy);
 
     // Make your API call with the compiled data
     const doseOfSubstance = parseFloat(dose);
-    const response = await fetch(
-        `/api/dose_response?doseOfSubstance=${doseOfSubstance}&chemical=${chemical}&ke_assay_list=${encodeURIComponent(JSON.stringify(keToAssaysMap))}&handleNoneDataNodesMode=${handleNoneDataNodesModeCheckbox}&aop_id=${aopId}`,
-    );
+    const csrfToken = document.getElementById('csrf_token').value;
+
+    const payload = {
+        doseOfSubstance: doseOfSubstance,
+        chemical: chemical,
+        ke_assay_list: jsonIfy,
+        handleNoneDataNodesMode: handleNoneDataNodesModeCheckbox,
+        aop_id: aopId
+    };
+
+    const response = await fetch('/api/dose_response', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken  // Include CSRF token header
+        },
+        body: JSON.stringify(payload),
+        credentials: 'same-origin'
+    });
+
     const bioactivityAssays = await response.json();
 
-    console.log("Bioactivity Assays Results:", bioactivityAssays);
 
     // Reset all Key Event node styles
     cy.nodes('[ke_type = "Key Event"]').forEach(node => {
@@ -1922,7 +1953,6 @@ async function gatherAndProcessDoseResponse(kePaths) {
                 const probability = eventObj["cumulative probability"];
 
                 // Calculate the color using your gradient function
-                console.log("probability", probability)
                 const borderColor = getGradientColor(probability);
 
                 // Set the node's style with the determined border color and other styling properties
@@ -2175,7 +2205,6 @@ document.getElementById('runAllKeyEvents').addEventListener('click', async funct
         ShowToaster("You have to search for an AOP before you can run the dose response", "error")
         return;
     }
-    console.log("kePathskePaths", kePaths)
     document.getElementById('doseResponseDialog').style.display = "none";
     await gatherAndProcessDoseResponse(kePaths);
 });

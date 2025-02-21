@@ -210,7 +210,7 @@ html, body {
 /* Style for the checked state */
 #checkbox-dose input[type="checkbox"]:checked {
     background-color: #007bff;
-    border-color: #ç007bff;
+    border-color: #007bff;
 }
 
 /* Create a custom checkmark using a pseudo-element */
@@ -651,6 +651,7 @@ button:hover {
     color: #fff;
     cursor: pointer;
     font-size: 14px;
+    width: 100%;
 }
 
 .openDose-button:hover {
@@ -745,5 +746,34 @@ button:hover {
 #infoIcon {
     width: 20px;
     height: 20px;
+}
+
+#checkbox-enrichment {
+    display: flex;
+    align-items: center;
+    justify-self: start;
+    margin-left: 0;
+    white-space: nowrap;
+}
+
+.group-help {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    background-color: #007bff;
+    color: #fff;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 18px;
+    font-size: 12px;
+    margin-left: 5px;
+    font-weight: bold;
+    cursor: help;
+}
+
+.dose-metrics-container {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Adjust spacing as needed */
 }
 
