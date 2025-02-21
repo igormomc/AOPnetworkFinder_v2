@@ -1164,10 +1164,13 @@ $(document).ready(function () {
                     if (!item.id) {
                         return item.text;
                     }
-                    const synonyms = item.synonyms && item.synonyms.length > 0
-                        ? ` (${item.synonyms.join(', ')})`
+                    const filteredSynonyms = item.synonyms
+                        ? Array.from(new Set(item.synonyms)).filter(syn => syn !== item.text)
+                        : [];
+                    const synonymsText = filteredSynonyms.length > 0
+                        ? ` (${filteredSynonyms.join(', ')})`
                         : '';
-                    const displayText = $('<span>').text(item.text + synonyms);
+                    const displayText = $('<span>').text(item.text + synonymsText);
                     return displayText;
                 }
             });
@@ -1238,10 +1241,13 @@ $(document).ready(function () {
                     if (!item.id) {
                         return item.text;
                     }
-                    const synonyms = item.synonyms && item.synonyms.length > 0
-                        ? ` (${item.synonyms.join(', ')})`
+                    const filteredSynonyms = item.synonyms
+                        ? Array.from(new Set(item.synonyms)).filter(syn => syn !== item.text)
+                        : [];
+                    const synonymsText = filteredSynonyms.length > 0
+                        ? ` (${filteredSynonyms.join(', ')})`
                         : '';
-                    const displayText = $('<span>').text(item.text + synonyms);
+                    const displayText = $('<span>').text(item.text + synonymsText);
                     return displayText;
                 }
             });
@@ -1291,10 +1297,13 @@ $(document).ready(function () {
                     if (!item.id) {
                         return item.text;
                     }
-                    const synonyms = item.synonyms && item.synonyms.length > 0
-                        ? ` (${item.synonyms.join(', ')})`
+                    const filteredSynonyms = item.synonyms
+                        ? Array.from(new Set(item.synonyms)).filter(syn => syn !== item.text)
+                        : [];
+                    const synonymsText = filteredSynonyms.length > 0
+                        ? ` (${filteredSynonyms.join(', ')})`
                         : '';
-                    const displayText = $('<span>').text(item.text + synonyms);
+                    const displayText = $('<span>').text(item.text + synonymsText);
                     return displayText;
                 }
             });
