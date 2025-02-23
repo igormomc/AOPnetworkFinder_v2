@@ -198,7 +198,8 @@ document.addEventListener('DOMContentLoaded', function () {
             render_graph('/searchAops', formData);
 
         } else {
-            alert("Please enter an AOP ID, KE ID or Stressor Name");
+            ShowToaster("Please enter an AOP ID, KE ID or Stressor Name","error");
+        
         }
     });
 });
@@ -488,7 +489,8 @@ function render_graph(url_string, formData) {
             function (error) {
                 console.log('Error:', error);
                 document.getElementById("loader").style.display = "none";
-                alert("Error: Unable to fetch this AOP, please check the AOP ID and try again.");
+                ShowToaster("Error: Unable to fetch this AOP, please check the AOP ID and try again.", "error")
+               
             }
         );
     chemicalSuggestions = [];
@@ -606,7 +608,7 @@ function getInsensitiveKeyValue(obj, keys) {
 function uploadFile() {
     const searchValueAop = document.getElementById("searchFieldAOP").value.trim();
     if (!searchValueAop) {
-        alert('Please search for an AOP before uploading a file.');
+        ShowToaster("Please search for an AOP before uploading a file", "error");
         return;
     }
 
@@ -628,13 +630,13 @@ function handleFileUpload(event) {
         console.log(`Selected file: ${fileName}`);
 
         if (!fileName.endsWith('.csv')) {
-            alert('Invalid file format. Please upload a CSV file.');
+            ShowToaster("Invalid file format. Please upload a CSV file", "error");
             return;
         }
 
         const maxFileSize = 1048576; // 1MB in bytes
         if (file.size > maxFileSize) {
-            alert('File is too large. Please upload a file smaller than 1MB.');
+            ShowToaster("File is too large. Please upload a file smaller than 1MB.", "error");
             return;
         }
 
@@ -660,7 +662,7 @@ function handleFileUpload(event) {
             const requiredHeaders = ['keid', 'chemical', 'ac50', 'gene'];
             const missingHeaders = requiredHeaders.filter(header => !headers.includes(header));
             if (missingHeaders.length > 0) {
-                alert(`Invalid file format. Missing headers: ${missingHeaders.join(', ')}`);
+                ShowToaster(`Invalid file format. Missing headers: ${missingHeaders.join(', ')}`, "error");
                 return;
             }
 
@@ -1581,7 +1583,7 @@ document.getElementById('saveIcon').addEventListener('click', function () {
                 quality: 1
             });
         } else {
-            alert("Invalid file extension. Please use .png or .jpg only.");
+            ShowToaster("Invalid file extension. Please use .png or .jpg only.","error");
             return;
         }
 
@@ -1626,7 +1628,7 @@ document.getElementById('saveStyleIcon').addEventListener('click', function () {
             fileName = 'Cytoscape_AOPnetworkFinder_Style_Color_Blind.xml';
             break;
         default:
-            alert("Invalid choice. Please enter '1' or '2'.");
+            ShowToaster("Invalid choice. Please enter '1' or '2'.","error");
             return;
     }
 
@@ -1646,7 +1648,8 @@ document.getElementById('emailIcon').addEventListener('click', function () {
             window.open(url, '_blank');
         });
     } else {
-        alert('Please enter valid AOP IDs.');
+        ShowToaster("Please enter valid AOP IDs","error");
+    
     }
 
 });
