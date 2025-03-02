@@ -1,23 +1,21 @@
-import requests
-from numpy.ma.extras import unique
+import json
+import logging
+import os
 
-from app import app
+import requests
 from flask import render_template, request, jsonify, send_from_directory
+from werkzeug.utils import secure_filename
+
+import app.security_config.input_validation as input_validation
 import app.service.aop_visualizer_service as visualizer_sv
 import app.service.aop_wiki_data_extraction_service as data_extraction_sv
 import app.service.ke_degree_reader_service as ke_reader
-import app.security_config.input_validation as input_validation
-import logging
-import os
+from app import app
 from . import cache
-from werkzeug.utils import secure_filename
-
 from .security_config.AopKeFormDataExctarctionValidation import AopKeFormDataExtractionValidation, \
     sanitize_form_extraction
 from .security_config.AopKeFormValidation import AopKeFormValidation, sanitize_form
 from .service.dose_response import run_dose_response
-import json
-
 from .service.get_chemical_suggestions_for_AOP import get_chemical_suggestions_for_aop
 
 
@@ -360,6 +358,8 @@ def fetch_bioactivity_assays():
 @app.route('/api/dose_response', methods=['POST'])
 def dose_response():
     data = request.get_json()
+
+    # Process ke_assay_list: if it's a string, try converting it to a dict.
     ke_assay_dict = data.get('ke_assay_list')
     if isinstance(ke_assay_dict, str):
         try:
@@ -367,8 +367,17 @@ def dose_response():
         except Exception as e:
             return jsonify({'error': f'Invalid ke_assay_list data: {str(e)}'}), 400
 
-    doseOfSubstance = float(data.get('doseOfSubstance'))
+    # Convert doseOfSubstance to float, with error handling.
+    try:
+        doseOfSubstance = float(data.get('doseOfSubstance'))
+    except (TypeError, ValueError) as e:
+        return jsonify({'error': f'Invalid doseOfSubstance: {str(e)}'}), 400
+
+    # Make sure that chemical is provided.
     chemical = data.get('chemical')
+    if chemical is None:
+        return jsonify({'error': 'Missing required field: chemical'}), 400
+
     handleDataNodesMode = data.get('handleNoneDataNodesMode')
     aop_id = data.get('aop_id')
 
@@ -380,6 +389,7 @@ def dose_response():
     print("-------------------------")
 
     results = run_dose_response(doseOfSubstance, chemical, ke_assay_dict, handleDataNodesMode, aop_id)
+
     print("results:::::::::", results)
     return jsonify(results)
 

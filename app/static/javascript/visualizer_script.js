@@ -198,8 +198,8 @@ document.addEventListener('DOMContentLoaded', function () {
             render_graph('/searchAops', formData);
 
         } else {
-            ShowToaster("Please enter an AOP ID, KE ID or Stressor Name","error");
-        
+            ShowToaster("Please enter an AOP ID, KE ID or Stressor Name", "error");
+
         }
     });
 });
@@ -490,7 +490,7 @@ function render_graph(url_string, formData) {
                 console.log('Error:', error);
                 document.getElementById("loader").style.display = "none";
                 ShowToaster("Error: Unable to fetch this AOP, please check the AOP ID and try again.", "error")
-               
+
             }
         );
     chemicalSuggestions = [];
@@ -1592,7 +1592,7 @@ document.getElementById('saveIcon').addEventListener('click', function () {
                 quality: 1
             });
         } else {
-            ShowToaster("Invalid file extension. Please use .png or .jpg only.","error");
+            ShowToaster("Invalid file extension. Please use .png or .jpg only.", "error");
             return;
         }
 
@@ -1637,7 +1637,7 @@ document.getElementById('saveStyleIcon').addEventListener('click', function () {
             fileName = 'Cytoscape_AOPnetworkFinder_Style_Color_Blind.xml';
             break;
         default:
-            ShowToaster("Invalid choice. Please enter '1' or '2'.","error");
+            ShowToaster("Invalid choice. Please enter '1' or '2'.", "error");
             return;
     }
 
@@ -1657,8 +1657,8 @@ document.getElementById('emailIcon').addEventListener('click', function () {
             window.open(url, '_blank');
         });
     } else {
-        ShowToaster("Please enter valid AOP IDs","error");
-    
+        ShowToaster("Please enter valid AOP IDs", "error");
+
     }
 
 });
