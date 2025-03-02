@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 
 from app import app
 
@@ -214,22 +215,64 @@ class TestOtherEndpoints(BaseTestCase):
             self.assertTrue(len(data) == 3 or len(data) < 3,
                             "Chemical suggestions should be 3 elements or fewer if not enough chemicals.")
 
-    def test_gene_enrichment_valid(self):
+
+class TestGeneEnrichmentEndpoint(unittest.TestCase):
+    def setUp(self):
+        app.config['TESTING'] = True
+        # Prevent exceptions from propagating
+        app.config['PROPAGATE_EXCEPTIONS'] = False
+        self.client = app.test_client()
+
+    @patch("app.route.fetch_bioactivity_assays_intern")
+    @patch("app.route.gene_enrichment2")
+    def test_gene_enrichment_valid(self, mock_gene_enrichment2, mock_fetch_assays):
         """
-        Test that GET /api/gene_enrichment with valid keList query parameter returns a 200 status code
-        and that the response contains the expected structure for each key.
+        Test the /api/gene_enrichment endpoint with a valid keList parameter
+        using dummy data for external dependencies.
         """
+        # Dummy gene mapping: keys are KE names ("KE" + ke id)
+        dummy_gene_to_genes = {
+            "KE386": ["GENE1", "GENE2"],
+            "KE1487": ["GENE3"],
+            "KE1488": []  # No genes → enrichment should yield None
+        }
+        # Dummy assays: list of assay dictionaries.
+        # The endpoint looks for assays whose "gene" dictionary's "geneSymbol" matches one of the genes.
+        dummy_assays = [
+            {"gene": {"geneSymbol": "GENE1"}, "assayComponentEndpointName": "ASSAY1"},
+            {"gene": {"geneSymbol": "GENE3"}, "assayComponentEndpointName": "ASSAY2"},
+            {"gene": {"geneSymbol": "GENE2"}, "assayComponentEndpointName": "ASSAY3"},
+            # A duplicate assay for GENE1 to test that we don't return duplicates.
+            {"gene": {"geneSymbol": "GENE1"}, "assayComponentEndpointName": "ASSAY1"}
+        ]
+
+        # Set up our mocks:
+        mock_gene_enrichment2.return_value = dummy_gene_to_genes
+        mock_fetch_assays.return_value = dummy_assays
+
+        # Call the endpoint with keList = "386,1487,1488"
         response = self.client.get('/api/gene_enrichment', query_string={'keList': '386,1487,1488'})
         self.assertEqual(response.status_code, 200)
         data = response.get_json()
         self.assertIsInstance(data, dict, "Expected response to be a dictionary.")
-        for ke in ['386', '1487', '1488']:
-            self.assertIn(ke, data, f"Response should include key '{ke}'.")
-            if data[ke] is not None:
-                self.assertIsInstance(data[ke], dict, f"Value for key '{ke}' should be a dictionary.")
-                self.assertIn("KE", data[ke], f"Dictionary for key '{ke}' should contain a 'KE' field.")
-                self.assertIn("assays", data[ke], f"Dictionary for key '{ke}' should contain an 'assays' field.")
-                self.assertIsInstance(data[ke]["assays"], list, f"'assays' for key '{ke}' should be a list.")
+
+        # For KE "386": dummy mapping "KE386" has ["GENE1", "GENE2"],
+        # so we expect assays "ASSAY1" (for GENE1) and "ASSAY3" (for GENE2).
+        self.assertIn("386", data)
+        self.assertIsNotNone(data["386"])
+        self.assertEqual(data["386"]["KE"], "386")
+        self.assertCountEqual(data["386"]["assays"], ["ASSAY1", "ASSAY3"])
+
+        # For KE "1487": dummy mapping "KE1487" has ["GENE3"],
+        # so we expect assay "ASSAY2".
+        self.assertIn("1487", data)
+        self.assertIsNotNone(data["1487"])
+        self.assertEqual(data["1487"]["KE"], "1487")
+        self.assertCountEqual(data["1487"]["assays"], ["ASSAY2"])
+
+        # For KE "1488": dummy mapping "KE1488" is an empty list, so enrichment returns None.
+        self.assertIn("1488", data)
+        self.assertIsNone(data["1488"])
 
 
 if __name__ == "__main__":
