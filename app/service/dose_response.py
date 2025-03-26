@@ -1,13 +1,9 @@
-import pymc as pm
-import numpy as np
-import pandas as pd
 import json
-import requests
 
-from app.service.branch_correction import branch_correct_dose_response, run_dose_response_on_partial_AOP, \
-    complete_ac50_values, run_goat_dose_response
+import numpy as np
+
+from app.service.branch_correction import run_goat_dose_response
 from app.service.convertExcelToJsonAc50 import get_excel_data
-from app.service.create_AOP import create_AOP_from_scratch, add_AOP_variable_by_keid
 
 
 def run_dose_response(doseOfSubstance, chemical, ke_assay_dict, handleDataNodesMode, aop_id):
@@ -68,6 +64,7 @@ def run_dose_response(doseOfSubstance, chemical, ke_assay_dict, handleDataNodesM
 
     # --------------------------------------------------
     # 3. Hill-equation-based likelihood
+    # dose is of concentration in μM
     # --------------------------------------------------
     def hill_equation_likelihood(dose, ac50):
         """Simple Hill-like equation: response = dose / (dose + AC50)."""
@@ -114,12 +111,14 @@ def run_dose_response(doseOfSubstance, chemical, ke_assay_dict, handleDataNodesM
                 print(f"[WARN] Unexpected assay type ({type(assay)}) for KE '{ke_number}'. Skipping.")
 
         if ac50_values:
-            if (handleDataNodesMode == "toggleAverage"):
-                ke_values_ac50[ke_number] = np.mean(ac50_values)
-            elif (handleDataNodesMode == "toggleMedian"):
-                ke_values_ac50[ke_number] = np.median(ac50_values)
-            elif (handleDataNodesMode == "toggleMinimum"):
-                ke_values_ac50[ke_number] = np.min(ac50_values)
+            if handleDataNodesMode == "toggleAverage":
+                ke_values_ac50[ke_number] = float(np.mean(ac50_values))
+            elif handleDataNodesMode == "toggleMedian":
+                ke_values_ac50[ke_number] = float(np.median(ac50_values))
+            elif handleDataNodesMode == "toggleMinimum":
+                value = np.min(ac50_values)
+                print("np.min(ac50_value)", value)
+                ke_values_ac50[ke_number] = int(value)
         else:
             ke_values_ac50[ke_number] = None
             ke_with_no_ac50Data[ke_number] = 'True'

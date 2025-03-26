@@ -1181,7 +1181,10 @@ $(document).ready(function () {
                 const selectedData = e.params.data;
             });
         })
-        .catch(error => console.error('Fetch error:', error));
+        .catch(error => {
+            console.error('Fetch error:', error)
+
+        });
 
     $('#cellsDropdown').val(null).trigger('change');
 });
