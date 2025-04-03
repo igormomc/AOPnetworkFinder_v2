@@ -35,6 +35,9 @@ let toastTimeout;
 
 function ShowToaster(message, color, autoRemove = true) {
     var x = document.getElementById("ShowToaster");
+    if (color === "error") {
+        autoRemove = false;
+    }
 
     if (toastTimeout) {
         clearTimeout(toastTimeout);
@@ -2216,8 +2219,12 @@ function addGradientBarToGraph() {
 
 document.getElementById('runAllKeyEvents').addEventListener('click', async function () {
     const kePaths = cy?.nodes('[ke_type = "Key Event"], [ke_type = "Molecular Initiating Event"]').map(node => node.data('label'));
+    const aopIds = document.getElementById("searchFieldAOP").value.split(",").map(id => id.trim());
     if (!kePaths) {
         ShowToaster("You have to search for an AOP before you can run the dose response", "error")
+        return;
+    } else if (aopIds.length > 1) {
+        ShowToaster("You can only run the dose response for one AOP at a time", "error")
         return;
     }
     document.getElementById('doseResponseDialog').style.display = "none";
