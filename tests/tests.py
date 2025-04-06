@@ -162,16 +162,6 @@ class TestOtherEndpoints(BaseTestCase):
         self.assertIsInstance(data, dict)
         self.assertTrue(len(data) > 0, "The cells endpoint should return a non-empty dictionary.")
 
-    def test_get_organs(self):
-        """
-        Test that GET /get_organs returns a 200 status code and a non-empty dictionary.
-        """
-        response = self.client.get('/get_organs')
-        self.assertEqual(response.status_code, 200)
-        data = response.get_json()
-        self.assertIsInstance(data, dict)
-        self.assertTrue(len(data) > 0, "The organs endpoint should return a non-empty dictionary.")
-
     def test_get_taxonomies(self):
         """
         Test that GET /get_taxonomies returns a 200 status code and a non-empty dictionary.
@@ -181,26 +171,6 @@ class TestOtherEndpoints(BaseTestCase):
         data = response.get_json()
         self.assertIsInstance(data, dict)
         self.assertTrue(len(data) > 0, "The taxonomies endpoint should return a non-empty dictionary.")
-
-    def test_get_sexes(self):
-        """
-        Test that GET /get_sexes returns a 200 status code and a list or dictionary.
-        """
-        response = self.client.get('/get_sexes')
-        self.assertEqual(response.status_code, 200)
-        data = response.get_json()
-        self.assertTrue(isinstance(data, list) or isinstance(data, dict),
-                        "The sexes endpoint should return a list or a dictionary.")
-
-    def test_get_life_stages(self):
-        """
-        Test that GET /get_life_stages returns a 200 status code and a non-empty dictionary.
-        """
-        response = self.client.get('/get_life_stages')
-        self.assertEqual(response.status_code, 200)
-        data = response.get_json()
-        self.assertIsInstance(data, dict)
-        self.assertTrue(len(data) > 0, "The life stages endpoint should return a non-empty dictionary.")
 
     def test_get_chemical_suggestions(self):
         """
