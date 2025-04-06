@@ -227,12 +227,18 @@ html, body {
 }
 
 
+.dropdown-container3 {
+    gap: 2%;
+    width: 100%;
+    margin-bottom: 16px
+}
+
 .dropdown-container {
     display: flex;
     justify-content: space-between;
     gap: 2%;
     width: 100%;
-    margin-bottom: 16px; /* Adjust the space between rows of dropdowns */
+    margin-bottom: 16px
 }
 
 .search-group {
@@ -590,7 +596,7 @@ button:hover {
 
 .doseResponseDialog-content {
     background-color: #fff;
-    margin: 10% auto; /* 10% from the top and centered */
+    margin: 5% auto; /* 10% from the top and centered */
     padding: 20px;
     border-radius: 8px;
     width: 400px;
@@ -651,7 +657,6 @@ button:hover {
     color: #fff;
     cursor: pointer;
     font-size: 14px;
-    width: 100%;
 }
 
 .openDose-button:hover {
@@ -771,9 +776,75 @@ button:hover {
     cursor: help;
 }
 
+.group-help2 {
+    display: inline-block;
+    width: 41px;
+    height: 18px;
+    background-color: #007bff;
+    color: #fff;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 18px;
+    font-size: 12px;
+    margin-left: 5px;
+    font-weight: bold;
+    cursor: help;
+}
+
 .dose-metrics-container {
     display: flex;
     align-items: center;
     gap: 10px; /* Adjust spacing as needed */
 }
 
+.mode-selector {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 5px 10px;
+    align-items: center;
+}
+
+/* Ensure that each radio input is aligned to the right */
+.mode-selector input[type="radio"] {
+    justify-self: end;
+    align-self: center;
+}
+
+/* Ensure that each label is aligned to the left */
+.mode-selector label {
+    justify-self: start;
+    align-self: center;
+}
+
+/* Optional: Style the help icon within the label */
+.mode-selector .group-help {
+    margin-left: 5px;
+    font-size: 0.9em;
+    color: #666;
+    cursor: help;
+}
+
+.dose-dropdowns {
+    margin-bottom: 1rem;
+}
+
+
+.search-group2 {
+    margin-right: auto;
+    width: 100%;
+}
+
+.search-group3 {
+    margin-right: auto;
+    width: 85%;
+}
+
+#doseResponseDialog .search-group select {
+    width: 250px; /* Set your desired fixed width */
+    box-sizing: border-box; /* Ensures padding/border don't exceed the width */
+}
+
+select {
+    width: 150px;
+    box-sizing: border-box;
+}

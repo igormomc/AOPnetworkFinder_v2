@@ -1,7 +1,10 @@
+import ast
+import csv
 import json
 import logging
 import os
 
+import pandas as pd
 import requests
 from flask import render_template, request, jsonify, send_from_directory
 from werkzeug.utils import secure_filename
@@ -17,6 +20,36 @@ from .security_config.AopKeFormDataExctarctionValidation import AopKeFormDataExt
 from .security_config.AopKeFormValidation import AopKeFormValidation, sanitize_form
 from .service.dose_response import run_dose_response
 from .service.get_chemical_suggestions_for_AOP import get_chemical_suggestions_for_aop
+
+
+def parse_list_string(value):
+    """
+    Attempts to parse a string that may represent a list.
+    If it does, return a set of stripped items.
+    Otherwise, return a set with the original stripped value.
+    """
+    try:
+        parsed = ast.literal_eval(value)
+        if isinstance(parsed, list):
+            return {str(item).strip() for item in parsed if str(item).strip()}
+        else:
+            return {str(parsed).strip()}
+    except Exception:
+        return {value.strip()}
+
+
+aopwiki_ke_info = []
+
+
+def load_csv_data():
+    global aopwiki_ke_info
+    with open("app/localDataFiles/aopwiki_KE_info.csv", mode="r", newline="") as csvfile:
+        reader = csv.DictReader(csvfile)
+        aopwiki_ke_info = [row for row in reader]
+
+
+# Load the CSV data when the application starts
+load_csv_data()
 
 
 # Page Routing
@@ -153,22 +186,14 @@ def search_aops():
             for aop_id in aop_query_list:
                 all_filters_match = True
                 if (len(life_stage_query) > 0):
-                    all_filters_match = False
+                    all_filters_match = True
                     for life_stage in life_stage_query.split(','):
-                        if visualizer_sv.check_if_life_stage_exist_in_aop(aop_id, life_stage):
-                            all_filters_match = True
+                        print("life_stage", life_stage)
 
                 if (len(sex_query) > 0):
-                    all_filters_match = False
+                    all_filters_match = True
                     for sex in sex_query.split(','):
-                        if visualizer_sv.check_if_sex_exist_in_aop(aop_id, sex):
-                            all_filters_match = True
-
-                if (len(organ_query) > 0):
-                    all_filters_match = False
-                    for organ in organ_query.split(','):
-                        if visualizer_sv.check_if_organ_exist_in_aop(aop_id, organ):
-                            all_filters_match = True
+                        print("sex", sex)
 
                 if len(cell_query) > 0:
                     all_filters_match = False
@@ -177,10 +202,9 @@ def search_aops():
                             all_filters_match = True
 
                 if len(taxonomy_query) > 0:
-                    all_filters_match = False
+                    all_filters_match = True
                     for taxonomy in taxonomy_query.split(','):
-                        if visualizer_sv.check_if_taxonomic_exist_in_aop(aop_id, taxonomy):
-                            all_filters_match = True
+                        print("taxonomy", taxonomy)
 
                 if all_filters_match:
                     filtered_aop_list.append(aop_id)
@@ -211,13 +235,81 @@ def search_aops():
         unique_ke = visualizer_sv.find_all_ke_from_json(aop_cytoscape)
         ke_merge_possiblity = visualizer_sv.merge_activation(unique_ke)
 
+        ke_list = []
+        print("unique_ke:", unique_ke)
+
+        for node in aop_cytoscape['elements']['nodes']:
+            data = node.get('data', {})
+            label = data.get('label', None)
+            # Only add labels that start with "KE"
+            if label and label.startswith("KE"):
+                ke_list.append(label)
+
+        organ_set = set()
+        sex_set = set()
+        lifestage_set = set()
+        for row in aopwiki_ke_info:
+            index_value = row["index"].strip()
+            if index_value in ke_list:
+                # Process organ field
+                organ_field = row["organ"].strip()
+                if organ_field:
+                    try:
+                        parsed = ast.literal_eval(organ_field)
+                        if isinstance(parsed, list):
+                            for organ in parsed:
+                                organ_set.add(organ.strip())
+                        else:
+                            organ_set.add(organ_field)
+                    except Exception:
+                        organ_set.add(organ_field)
+
+                # Process sex field
+                sex_field = row["sex"].strip()
+                if sex_field:
+                    try:
+                        parsed = ast.literal_eval(sex_field)
+                        if isinstance(parsed, list):
+                            for sex in parsed:
+                                sex_set.add(sex.strip())
+                        else:
+                            sex_set.add(sex_field)
+                    except Exception:
+                        sex_set.add(sex_field)
+
+                # Process lifestage field
+                lifestage_field = row["lifestage"].strip()
+                if lifestage_field:
+                    try:
+                        parsed = ast.literal_eval(lifestage_field)
+                        if isinstance(parsed, list):
+                            for stage in parsed:
+                                lifestage_set.add(stage.strip())
+                        else:
+                            lifestage_set.add(lifestage_field)
+                    except Exception:
+                        lifestage_set.add(lifestage_field)
+
+        # Convert sets to lists if needed
+        organ_list_final = list(organ_set)
+        sex_list_final = list(sex_set)
+        lifestage_list_final = list(lifestage_set)
+
+        print("organ_set", organ_list_final)
+        print("sex", sex_list_final)
+        print("lifestage", lifestage_list_final)
         final_response = {
             'elements': aop_cytoscape['elements'],
             'merge_options:': ke_merge_possiblity,
             'aop_before_filter': aop_list_filtered,
-            'aop_after_filter': aop_after_filter
+            'aop_after_filter': aop_after_filter,
+            'organ_set': organ_list_final,
+            'sex_set': sex_list_final,
+            'lifestage_set': lifestage_list_final,
+
         }
         json_result = jsonify(final_response)
+        print("json_result:::::::", final_response)
         return json_result
     return render_template('visualizer_page_one.html', data=None)
 
@@ -274,13 +366,30 @@ def get_cells():
     return jsonify(cell_list)
 
 
-@app.route('/get_organs')
+@app.route('/get_organs', methods=['POST'])
 @cache.cached(timeout=6000)
 def get_organs():
-    # Populate data with stressor name
-    organ_list = visualizer_sv.get_all_organs_from_aop_wiki()
+    # Expect a JSON body with a key "ids" that contains a list of IDs.
+    data = request.get_json()
+    id_list = data.get("ids")
+    if not id_list or not isinstance(id_list, list):
+        return jsonify({"error": "Please provide a list of IDs in the 'ids' field."}), 400
 
-    return jsonify(organ_list)
+    # Load the CSV file; adjust the path if necessary.
+    try:
+        df = pd.read_csv('aopwiki_KE_info.csv')
+    except Exception as e:
+        return jsonify({"error": f"Could not read CSV file: {str(e)}"}), 500
+
+    # Filter the DataFrame rows by the provided IDs.
+    # Then, filter out rows where the 'organ' column is empty or missing.
+    df_filtered = df[df['index'].isin(id_list)]
+    df_filtered = df_filtered[df_filtered['organ'].notna() & (df_filtered['organ'] != "")]
+
+    # Extract unique organs from the filtered rows.
+    organs = df_filtered['organ'].unique().tolist()
+
+    return jsonify(organs)
 
 
 @app.route('/get_taxonomies')
@@ -381,8 +490,17 @@ def dose_response():
     handleDataNodesMode = data.get('handleNoneDataNodesMode')
     aop_id = data.get('aop_id')
 
+    organFilter = data.get('organFilter')
+    lifeStageFilter = data.get('lifeStageFilter')
+    sexFilter = data.get('sexFilter')
+    taxonomyFilter = data.get('taxonomyFilter')
+    print("organFilter:", organFilter)
+    print("lifeStageFilter:", lifeStageFilter)
+    print("sexFilter:", sexFilter)
+    print("taxonomyFilter::", taxonomyFilter)
+
     print("-------------------------")
-    print("ke_assay_dict:", ke_assay_dict)
+    print("ke_assay_dict::::", ke_assay_dict)
     print("doseOfSubstance:", doseOfSubstance)
     print("chemical:", chemical)
     print("handleDataNodesMode:", handleDataNodesMode)
@@ -444,5 +562,21 @@ def gene_enrichment():
         else:
             results[ke] = None
 
-    print("Gene Enrichment Results:", results)
+    print("Gene Enrichment Results::::::", results)
     return jsonify(results)
+
+
+@app.route('/api/read_assays_domainApp', methods=['GET'])
+def read_assays_domainApp():
+    file_path = 'app/localDataFiles/organism_organ_doa.csv'
+    try:
+        with open(file_path, mode='r', newline='', encoding='utf8') as csvfile:
+            # DictReader automatically uses the first row as the header row
+            reader = csv.DictReader(csvfile)
+            data = [row for row in reader]
+            # Convert to JSON
+            json_data = json.dumps(data)
+            return json_data
+    except Exception as e:
+        logging.error(f"Error reading the CSV file: {e}")
+        return jsonify({'error': 'Failed to read the CSV file'}), 500

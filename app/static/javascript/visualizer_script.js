@@ -26,7 +26,7 @@ const colorBlindColors = {
 
 let assayGenesDict = null;
 let userUploadedData = null;
-
+let domainDataAssays = null;
 
 let lastClickTime = 0;
 const doubleClickThreshold = 300; // Milliseconds
@@ -162,7 +162,6 @@ document.addEventListener('DOMContentLoaded', function () {
         var searchValueStressor = document.getElementById("stressorDropdown").value;
         var genesChecked = document.getElementById("checkedBoxGene").checked;
         var keDegreeSelection = document.querySelector('input[name="degree"]:checked').value;
-        var organsDropdown = $('#organsDropdown').val();
         var taxonomiDropdown = $('#taxonomiDropdown').val();
         var lifeStageDropdown = $('#lifeStageDropdown').val();
         var sexDropdown = $('#sexDropdown').val();
@@ -175,11 +174,10 @@ document.addEventListener('DOMContentLoaded', function () {
         formData.append("checkboxGene", genesChecked ? "1" : "0");
         formData.append("keDegree", keDegreeSelection);
 
-        if (searchValueAop || searchValueKe || searchValueStressor || organsDropdown || taxonomiDropdown || lifeStageDropdown || sexDropdown || cellsDropdown) {
+        if (searchValueAop || searchValueKe || searchValueStressor || taxonomiDropdown || lifeStageDropdown || sexDropdown || cellsDropdown) {
             formData.append("searchFieldAOP", searchValueAop);
             formData.append("searchFieldKE", searchValueKe);
             formData.append("stressorDropdown", searchValueStressor);
-            formData.append("organDropdown", organsDropdown);
             formData.append("taxValue", taxonomiDropdown);
             formData.append("lifeStageDropdown", lifeStageDropdown);
             formData.append("sexDropdown", sexDropdown);
@@ -197,9 +195,11 @@ document.addEventListener('DOMContentLoaded', function () {
             if (bioactivityAssays) {
                 assayGenesDict = groupAssaysByGeneSymbol(bioactivityAssays);
             }
-
+            const AssayDomainData = await fetchDomainOfApplicationAssays();
+            if (AssayDomainData) {
+                domainDataAssays = AssayDomainData;
+            }
             render_graph('/searchAops', formData);
-
         } else {
             ShowToaster("Please enter an AOP ID, KE ID or Stressor Name", "error");
 
@@ -258,7 +258,6 @@ function render_graph(url_string, formData) {
         .then(cyData => {
                 globalGraphJson = cyData.elements;
                 globalMergeJson = cyData['merge_options:'];
-                console.log(globalMergeJson);
 
                 const destinationDropdown = document.getElementById('keepNodeDropDown');
                 const sourceDropdown = document.getElementById('loseNodeDropDown');
@@ -267,7 +266,15 @@ function render_graph(url_string, formData) {
                 loggingAopVisualized(cyData['aop_before_filter'], cyData['aop_after_filter']);
                 populateMergeOptionsDropDown(destinationDropdown, sourceDropdown, globalGraphJson);
                 populateHighlightAopDropDown(aopDropDown, cyData['aop_after_filter']);
-
+                if (cyData.organ_set && cyData.organ_set.length > 0) {
+                    updateOrgansDropdown(cyData.organ_set);
+                }
+                if (cyData.lifestage_set && cyData.lifestage_set.length > 0) {
+                    updateLifestageDropdown(cyData.lifestage_set);
+                }
+                if (cyData.sex_set && cyData.sex_set.length > 0) {
+                    updateSexDropdown(cyData.sex_set);
+                }
                 cy = cytoscape({
                     container: document.getElementById('cy'),
                     elements: {
@@ -384,7 +391,6 @@ function render_graph(url_string, formData) {
                 createMergeButtons(globalMergeJson);
 
                 cy.on('click', 'node', function (evt) {
-                    console.log("Node clicked: ", evt.target);
                     const currentTime = new Date().getTime();
                     if (currentTime - lastClickTime <= doubleClickThreshold) {
                         const node = evt.target;
@@ -510,9 +516,6 @@ function addDataToGraph(data) {
         const chemName = getInsensitiveKeyValue(entry, ['chemical', 'chem']);
         const ac50 = getInsensitiveKeyValue(entry, ['AC50', 'ac50']) || 'N/A';
         const gene = getInsensitiveKeyValue(entry, ['GENE', 'gene']);
-        console.log("gen", gene);
-
-        console.log(`Row ${index + 1}: KE ID: ${keid}, Assay: ${chemName}, AC50: ${ac50}`);
 
         if (!keid) {
             console.warn(`Row ${index + 1}: Missing KE ID. Skipping entry:`, entry);
@@ -553,7 +556,6 @@ function addDataToGraph(data) {
                         'height': 10
                     }
                 });
-                console.log(`Added Assay Node: assay-${gene}`);
             } catch (error) {
                 console.error(`Error adding assay node "assay-${gene}":`, error);
                 return;
@@ -630,7 +632,6 @@ function handleFileUpload(event) {
     const file = event.target.files[0];
     if (file) {
         const fileName = file.name;
-        console.log(`Selected file: ${fileName}`);
 
         if (!fileName.endsWith('.csv')) {
             ShowToaster("Invalid file format. Please upload a CSV file", "error");
@@ -660,7 +661,6 @@ function handleFileUpload(event) {
 
             const rows = fileContent.split('\n').map(row => row.trim()).filter(row => row);
             const headers = rows.shift().split(',').map(header => header.trim().toLowerCase());
-            console.log('Headers in uploaded file:', headers);
 
             const requiredHeaders = ['keid', 'chemical', 'ac50', 'gene'];
             const missingHeaders = requiredHeaders.filter(header => !headers.includes(header));
@@ -688,8 +688,6 @@ function handleFileUpload(event) {
                 return row;
             });
 
-            console.log('Sanitized Data:', sanitizedData);
-
             const requiredKeys = {
                 keid: ['keid'],
                 chemical: ['chemical', 'chem'],
@@ -716,10 +714,8 @@ function handleFileUpload(event) {
                 return;
             }
 
-            console.log('Validation passed. All required keys are present.');
 
             userUploadedData = sanitizedData;
-            console.log("userUploadedData", userUploadedData);
 
             const formData = new FormData();
             formData.append('file_name', file.name);
@@ -785,8 +781,6 @@ function updateChemicalSuggestions() {
         const suggestionsToShow = chemicalSuggestions.slice(0, 3).join(', ');
         chemicalHelpElement.innerHTML = `<strong>Suggested chemicals:</strong> ${suggestionsToShow}`;
         chemicalHelpElement.title = 'These are the chemicals that we have the most data on for this AOP.';
-
-        console.log('Chemical Suggestions:', chemicalSuggestions);
     }
 }
 
@@ -938,7 +932,6 @@ function createMergeButtons(mergeOptions) {
                 }
                 // Toggle 'active' class on clicked button
                 this.classList.toggle('active');
-                console.log(`Merge option selected: ${option}`);
             });
 
             pairDiv.appendChild(button); // Add the button to the pair's div
@@ -981,7 +974,6 @@ function populateMergeOptionsDropDown(dropDownKeep, dropDownLose, graphJson) {
 function populateHighlightAopDropDown(dropDownAop, graphJson) {
 
     const aopAfterFilter = graphJson;
-    console.log(aopAfterFilter);
     dropDownAop.innerHTML = '';
 
     aopAfterFilter.forEach(aopItem => {
@@ -1192,8 +1184,15 @@ $(document).ready(function () {
     $('#cellsDropdown').val(null).trigger('change');
 });
 
-
 $(document).ready(function () {
+    $('#organsDropdown').select2({
+        placeholder: "Please run an AOP search to populate organs",
+        allowClear: true,
+        data: [{id: "", text: "No organs available yet"}],
+    });
+});
+
+/*$(document).ready(function () {
     fetch('/get_organs')
         .then(response => response.json())
         .then(data => {
@@ -1227,8 +1226,7 @@ $(document).ready(function () {
         .catch(error => console.error('Fetch error:', error));
 
     $('#organsDropdown').val(null).trigger('change');
-});
-
+});*/
 
 $(document).ready(function () {
     fetch('/get_taxonomies')
@@ -1244,7 +1242,6 @@ $(document).ready(function () {
                 placeholder: "Search for a Taxonomy",
                 allowClear: true,
                 data: formattedTaxData,
-                multiple: true,
                 templateResult: function (item) {
                     if (!item.id) {
                         return item.text;
@@ -1265,60 +1262,21 @@ $(document).ready(function () {
     $('#taxonomiDropdown').val(null).trigger('change');
 });
 
-
 $(document).ready(function () {
-    fetch('/get_sexes')
-        .then(response => response.json())
-        .then(data => {
-            const formattedSexData = data.map(sex => ({
-                id: sex,
-                text: sex
-            }));
-            $('#sexDropdown').select2({
-                placeholder: "Search for a Sex",
-                allowClear: true,
-                data: formattedSexData,
-                multiple: true
-            });
-        })
-        .catch(error => console.error('Fetch error:', error));
-    $('#sexDropdown').val(null).trigger('change');
+    $('#sexDropdown').select2({
+        placeholder: "Please run an AOP search to populate sex",
+        allowClear: true,
+        data: [{id: "", text: "No sex available yet"}],
+    });
 });
 
 
 $(document).ready(function () {
-    fetch('/get_life_stages')
-        .then(response => response.json())
-        .then(data => {
-            const formattedLifeData = Object.keys(data).map(lifeStage => ({
-                id: lifeStage,
-                text: lifeStage,
-                synonyms: data[lifeStage]
-            }));
-
-            $('#lifeStageDropdown').select2({
-                placeholder: "Search for a Life Stage",
-                allowClear: true,
-                data: formattedLifeData,
-                multiple: true,
-                templateResult: function (item) {
-                    if (!item.id) {
-                        return item.text;
-                    }
-                    const filteredSynonyms = item.synonyms
-                        ? Array.from(new Set(item.synonyms)).filter(syn => syn !== item.text)
-                        : [];
-                    const synonymsText = filteredSynonyms.length > 0
-                        ? ` (${filteredSynonyms.join(', ')})`
-                        : '';
-                    const displayText = $('<span>').text(item.text + synonymsText);
-                    return displayText;
-                }
-            });
-        })
-        .catch(error => console.error('Fetch error:', error));
-
-    $('#lifeStageDropdown').val(null).trigger('change');
+    $('#lifeStageDropdown').select2({
+        placeholder: "Please run an AOP search to populate lifestages",
+        allowClear: true,
+        data: [{id: "", text: "No lifestage available yet"}],
+    });
 });
 
 
@@ -1711,7 +1669,6 @@ function checkUploadedFileForAssay(ke) {
     }
 
     const keData = userUploadedData.find(row => row.keid === ke);
-    console.log("KE Data from uploaded file:", keData);
     if (!keData) {
         return null;
     }
@@ -1870,41 +1827,92 @@ async function gatherAndProcessDoseResponse(kePaths) {
     addGradientBarToGraph()
 
     //get value of checkbox-enrichment
-    const checkboxEnrichment = document.getElementById("checkbox-enrichment");
-    const checkboxEnrichmentValue = checkboxEnrichment.querySelector("input[type='checkbox']").checked;
+    const checkboxEnrichment = document.getElementById("enrichmentMode");
+    const selectedMode = document.querySelector("input[name='mode']:checked").value;
 
-    if (checkboxEnrichmentValue) {
-        let nullKeList = []
+    if (selectedMode === "EnrichmentMode") {
+        let keList = []
         for (const key in keToAssaysMap) {
-            if (keToAssaysMap[key] === null) {
-                nullKeList.push(key)
-            }
+            keList.push(key)
         }
 
-        const geneEnrichment = await fetchGeneEnrichment(nullKeList);
+        const geneEnrichment = await fetchGeneEnrichment(keList);
 
         for (const key in keToAssaysMap) {
-            // If keToAssaysMap for the key is null and geneEnrichment has data,
+            // If geneEnrichment has data,
             // update it with the array of assays from geneEnrichment.
-            if (keToAssaysMap[key] === null && geneEnrichment[key]) {
+            if (geneEnrichment[key]) {
+                //check if geneEnrichment is in
                 keToAssaysMap[key] = geneEnrichment[key].assays;
+            }
+
+        }
+
+    } else if (selectedMode === "MergeMode") {
+        let keList = []
+        for (const key in keToAssaysMap) {
+            keList.push(key)
+        }
+        const geneEnrichment = await fetchGeneEnrichment(keList);
+        for (const key in keToAssaysMap) {
+            //add geneEnrichment to keToAssaysMap, but leave the existing assays be
+
+            if (geneEnrichment[key]) {
+                keToAssaysMap[key] = keToAssaysMap[key] || [];
+                keToAssaysMap[key] = keToAssaysMap[key].concat(geneEnrichment[key].assays);
             }
         }
     }
 
-
-    const jsonIfy = JSON.stringify(keToAssaysMap);
-
-    // Make your API call with the compiled data
+    //const jsonIfy = JSON.stringify(keToAssaysMap);
     const doseOfSubstance = parseFloat(dose);
     const csrfToken = document.getElementById('csrf_token').value;
 
+    let selectedOrgan = $('#organsDropdown').val() ? $('#organsDropdown').val()[0] : null;
+    let selectedLifeStage = $('#lifeStageDropdown').val() ? $('#lifeStageDropdown').val()[0] : null;
+    let selectedSex = $('#sexDropdown').val() ? $('#sexDropdown').val()[0] : null;
+    let taxonomies = $('#taxonomiDropdown').val() ? $('#taxonomiDropdown').val()[0] : null;
+
+    let filteredAssaysMap = {};
+
+    Object.keys(keToAssaysMap).forEach(key => {
+        const assaysList = keToAssaysMap[key];
+        if (!assaysList) {
+            filteredAssaysMap[key] = null;
+            return;
+        }
+
+        // Filter assays based on selected organ, life stage, and sex.
+        const filteredAssays = assaysList.filter(assay => {
+            const assayData = domainDataAssays.find(data => data.assayComponentEndpointName === assay);
+            if (!assayData) return false;
+
+            if (selectedOrgan && assayData.organ !== selectedOrgan) return false;
+
+            if (selectedLifeStage && assayData.lifeStage !== selectedLifeStage) return false;
+
+            if (selectedSex && assayData.sex !== selectedSex) return false;
+
+            if (taxonomies && assayData.organismName !== taxonomies) return false;
+
+            return true;
+        });
+
+        filteredAssaysMap[key] = filteredAssays.length > 0 ? filteredAssays : null;
+    });
+
+
+    console.log("filteredAssaysMap", filteredAssaysMap)
     const payload = {
         doseOfSubstance: doseOfSubstance,
         chemical: chemical,
-        ke_assay_list: jsonIfy,
+        ke_assay_list: JSON.stringify(filteredAssaysMap),
         handleNoneDataNodesMode: handleNoneDataNodesModeCheckbox,
-        aop_id: aopId
+        aop_id: aopId,
+        organFilter: $('#organsDropdown').val(),
+        lifeStageFilter: $('#lifeStageDropdown').val(),
+        taxonomyFilter: $('#taxonomiDropdown').val(),
+        sexFilter: $('#sexDropdown').val(),
     };
 
     const response = await fetch('/api/dose_response', {
@@ -2230,6 +2238,84 @@ document.getElementById('runAllKeyEvents').addEventListener('click', async funct
     document.getElementById('doseResponseDialog').style.display = "none";
     await gatherAndProcessDoseResponse(kePaths);
 });
+
+function updateOrgansDropdown(organList) {
+    // Format the list for select2 (if you need synonyms, adjust accordingly)
+    const formattedOrgsData = organList.map(organ => ({
+        id: organ,
+        text: organ,
+        synonyms: [] // Adjust if you have synonyms
+    }));
+
+    // Destroy the current select2 instance to reinitialize it
+    $('#organsDropdown').select2('destroy');
+
+    // Empty the dropdown options and reinitialize select2 with the new data
+    $('#organsDropdown').empty().select2({
+        placeholder: "Search for an Organ",
+        allowClear: true,
+        data: formattedOrgsData,
+        templateResult: function (item) {
+            if (!item.id) return item.text;
+            return $('<span>').text(item.text);
+        }
+    });
+
+    // Clear any pre-selected values
+    $('#organsDropdown').val(null).trigger('change');
+}
+
+function updateLifestageDropdown(lifestageList) {
+    // Format the list for select2 (if you need synonyms, adjust accordingly)
+    const formattedLifestageData = lifestageList.map(lifestage => ({
+        id: lifestage,
+        text: lifestage,
+        synonyms: []
+    }));
+
+    // Destroy the current select2 instance to reinitialize it
+    $('#lifeStageDropdown').select2('destroy');
+
+    // Empty the dropdown options and reinitialize select2 with the new data
+    $('#lifeStageDropdown').empty().select2({
+        placeholder: "Search for an Lifestage",
+        allowClear: true,
+        data: formattedLifestageData,
+        templateResult: function (item) {
+            if (!item.id) return item.text;
+            return $('<span>').text(item.text);
+        }
+    });
+
+    // Clear any pre-selected values
+    $('#lifeStageDropdown').val(null).trigger('change');
+}
+
+function updateSexDropdown(sexList) {
+    const formattedSexData = sexList.map(sex => ({
+        id: sex,
+        text: sex,
+        synonyms: []
+    }));
+
+    // Destroy the current select2 instance to reinitialize it
+    $('#sexDropdown').select2('destroy');
+
+    // Empty the dropdown options and reinitialize select2 with the new data
+    $('#sexDropdown').empty().select2({
+        placeholder: "Search for an sex",
+        allowClear: true,
+        data: formattedSexData,
+        templateResult: function (item) {
+            if (!item.id) return item.text;
+            return $('<span>').text(item.text);
+        }
+    });
+
+    // Clear any pre-selected values
+    $('#sexDropdown').val(null).trigger('change');
+}
+
 
 /*document.getElementById('triggerDoseResponse').addEventListener('click', async function () {
     const kePaths = document.getElementById("kePath").value
