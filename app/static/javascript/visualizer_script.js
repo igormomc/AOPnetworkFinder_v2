@@ -2206,32 +2206,23 @@ function removeGradientBarFromGraph() {
 }
 
 function addGradientBarToGraph() {
-    cy.add({
-        group: 'nodes',
-        data: {
-            id: 'gradient-bar',
-            label: '',
-            isLegend: true
-        },
-        position: {x: 0, y: 0},
-        selectable: false,
-        grabbable: true,
-        classes: 'gradient-bar-node'
-    });
-
-    cy.style()
-        .selector('.gradient-bar-node')
-        .style({
-            'background-image': "/static/images/bar-gradient.png",
-            'background-fit': 'contain',
-            'background-opacity': 1,
-            'shape': 'rectangle',
-            'width': 470,
-            'height': 50,
-            'border-width': 0,
-            'border-opacity': 0
-        })
-        .update();
+    // Check if the gradient bar already exists
+    let gradientBar = document.getElementById('gradient-bar');
+    if (!gradientBar) {
+        // Create a new div for the gradient bar
+        gradientBar = document.createElement('div');
+        gradientBar.id = 'gradient-bar';
+        gradientBar.style.position = 'absolute';
+        gradientBar.style.top = '40px';
+        gradientBar.style.left = '10px';
+        gradientBar.style.width = '550px';
+        gradientBar.style.height = '100px';
+        gradientBar.style.backgroundImage = 'url("/static/images/bar-gradient.png")';
+        gradientBar.style.backgroundSize = 'contain';
+        gradientBar.style.backgroundRepeat = 'no-repeat';
+        gradientBar.style.zIndex = '1000';
+        document.getElementById('cy').appendChild(gradientBar);
+    }
 }
 
 document.getElementById('runAllKeyEvents').addEventListener('click', async function () {
