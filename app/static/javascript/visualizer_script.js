@@ -114,6 +114,11 @@ document.getElementById('checkedAssayGenes').addEventListener('change', function
     updateGeneVisibility();
 });
 
+document.getElementById("toggleFiltersCheckbox").addEventListener("change", function () {
+    var filterSection = document.getElementById("filterDropdowns");
+    filterSection.style.display = this.checked ? "none" : "block";
+});
+
 
 function groupAssaysByGeneSymbol(assays) {
     const geneAssayMap = {};
@@ -1864,7 +1869,7 @@ async function gatherAndProcessDoseResponse(kePaths) {
         }
     }
 
-    //const jsonIfy = JSON.stringify(keToAssaysMap);
+    const jsonIfy = JSON.stringify(keToAssaysMap);
     const doseOfSubstance = parseFloat(dose);
     const csrfToken = document.getElementById('csrf_token').value;
 
@@ -1875,6 +1880,8 @@ async function gatherAndProcessDoseResponse(kePaths) {
 
     let filteredAssaysMap = {};
 
+
+    const isCheckedExplorative = document.getElementById('toggleFiltersCheckbox').checked;
     Object.keys(keToAssaysMap).forEach(key => {
         const assaysList = keToAssaysMap[key];
         if (!assaysList) {
@@ -1883,30 +1890,32 @@ async function gatherAndProcessDoseResponse(kePaths) {
         }
 
         // Filter assays based on selected organ, life stage, and sex.
-        const filteredAssays = assaysList.filter(assay => {
-            const assayData = domainDataAssays.find(data => data.assayComponentEndpointName === assay);
-            if (!assayData) return false;
+        if (!isCheckedExplorative) {
+            const filteredAssays = assaysList.filter(assay => {
+                const assayData = domainDataAssays.find(data => data.assayComponentEndpointName === assay);
+                if (!assayData) return false;
 
-            if (selectedOrgan && assayData.organ !== selectedOrgan) return false;
+                if (selectedOrgan && assayData.organ !== selectedOrgan) return false;
 
-            if (selectedLifeStage && assayData.lifeStage !== selectedLifeStage) return false;
+                if (selectedLifeStage && assayData.lifeStage !== selectedLifeStage) return false;
 
-            if (selectedSex && assayData.sex !== selectedSex) return false;
+                if (selectedSex && assayData.sex !== selectedSex) return false;
 
-            if (taxonomies && assayData.organismName !== taxonomies) return false;
+                if (taxonomies && assayData.organismName !== taxonomies) return false;
 
-            return true;
-        });
+                return true;
+            });
 
-        filteredAssaysMap[key] = filteredAssays.length > 0 ? filteredAssays : null;
+            filteredAssaysMap[key] = filteredAssays.length > 0 ? filteredAssays : null;
+        }
     });
 
+    let keAssayListToSend = isCheckedExplorative ? jsonIfy : JSON.stringify(filteredAssaysMap);
 
-    console.log("filteredAssaysMap", filteredAssaysMap)
     const payload = {
         doseOfSubstance: doseOfSubstance,
         chemical: chemical,
-        ke_assay_list: JSON.stringify(filteredAssaysMap),
+        ke_assay_list: keAssayListToSend,
         handleNoneDataNodesMode: handleNoneDataNodesModeCheckbox,
         aop_id: aopId,
         organFilter: $('#organsDropdown').val(),

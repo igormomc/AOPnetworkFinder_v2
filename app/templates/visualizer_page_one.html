@@ -218,93 +218,132 @@
         <!-- <span class="close">&times;</span> -->
     </div>
 </div>
-
 <div id="doseResponseDialog" class="modal">
     <div class="doseResponseDialog-content">
-        <span class="close" onclick="document.getElementById('doseResponseDialog').style.display='none'">&times;</span>
-        <h2>Dose Response Calculation</h2>
-        <div class="doseResponseWrapper">
-            <!-- Dose and Chemical Inputs -->
-            <div class="input-group">
-                <label for="dose">Dose</label>
-                <input type="text" id="dose" placeholder="Enter Dose"/>
-            </div>
-            <div class="input-group">
-                <label for="chemical">Chemical</label>
-                <input type="text" id="chemical" placeholder="Enter Chemical"/>
-                <small id="chemicalHelp" class="form-text text-muted"></small>
-            </div>
-            <!-- Dropdowns Section -->
-            <div class="dropdown-container">
-                <div class="search-group2">
-                    <label for="organsDropdown">Organs:</label>
-                    <select id="organsDropdown">
-                        <option value="">Select an organ</option>
-                        <!-- Add organ options here -->
-                    </select>
+        <!-- Modal Header -->
+        <header class="modal-header">
+            <span class="close"
+                  onclick="document.getElementById('doseResponseDialog').style.display='none'">&times;</span>
+            <h2>Dose Response Calculation</h2>
+        </header>
+
+        <!-- Form Container -->
+        <form class="modal-form" onsubmit="return false;">
+
+            <!-- Basic Information Section -->
+            <section id="basicInformation">
+                <h3>Basic Information</h3>
+                <div class="input-group">
+                    <label for="dose">Dose</label>
+                    <input type="text" id="dose" placeholder="Enter Dose" required/>
                 </div>
-                <div class="search-group2">
-                    <label for="lifeStageDropdown">Life Stage:</label>
-                    <select id="lifeStageDropdown">
-                        <option value="">Select a life stage</option>
-                        <!-- Add life stage options here -->
-                    </select>
+                <div class="input-group">
+                    <label for="chemical">Chemical</label>
+                    <input type="text" id="chemical" placeholder="Enter Chemical"/>
+                    <small id="chemicalHelp" class="form-text text-muted"></small>
                 </div>
-                <span class="group-help2"
-                      title="Filter the assays connected to the genes in the key events. For example, if you filter by 'Male,' only assays that have been tested on male subjects will be included in the calculation">?</span>
-            </div>
-            <div class="dropdown-container">
-                <div class="search-group3">
-                    <label for="sexDropdown">Sex:</label>
-                    <select id="sexDropdown">
-                        <option value="">Select sex</option>
-                        <!-- Add sex options here -->
-                    </select>
-                </div>
-                <div class="search-group2">
-                    <label for="taxonomiDropdown">Taxonomy:</label>
-                    <select id="taxonomiDropdown">
-                        <option value="">Select taxonomy</option>
-                        <!-- Add taxonomy options here -->
-                    </select>
-                </div>
-            </div>
-            <!-- Metrics Checkboxes -->
-            <div class="dose-metrics-container">
-                <div class="checkbox-group" id="checkbox-dose">
+            </section>
+
+            <!-- Advanced Options Section -->
+            <section id="advancedOptions">
+                <h3>Advanced Options</h3>
+                <div class="checkbox-container" style="margin-bottom: 10px;">
                     <label>
-                        <input type="checkbox" id="toggleMedian" name="toggleMedian" checked>
-                        Median
+                        <input type="checkbox" id="toggleFiltersCheckbox">
+                        Explorative Mode
                     </label>
-                    <label>
-                        <input type="checkbox" id="toggleAverage" name="toggleAverage">
-                        Average
-                    </label>
-                    <label>
-                        <input type="checkbox" id="toggleMinimum" name="toggleMinimum">
-                        Minimum
-                    </label>
+                    <span class="group-help3"
+                          title="If you toggle this on, it means that we will use assays that have not been checked for quality. This is a riskier method for running the dose response, but it will yield more results because more assays are available.">?</span>
                 </div>
-                <span class="group-help" title="Choose one or more metrics for dose response calculations:
+
+                <div id="filterDropdowns">
+                    <!-- First Dropdown Row -->
+                    <div class="dropdown-container">
+                        <div class="search-group2">
+                            <label for="organsDropdown">Organs:</label>
+                            <select id="organsDropdown">
+                                <option value="">Select an organ</option>
+                                <!-- Add organ options here -->
+                            </select>
+                        </div>
+                        <div class="search-group2">
+                            <label for="lifeStageDropdown">Life Stage:</label>
+                            <select id="lifeStageDropdown">
+                                <option value="">Select a life stage</option>
+                                <!-- Add life stage options here -->
+                            </select>
+                        </div>
+                        <span class="group-help2"
+                              title="Filter the assays connected to the genes in the key events. For example, if you filter by 'Male,' only assays that have been tested on male subjects will be included in the calculation">?</span>
+                    </div>
+                    <!-- Second Dropdown Row -->
+                    <div class="dropdown-container">
+                        <div class="search-group3">
+                            <label for="sexDropdown">Sex:</label>
+                            <select id="sexDropdown">
+                                <option value="">Select sex</option>
+                                <!-- Add sex options here -->
+                            </select>
+                        </div>
+                        <div class="search-group2">
+                            <label for="taxonomiDropdown">Taxonomy:</label>
+                            <select id="taxonomiDropdown">
+                                <option value="">Select taxonomy</option>
+                                <!-- Add taxonomy options here -->
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Metrics and Mode Section -->
+            <section id="metricsMode">
+                <h3>Metrics & Mode Selection</h3>
+                <div class="dose-metrics-container">
+                    <div class="checkbox-group" id="checkbox-dose">
+                        <label>
+                            <input type="checkbox" id="toggleMedian" name="toggleMedian" checked>
+                            Median
+                        </label>
+                        <label>
+                            <input type="checkbox" id="toggleAverage" name="toggleAverage">
+                            Average
+                        </label>
+                        <label>
+                            <input type="checkbox" id="toggleMinimum" name="toggleMinimum">
+                            Minimum
+                        </label>
+                    </div>
+                    <span class="group-help" title="Choose one or more metrics for dose response calculations:
 • Median: uses the middle value of all the AC50 values.
 • Average: computes the mean of all the AC50 values.
-• Minimum: selects the lowest value of all the AC50 values.">?</span>
-            </div>
-            <!-- Button Group -->
-            <div class="button-group">
-                <button type="button" id="runAllKeyEvents" class="openDose-button">
-                    Run Dose Response
-                </button>
+• Minimum: selects the lowest value of all the AC50 values.
+• Restricted Mode: uses only the assays from genes that comes from AOP WIKI.
+• Manually curated Mode: uses only the assays from genes that are manually curated.
+• Merge Mode: uses all the assays from genes that are manually curated and from AOP WIKI.
+">?</span>
+                </div>
+
                 <div class="mode-selector">
                     <input type="radio" id="aopwikimode" name="mode" value="AopWikiMode" checked>
-                    <label for="aopwikimode">Aop-Wiki Mode</label>
+                    <label for="aopwikimode">Restricted Mode </label>
                     <input type="radio" id="enrichmentMode" name="mode" value="EnrichmentMode">
-                    <label for="enrichmentMode">Enrichment Mode</label>
+                    <label for="enrichmentMode">Manually curated Mode</label>
                     <input type="radio" id="mergemode" name="mode" value="MergeMode">
                     <label for="mergemode">Merge Mode</label>
                 </div>
-            </div>
-        </div>
+            </section>
+
+            <!-- Modal Footer -->
+            <footer class="modal-footer">
+                <div class="button-group">
+                    <button type="button" id="runAllKeyEvents" class="openDose-button">
+                        Run Dose Response
+                    </button>
+                </div>
+            </footer>
+
+        </form>
     </div>
 </div>
 

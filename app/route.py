@@ -117,26 +117,6 @@ def search_aops():
             cells = visualizer_sv.get_all_cells_from_aop_wiki()
             cache.set('get_cells', cells, timeout=6000)
 
-        organs = cache.get('get_organs')
-        if organs is None:
-            organs = visualizer_sv.get_all_organs_from_aop_wiki()
-            cache.set('get_organs', organs, timeout=6000)
-
-        taxonomies = cache.get('get_taxonomies')
-        if taxonomies is None:
-            taxonomies = visualizer_sv.get_all_taxonomies_from_aop_wiki()
-            cache.set('get_taxonomies', taxonomies, timeout=6000)
-
-        sexes = cache.get('get_sexes')
-        if sexes is None:
-            sexes = visualizer_sv.get_all_sex_from_aop_wiki()
-            cache.set('get_sexes', sexes, timeout=6000)
-
-        lifeStages = cache.get('get_life_stages')
-        if lifeStages is None:
-            lifeStages = visualizer_sv.get_all_life_stage_from_aop_wiki()
-            cache.set('get_life_stages', lifeStages, timeout=6000)
-
         # Check if the submitted stressor is in the list of stressors
         if stressor_query in stressors:
             # Valid stressor submission
