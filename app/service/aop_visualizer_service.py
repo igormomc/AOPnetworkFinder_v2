@@ -1,11 +1,13 @@
 import logging
+import re
 from collections import defaultdict
+
 import networkx
+import textdistance
+
 import app.SPARQL_QUERIES.visualizer_queries as sq
 import app.model.aop as aop
 import app.service.plot_aop_service as plot_aop
-import re
-import textdistance
 from app.service.helpers import group_life_stages, group_taxonomic_groups, group_cells, group_organs
 
 
@@ -47,7 +49,7 @@ def visualize_aop_user_input(aop_ids, checkbox_gene, under_development_chx, endo
 
     # One AOP
     if len(set_of_unique_aops) == 1:
-        #logging.error(f"set_of_unique_aops: {sq.aop_dump(next(iter(set_of_unique_aops)))}")
+        # logging.error(f"set_of_unique_aops: {sq.aop_dump(next(iter(set_of_unique_aops)))}")
 
         aop_rdf_data = sq.aop_dump(next(iter(set_of_unique_aops)))
         if len(aop_rdf_data['results']['bindings']) != 0:
@@ -232,17 +234,19 @@ def get_all_stressors_from_aop_wiki():
         list_of_stressors.append(x['str_title']['value'])
     return list_of_stressors
 
+
 def get_all_cells_from_aop_wiki():
     list_of_cells = []
     # query
     cell_dict = sq.cell_dump()
-    #print("cell_dict", cell_dict)
+    # print("cell_dict", cell_dict)
     for x in cell_dict['results']['bindings']:
         # append to list_of_stressors
         list_of_cells.append(x['cell_title']['value'])
 
     grouped_cells = group_cells(list_of_cells)
     return grouped_cells
+
 
 def get_all_organs_from_aop_wiki():
     list_of_organs = []
@@ -254,6 +258,7 @@ def get_all_organs_from_aop_wiki():
     grouped_organs = group_organs(list_of_organs)
     return grouped_organs
 
+
 def get_all_taxonomies_from_aop_wiki():
     list_of_taxonomic = []
     # query
@@ -264,14 +269,16 @@ def get_all_taxonomies_from_aop_wiki():
     grouped_taxonomic = group_taxonomic_groups(list_of_taxonomic)
     return grouped_taxonomic
 
+
 def get_all_sex_from_aop_wiki():
     list_of_sex = []
     # query
     sex_dict = sq.sex_dump()
-    #print(sex_dict)
+    # print(sex_dict)
     for x in sex_dict['results']['bindings']:
         list_of_sex.append(x['sexObject']['value'])
     return list_of_sex
+
 
 def get_all_life_stage_from_aop_wiki():
     list_of_life_stage = []
@@ -313,12 +320,14 @@ def check_if_life_stage_exist_in_aop(aop_id, life_stage):
         return True
     return False
 
+
 def check_if_sex_exist_in_aop(aop_id, sex):
     sex_json = sq.sex_filter_search(aop_id, sex)
     logging.error(f"sex_json_JSON: {sex_json}, {aop_id}, {sex}")
     if len(sex_json['results']['bindings']) >= 1:
         return True
     return False
+
 
 def check_if_organ_exist_in_aop(aop_id, organ):
     grouped_organs = get_all_organs_from_aop_wiki()
@@ -329,6 +338,7 @@ def check_if_organ_exist_in_aop(aop_id, organ):
         return True
     return False
 
+
 def check_if_cell_exist_in_aop(aop_id, cell):
     grouped_cells = get_all_cells_from_aop_wiki()
     cell_array = grouped_cells.get(cell, [cell])
@@ -337,6 +347,7 @@ def check_if_cell_exist_in_aop(aop_id, cell):
     if len(cell_json['results']['bindings']) >= 1:
         return True
     return False
+
 
 def check_if_taxonomic_exist_in_aop(aop_id, taxonomic):
     grouped_taxonomic = get_all_taxonomies_from_aop_wiki()

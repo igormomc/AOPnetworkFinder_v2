@@ -16,7 +16,7 @@ life_stage_mapping = {
     "Development": [
         "Development",
         "During brain development",
-            "During brain development, adulthood and aging",
+        "During brain development, adulthood and aging",
         "During development and at adulthood"
     ],
     "Embryo": [
@@ -48,7 +48,6 @@ life_stage_mapping = {
         "Not Otherwise Specified"
     ]
 }
-
 
 taxonomic_mapping = {
     "Hamster": [
@@ -189,7 +188,6 @@ taxonomic_mapping = {
         "Macaca fascicularis",
         "Macaca mulatta",
         "Pan troglodytes",
-        "Homo sapiens"
     ],
     "Animals": [
         "Murinae gen. sp.",
@@ -444,5 +442,3 @@ organ_groups = {
         "tissue"
     ]
 }
-
-

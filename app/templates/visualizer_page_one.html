@@ -100,7 +100,7 @@
         </form>
 
         <!-- Container for the dropdowns that need to be side by side -->
-        <div class="dropdown-container">
+        <div class="dropdown-container3">
             <div class="search-group" id="searchGroupStressor">
                 <label for="stressorDropdown">Stressor:</label>
                 <select id="stressorDropdown">
@@ -114,34 +114,34 @@
                 <option></option>
             </div>
         </div>
+        <!--
+                <!&ndash; Another pair of dropdowns &ndash;>
+                <div class="dropdown-container">
+                    <div class="search-group" id="searchGroupOrgans">
+                        <label for="organsDropdown">Organs:</label>
+                        <select id="organsDropdown" multiple="multiple"></select>
+                        <option></option>
+                    </div>
 
-        <!-- Another pair of dropdowns -->
-        <div class="dropdown-container">
-            <div class="search-group" id="searchGroupOrgans">
-                <label for="organsDropdown">Organs:</label>
-                <select id="organsDropdown" multiple="multiple"></select>
-                <option></option>
-            </div>
-
-            <div class="search-group" id="searchGroupTaxonomies">
-                <label for="taxonomiDropdown">Taxonomies:</label>
-                <select id="taxonomiDropdown" multiple="multiple"></select>
-                <option></option>
-            </div>
-        </div>
-        <!-- Another pair of dropdowns -->
-        <div class="dropdown-container">
-            <div class="search-group" id="searchGroupLifeStage">
-                <label for="lifeStageDropdown">LifeStage:</label>
-                <select id="lifeStageDropdown" multiple="multiple"></select>
-                <option></option>
-            </div>
-            <div class="search-group" id="searchGroupSex">
-                <label for="sexDropdown">Sex:</label>
-                <select id="sexDropdown" multiple="multiple"></select>
-                <option></option>
-            </div>
-        </div>
+                    <div class="search-group" id="searchGroupTaxonomies">
+                        <label for="taxonomiDropdown">Taxonomies:</label>
+                        <select id="taxonomiDropdown" multiple="multiple"></select>
+                        <option></option>
+                    </div>
+                </div>
+                <!&ndash; Another pair of dropdowns &ndash;>
+                <div class="dropdown-container">
+                    <div class="search-group" id="searchGroupLifeStage">
+                        <label for="lifeStageDropdown">LifeStage:</label>
+                        <select id="lifeStageDropdown" multiple="multiple"></select>
+                        <option></option>
+                    </div>
+                    <div class="search-group" id="searchGroupSex">
+                        <label for="sexDropdown">Sex:</label>
+                        <select id="sexDropdown" multiple="multiple"></select>
+                        <option></option>
+                    </div>
+                </div>-->
 
         <!-- Checkboxes at the bottom -->
         <!-- <div class="checkbox-group" id="checkbox-filter">
@@ -218,52 +218,135 @@
         <!-- <span class="close">&times;</span> -->
     </div>
 </div>
-
 <div id="doseResponseDialog" class="modal">
     <div class="doseResponseDialog-content">
-        <span class="close" onclick="document.getElementById('doseResponseDialog').style.display='none'">&times;</span>
-        <h2>Dose Response Calculation</h2>
-        <div class="doseResponseWrapper">
-            <div class="input-group">
-                <label for="dose">Dose</label>
-                <input type="text" id="dose" placeholder="Enter Dose"/>
-            </div>
-            <div class="input-group">
-                <label for="chemical">Chemical</label>
-                <input type="text" id="chemical" placeholder="Enter Chemical"/>
-                <small id="chemicalHelp" class="form-text text-muted"></small>
-            </div>
-            <div class="checkbox-group" id="checkbox-dose">
-                <label>
-                    <input type="checkbox" id="toggleMedian" name="toggleMedian" checked>
-                    Median
-                </label>
-                <label>
-                    <input type="checkbox" id="toggleAverage" name="toggleAverage">
-                    Average
-                </label>
-                <label>
-                    <input type="checkbox" id="toggleMinimum" name="toggleMinimum">
-                    Minimum
-                </label>
-            </div>
+        <!-- Modal Header -->
+        <header class="modal-header">
+            <span class="close"
+                  onclick="document.getElementById('doseResponseDialog').style.display='none'">&times;</span>
+            <h2>Dose Response Calculation</h2>
+        </header>
 
-            <!-- <div class="input-group">
-                 <label for="kePath">Key Events</label>
-                 <input type="text" id="kePath" placeholder="Enter Key Events"/>
-             </div>-->
+        <!-- Form Container -->
+        <form class="modal-form" onsubmit="return false;">
 
-            <div class="button-group">
-                <!--<button type="button" id="triggerDoseResponse" class="openDose-button">
-                    Run Dose Response
-                </button>-->
-                <button type="button" id="runAllKeyEvents" class="openDose-button">
-                    Run on All Key Events
-                </button>
-            </div>
-        </div>
+            <!-- Basic Information Section -->
+            <section id="basicInformation">
+                <h3>Basic Information</h3>
+                <div class="input-group">
+                    <label for="dose">Dose</label>
+                    <input type="text" id="dose" placeholder="Enter Dose" required/>
+                </div>
+                <div class="input-group">
+                    <label for="chemical">Chemical</label>
+                    <input type="text" id="chemical" placeholder="Enter Chemical"/>
+                    <small id="chemicalHelp" class="form-text text-muted"></small>
+                </div>
+            </section>
+
+            <!-- Advanced Options Section -->
+            <section id="advancedOptions">
+                <h3>Advanced Options</h3>
+                <div class="checkbox-container" style="margin-bottom: 10px;">
+                    <label>
+                        <input type="checkbox" id="toggleFiltersCheckbox">
+                        Explorative Mode
+                    </label>
+                    <span class="group-help3"
+                          title="If you toggle this on, it means that we will use assays that have not been checked for quality. This is a riskier method for running the dose response, but it will yield more results because more assays are available.">?</span>
+                </div>
+
+                <div id="filterDropdowns">
+                    <!-- First Dropdown Row -->
+                    <div class="dropdown-container">
+                        <div class="search-group2">
+                            <label for="organsDropdown">Organs:</label>
+                            <select id="organsDropdown">
+                                <option value="">Select an organ</option>
+                                <!-- Add organ options here -->
+                            </select>
+                        </div>
+                        <div class="search-group2">
+                            <label for="lifeStageDropdown">Life Stage:</label>
+                            <select id="lifeStageDropdown">
+                                <option value="">Select a life stage</option>
+                                <!-- Add life stage options here -->
+                            </select>
+                        </div>
+                        <span class="group-help2"
+                              title="Filter the assays connected to the genes in the key events. For example, if you filter by 'Male,' only assays that have been tested on male subjects will be included in the calculation">?</span>
+                    </div>
+                    <!-- Second Dropdown Row -->
+                    <div class="dropdown-container">
+                        <div class="search-group3">
+                            <label for="sexDropdown">Sex:</label>
+                            <select id="sexDropdown">
+                                <option value="">Select sex</option>
+                                <!-- Add sex options here -->
+                            </select>
+                        </div>
+                        <div class="search-group2">
+                            <label for="taxonomiDropdown">Taxonomy:</label>
+                            <select id="taxonomiDropdown">
+                                <option value="">Select taxonomy</option>
+                                <!-- Add taxonomy options here -->
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Metrics and Mode Section -->
+            <section id="metricsMode">
+                <h3>Metrics & Mode Selection</h3>
+                <div class="dose-metrics-container">
+                    <div class="checkbox-group" id="checkbox-dose">
+                        <label>
+                            <input type="checkbox" id="toggleMedian" name="toggleMedian" checked>
+                            Median
+                        </label>
+                        <label>
+                            <input type="checkbox" id="toggleAverage" name="toggleAverage">
+                            Average
+                        </label>
+                        <label>
+                            <input type="checkbox" id="toggleMinimum" name="toggleMinimum">
+                            Minimum
+                        </label>
+                    </div>
+                    <span class="group-help" title="Choose one or more metrics for dose response calculations:
+• Median: uses the middle value of all the AC50 values.
+• Average: computes the mean of all the AC50 values.
+• Minimum: selects the lowest value of all the AC50 values.
+• Restricted Mode: uses only the assays from genes that comes from AOP WIKI.
+• Manually curated Mode: uses only the assays from genes that are manually curated.
+• Merge Mode: uses all the assays from genes that are manually curated and from AOP WIKI.
+">?</span>
+                </div>
+
+                <div class="mode-selector">
+                    <input type="radio" id="aopwikimode" name="mode" value="AopWikiMode" checked>
+                    <label for="aopwikimode">Restricted Mode </label>
+                    <input type="radio" id="enrichmentMode" name="mode" value="EnrichmentMode">
+                    <label for="enrichmentMode">Manually curated Mode</label>
+                    <input type="radio" id="mergemode" name="mode" value="MergeMode">
+                    <label for="mergemode">Merge Mode</label>
+                </div>
+            </section>
+
+            <!-- Modal Footer -->
+            <footer class="modal-footer">
+                <div class="button-group">
+                    <button type="button" id="runAllKeyEvents" class="openDose-button">
+                        Run Dose Response
+                    </button>
+                </div>
+            </footer>
+
+        </form>
     </div>
 </div>
+
 
 <div id="ShowToaster">
     <span></span>
@@ -288,6 +371,7 @@
 <script src="{{ url_for('static', filename='javascript/scripts/fetchAllAssays.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/scripts/fetchDoseResponse.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/scripts/getChemicalSuggestions.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/scripts/fetchGeneEnrichment.js') }}"></script>
 
 
 <!-- Include xlsx library -->
@@ -298,8 +382,3 @@
    <script src="{{ url_for('static', filename='javascript/input_validator_script.js') }}"></script>-->
 
 {% endblock %}
-
-
-
-
-
