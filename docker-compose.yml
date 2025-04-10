@@ -7,13 +7,12 @@ services:
       args:
         options: --reload
     ports:
-      - 8000:8000
+      - "8000:8000"
     volumes:
-      - .:/app
       - venv:/venv
     environment:
       FLASK_ENV: development
-      FLASK_DEBUG: 1
+      FLASK_DEBUG: "1"
 
 volumes:
   venv:
