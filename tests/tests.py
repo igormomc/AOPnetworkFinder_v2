@@ -200,7 +200,6 @@ class TestGeneEnrichmentEndpoint(unittest.TestCase):
         Test the /api/gene_enrichment endpoint with a valid keList parameter
         using dummy data for external dependencies.
         """
-        # Dummy gene mapping: keys are KE names ("KE" + ke id)
         dummy_gene_to_genes = {
             "KE386": ["GENE1", "GENE2"],
             "KE1487": ["GENE3"],
