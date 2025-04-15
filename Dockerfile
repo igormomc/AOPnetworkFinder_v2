@@ -40,5 +40,7 @@ COPY . .
 EXPOSE 8000
 
 # Command to run the app using watchmedo
-# CMD ["/venv/bin/watchmedo", "auto-restart", "--directory=.", "--pattern=*.py", "--recursive", "--", "/venv/bin/gunicorn", "--reload", "-w", "4", "-b", ":8000", "--timeout", "120", "run:app"]
-CMD ["/venv/bin/gunicorn", "--reload", "-w", "1", "-b", ":8000", "--timeout", "120", "--log-level", "debug", "run:app"]
+CMD ["/venv/bin/watchmedo", "auto-restart", "--directory=.", "--pattern=*.py", "--recursive", "--", "/venv/bin/gunicorn", "--reload", "-w", "4", "-b", ":8000", "--timeout", "120", "run:app"]
+
+# This works to run on windows
+# CMD ["/venv/bin/gunicorn", "--reload", "-w", "1", "-b", ":8000", "--timeout", "120", "--log-level", "debug", "run:app"]
