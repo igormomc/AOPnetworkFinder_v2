@@ -30,7 +30,7 @@ def run_dose_response(doseOfSubstance, chemical, ke_assay_dict, handleDataNodesM
         chem_to_dsstoxi = json.load(file)
     with open('app/localDataFiles/allAssays.json', 'r') as file2:
         all_assays_json = json.load(file2)
-    with open('app/localDataFiles/structured_filename.json', 'r') as file3:
+    with open('app/localDataFiles/restricted_aop_KeGene.json', 'r') as file3:
         testdata = json.load(file3)
 
     # --------------------------------------------------
@@ -128,6 +128,7 @@ def run_dose_response(doseOfSubstance, chemical, ke_assay_dict, handleDataNodesM
         if ke_values_ac50[ke] == None:
             ke_with_no_ac50Data[ke] = 'True'
 
+    print("ke_values_ac50::::IGI:", ke_values_ac50)
     AOP, probability = run_goat_dose_response(aop_id, dose=doseOfSubstance, AC50_values=ke_values_ac50,
                                               selected_nodes=None)
 

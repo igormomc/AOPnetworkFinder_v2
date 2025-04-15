@@ -507,7 +507,7 @@ def gene_enrichment2():
     if ENRICH_GENES_CACHE:
         return ENRICH_GENES_CACHE
 
-    with open('app/localDataFiles/GenesToKe_minified.json') as f:
+    with open('app/localDataFiles/manually_curated_KeGene.json') as f:
         data = json.load(f)
         ENRICH_GENES_CACHE = data
         return data

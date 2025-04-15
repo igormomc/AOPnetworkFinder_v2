@@ -763,6 +763,20 @@ document.getElementById('infoButton').addEventListener('click', function () {
     }
 });
 
+document.getElementById('downloadTemplateButton').addEventListener('click', function () {
+    const csvContent = "keid,chemical,ac50,gene\n";
+    const exmapleFirstRow = "KE 386,Caffeine,1000,NDOR1\n";
+    const blob = new Blob([csvContent + exmapleFirstRow], {type: 'text/csv;charset=utf-8;'});
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = "template.csv";
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    console.log("Download link created");
+});
+
 document.getElementById('openDoseResponseDialog').addEventListener('click', async function () {
     const modal = document.getElementById("doseResponseDialog");
     modal.style.display = 'block'
@@ -1911,7 +1925,8 @@ async function gatherAndProcessDoseResponse(kePaths) {
     });
 
     let keAssayListToSend = isCheckedExplorative ? jsonIfy : JSON.stringify(filteredAssaysMap);
-
+    console.log("filteredAssaysMap", filteredAssaysMap)
+    console.log("filteredAssaysMap2", keToAssaysMap)
     const payload = {
         doseOfSubstance: doseOfSubstance,
         chemical: chemical,

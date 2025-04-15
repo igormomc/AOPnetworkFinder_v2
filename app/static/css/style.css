@@ -596,7 +596,7 @@ button:hover {
 
 .doseResponseDialog-content {
     background-color: #fff;
-    margin: 1% auto; /* 10% from the top and centered */
+    margin: 0.5% auto; /* 10% from the top and centered */
     padding: 20px;
     border-radius: 8px;
     width: 450px;
