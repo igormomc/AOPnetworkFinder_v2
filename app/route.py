@@ -474,6 +474,15 @@ def dose_response():
     lifeStageFilter = data.get('lifeStageFilter')
     sexFilter = data.get('sexFilter')
     taxonomyFilter = data.get('taxonomyFilter')
+    manualKEPaths = data.get('manualKEPaths')
+    manualKEEdges = []
+
+    for source, targets in manualKEPaths.items():
+        source_clean = source.replace("KE ", "")
+        for target in targets:
+            target_clean = target.replace("KE ", "")
+            manualKEEdges.append((source_clean, target_clean))
+
     print("organFilter:", organFilter)
     print("lifeStageFilter:", lifeStageFilter)
     print("sexFilter:", sexFilter)
@@ -484,9 +493,10 @@ def dose_response():
     print("doseOfSubstance:", doseOfSubstance)
     print("chemical:", chemical)
     print("handleDataNodesMode:", handleDataNodesMode)
+    print("manualKEPaths::", manualKEEdges)
     print("-------------------------")
 
-    results = run_dose_response(doseOfSubstance, chemical, ke_assay_dict, handleDataNodesMode, aop_id)
+    results = run_dose_response(doseOfSubstance, chemical, ke_assay_dict, handleDataNodesMode, aop_id, manualKEEdges)
 
     print("results:::::::::", results)
     return jsonify(results)

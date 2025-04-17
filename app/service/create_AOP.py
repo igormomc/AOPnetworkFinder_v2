@@ -1,5 +1,5 @@
 from SPARQLWrapper import SPARQLWrapper, JSON
-import json
+
 from app.service.visualize_AOP import print
 
 
@@ -139,12 +139,37 @@ def add_connections_to_AOP(connections, AOP):
                 AOP[node]["connections"].append(connection[1])
 
 
-def create_AOP_from_scratch(aop_id):
+def create_AOP_from_scratch(aop_id, manualKEEdges=None):
+    """
+    Main wrapper function to create a fully structured AOP graph from an AOP ID.
+
+    Parameters:
+    - aop_id (int or str): A valid AOP identifier.
+
+    Steps:
+    - Queries the SPARQL endpoint for the given AOP.
+    - Collects KER connections.
+    - Identifies MIEs and AOs.
+    - Determines node order from MIE.
+    - Builds node metadata (name, genes, KE_id).
+    - Fills in connections between nodes.
+
+    Returns:
+    - dict: Final AOP graph with all nodes and their connections.
+    """
+
     result = aop_dump(aop_id)
+
     connections = collect_connections_in_AOP(result)
+    if manualKEEdges:
+        for connection in manualKEEdges:
+            connections.append(connection)
+
     MIES, AOS = find_AO_and_MIE(result)
     ordered_nodes = get_nodes_in_apparition_order(result, connections)
+
     AOP = build_AOP(result, MIES, AOS, ordered_nodes)
+
     add_connections_to_AOP(connections, AOP)
     return AOP
 

@@ -351,6 +351,15 @@ function render_graph(url_string, formData) {
                                 'text-opacity': 0, // Hide label text
                                 'border-opacity': 0
                             }
+                        },
+                        {
+                            selector: '.manual-edge',
+                            style: {
+                                'line-color': '#8ee2ff',
+                                'target-arrow-color': '#8ee2ff',
+                                'width': 3,
+                                'target-arrow-shape': 'triangle'
+                            }
                         }
                     ],
                     layout: {
@@ -877,6 +886,12 @@ function highlightNodesById(idToHighlight) {
 
 
 //Logic for merging nodes
+// Global array to store the paths
+let manualKEPaths = {};
+let hasNodesBeenAddedManually = false;
+
+
+// Manuel merge process
 function mergeNodes(keepNodeId, loseNodeId) {
     let keepNode = cy.getElementById(keepNodeId);
     let loseNode = cy.getElementById(loseNodeId);
@@ -898,20 +913,25 @@ function mergeNodes(keepNodeId, loseNodeId) {
 
         // Add a new edge if no equivalent edge exists
         if (!existingEdge) {
-            cy.add({
-                group: 'edges',
+            const newEdge = {
+                group: "edges",
                 data: {
-                    source: newSourceId,
-                    target: newTargetId
-                }
-            });
+                    source: sourceId,
+                    target: targetId,
+                    type: 'manual'
+                },
+                classes: 'manual-edge'
+            };
+            cy.add([newEdge]);
         }
     });
+
 
     // Remove the loseNode and update dropdown
     loseNode.remove();
     removeButtonPairs(keepNodeId, loseNodeId);
-    //update globaljsonmerge
+
+    // Update globalMergeJson
     globalMergeJson = globalMergeJson.filter(([source, target]) => source !== loseNodeId && target !== loseNodeId);
 
     globalGraphJson.nodes = globalGraphJson.nodes.filter(node => node.data.name !== loseNodeId);
@@ -919,7 +939,8 @@ function mergeNodes(keepNodeId, loseNodeId) {
     const destinationDropdown = document.getElementById('keepNodeDropDown');
     const sourceDropdown = document.getElementById('loseNodeDropDown');
     populateMergeOptionsDropDown(destinationDropdown, sourceDropdown, globalGraphJson);
-    //regenerate the updated buttons
+
+    // Regenerate the updated buttons
     createMergeButtons(globalMergeJson);
 }
 
@@ -1496,15 +1517,46 @@ function setupEdgeAddition(cy) {
 
     cy.on('tap', 'node', function (evt) {
         if (shiftKeyDown) {
+            hasNodesBeenAddedManually = true;
             let nodeId = evt.target.id();
             if (firstNodeId === null) {
                 firstNodeId = nodeId;
             } else {
                 cy.add([
-                    {group: "edges", data: {source: firstNodeId, target: nodeId}}
+                    {
+                        group: "edges",
+                        data: {
+                            source: firstNodeId,
+                            target: nodeId,
+                            type: 'manual'
+                        },
+                        classes: 'manual-edge'
+                    }
                 ]);
                 firstNodeId = null; // Reset for next edge addition
             }
+            const graph = cy.json().elements
+            const idToKE = {};
+            graph.nodes.forEach(node => {
+                if (node.data.ke_identifier && node.data.label) {
+                    idToKE[node.data.id] = node.data.label;
+                }
+            });
+
+            graph.edges.forEach(edge => {
+                const sourceLabel = idToKE[edge.data.source];
+                const targetLabel = idToKE[edge.data.target];
+
+                if (sourceLabel && targetLabel) {
+                    console.log(`${sourceLabel} -> ${targetLabel}`);
+
+                    // Add to object
+                    if (!manualKEPaths[sourceLabel]) {
+                        manualKEPaths[sourceLabel] = new Set();
+                    }
+                    manualKEPaths[sourceLabel].add(targetLabel);
+                }
+            });
         }
     });
 }
@@ -1765,6 +1817,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // Reusable function that processes an array of Key Event labels
 async function gatherAndProcessDoseResponse(kePaths) {
+    console.log("kePaths123", kePaths)
     removeGradientBarFromGraph()
     const dose = document.getElementById("dose").value;
     const chemical = document.getElementById("chemical").value;
@@ -1926,7 +1979,12 @@ async function gatherAndProcessDoseResponse(kePaths) {
 
     let keAssayListToSend = isCheckedExplorative ? jsonIfy : JSON.stringify(filteredAssaysMap);
     console.log("filteredAssaysMap", filteredAssaysMap)
-    console.log("filteredAssaysMap2", keToAssaysMap)
+    console.log("filteredAssaysMap22", keToAssaysMap)
+    console.log("manuallyAddedEdgeogaboga", manualKEPaths)
+    const serializedManualPaths = Object.fromEntries(
+        Object.entries(manualKEPaths).map(([source, targets]) => [source, Array.from(targets)])
+    );
+
     const payload = {
         doseOfSubstance: doseOfSubstance,
         chemical: chemical,
@@ -1937,6 +1995,7 @@ async function gatherAndProcessDoseResponse(kePaths) {
         lifeStageFilter: $('#lifeStageDropdown').val(),
         taxonomyFilter: $('#taxonomiDropdown').val(),
         sexFilter: $('#sexDropdown').val(),
+        manualKEPaths: serializedManualPaths,
     };
 
     const response = await fetch('/api/dose_response', {
@@ -2242,6 +2301,7 @@ function addGradientBarToGraph() {
 
 document.getElementById('runAllKeyEvents').addEventListener('click', async function () {
     const kePaths = cy?.nodes('[ke_type = "Key Event"], [ke_type = "Molecular Initiating Event"]').map(node => node.data('label'));
+    console.log("the hole KE path after manually adding edges to the graph: ", cy?.nodes)
     const aopIds = document.getElementById("searchFieldAOP").value.split(",").map(id => id.trim());
     if (!kePaths) {
         ShowToaster("You have to search for an AOP before you can run the dose response", "error")
@@ -2331,6 +2391,14 @@ function updateSexDropdown(sexList) {
     $('#sexDropdown').val(null).trigger('change');
 }
 
+function updateGraphAfterAddingEdges() {
+    const kePaths = cy?.nodes('[ke_type = "Key Event"], [ke_type = "Molecular Initiating Event"]').map(node => node.data('label'));
+    console.log("the hole KE path after manually adding edges to the graph123: ", cy?.nodes)
+    if (kePaths) {
+        const kePathString = kePaths.join(", ");
+        document.getElementById("kePath").value = kePathString;
+    }
+}
 
 /*document.getElementById('triggerDoseResponse').addEventListener('click', async function () {
     const kePaths = document.getElementById("kePath").value

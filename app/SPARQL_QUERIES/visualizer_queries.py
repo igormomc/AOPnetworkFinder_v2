@@ -1,5 +1,4 @@
-
-from SPARQLWrapper import SPARQLWrapper, JSON, CSV
+from SPARQLWrapper import SPARQLWrapper, JSON
 
 
 ### Sparql queries ###
@@ -189,7 +188,6 @@ def stressor_and_AOP_finder(binary_stressor, aop_id):
 # Update also the query in the function multiple_aop_dump
 
 # Dump all AOP data for a given aop, including KE and KER -> query 1 time
-# INFO-IGOR: This is the Querry being run when clicking on "Search AOP" with one AOP ID, with no stressor, etc
 def aop_dump(aop_id):
     # endpoint sparql
     sparql = SPARQLWrapper("https://aopwiki.rdf.bigcat-bioinformatics.org/sparql")
@@ -235,6 +233,7 @@ WHERE
             return json_format
         except Exception as e:
             print(e)
+
 
 ###def aop_dump(aop_id):
 ###    # endpoint sparql
@@ -541,6 +540,7 @@ def organ_dump():
         return json_format
     except Exception as e:
         print(e)
+
 
 def taxonomic_dump():
     # endpoint sparql
@@ -871,6 +871,7 @@ WHERE {
         return json_format
     except Exception as e:
         print(e)
+
 
 def ke_degree_1_multiple_dump(ke_ids):
     '''Degree 1 of given KEs'''
@@ -1352,7 +1353,6 @@ WHERE {
         print(e)
 
 
-
 def life_stage_filter_search(aop_id, life_stages):
     # endpoint sparql
     sparql = SPARQLWrapper(
@@ -1382,6 +1382,7 @@ WHERE {{
     except Exception as e:
         print(e)
 
+
 def sex_filter_search(aop_id, sex):
     # endpoint sparql
     sparql = SPARQLWrapper(
@@ -1405,6 +1406,7 @@ WHERE {
         return json_format
     except Exception as e:
         print(e)
+
 
 def organ_filter_search(aop_id, organs):
     # endpoint sparql
@@ -1431,7 +1433,6 @@ def organ_filter_search(aop_id, organs):
         return json_format
     except Exception as e:
         print(e)
-
 
 
 def cell_filter_search(aop_id, cells):

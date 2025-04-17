@@ -1,10 +1,12 @@
-import pymc as pm
-import numpy as np
-from app.service.visualize_AOP import visualize_AOP, build_graph, print
-import networkx as nx
 from collections import deque
 from enum import Enum
+
+import networkx as nx
+import numpy as np
+import pymc as pm
+
 from app.service.create_AOP import add_proba_by_keid, create_AOP_from_scratch, add_AOP_variable_by_keid
+from app.service.visualize_AOP import build_graph
 
 
 class fill_method(Enum):
@@ -371,7 +373,6 @@ def perform_branch_correction(AOP, node, visited=None):
 
     if not predecessors:
         # If it's an endpoint, handle differently:
-        print(node)
         if "MIE" in node:  # If it's an MIE node
             AOP[node]["cumulative probability"] = AOP[node]["P(prior|event)"]
         else:  # If it's a Key Event node
@@ -537,8 +538,8 @@ def complete_ac50_values(AOP, method=fill_method.AVERAGE, max_val=0, min_val=0):
 
 
 def run_goat_dose_response(AOP_id, dose, calculated_node="AO0", AC50_values=None, probability_values=None,
-                           selected_nodes=None, method=fill_method.MEDIAN, max_ac50=0, min_ac50=0):
-    AOP = create_AOP_from_scratch(AOP_id)
+                           selected_nodes=None, method=fill_method.MEDIAN, max_ac50=0, min_ac50=0, manualKEEdges=None):
+    AOP = create_AOP_from_scratch(AOP_id, manualKEEdges)
 
     if AC50_values:
         add_AOP_variable_by_keid(AOP, AC50_values)

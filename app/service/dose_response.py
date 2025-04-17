@@ -6,7 +6,7 @@ from app.service.branch_correction import run_goat_dose_response
 from app.service.convertExcelToJsonAc50 import get_excel_data
 
 
-def run_dose_response(doseOfSubstance, chemical, ke_assay_dict, handleDataNodesMode, aop_id):
+def run_dose_response(doseOfSubstance, chemical, ke_assay_dict, handleDataNodesMode, aop_id, manualKEEdges):
     ke_with_no_ac50Data = {}
 
     """
@@ -130,7 +130,7 @@ def run_dose_response(doseOfSubstance, chemical, ke_assay_dict, handleDataNodesM
 
     print("ke_values_ac50::::IGI:", ke_values_ac50)
     AOP, probability = run_goat_dose_response(aop_id, dose=doseOfSubstance, AC50_values=ke_values_ac50,
-                                              selected_nodes=None)
+                                              selected_nodes=None, manualKEEdges=manualKEEdges, )
 
     return {
         "dose": doseOfSubstance,
