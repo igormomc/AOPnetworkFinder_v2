@@ -4,13 +4,13 @@ import random
 
 def get_chemical_suggestions_for_aop(aop_id):
     try:
-        with open('app/localDataFiles/aop_assays_chem_counted.json', 'r') as file:
-            aop_assays_chem_counted = json.load(file)
+        with open('app/localDataFiles/aop_chem_counts.json', 'r') as file:
+            aop_chem_counts = json.load(file)
     except FileNotFoundError as e:
         print(f"Error: {e}")
         return None
 
-    aop_data = aop_assays_chem_counted.get(aop_id, {})
+    aop_data = aop_chem_counts.get(aop_id, {})
     if not aop_data:
         return []
 

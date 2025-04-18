@@ -59,7 +59,8 @@ class TestDoseResponseEndpoint(BaseTestCase):
                 ]
             },
             "handleNoneDataNodesMode": "toggleMedian",
-            "aop_id": "17"
+            "aop_id": "17",
+            "manualKEPaths": [],
         }
 
         # Send the POST request

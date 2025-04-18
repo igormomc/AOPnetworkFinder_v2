@@ -26,7 +26,7 @@ def run_dose_response(doseOfSubstance, chemical, ke_assay_dict, handleDataNodesM
     # 1. Load your Excel data and supporting JSON files
     # --------------------------------------------------
     df, json_data = get_excel_data()
-    with open('app/localDataFiles/chemNameToDsstoxid.json', 'r') as file:
+    with open('app/localDataFiles/chem_to_dsstox.json', 'r') as file:
         chem_to_dsstoxi = json.load(file)
     with open('app/localDataFiles/allAssays.json', 'r') as file2:
         all_assays_json = json.load(file2)
