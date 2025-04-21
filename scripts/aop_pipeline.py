@@ -18,7 +18,7 @@ AOP Pipeline Script
             }
         }
 
-    
+
 
 
   To run all the scripts and produce the final output, run:
@@ -27,8 +27,8 @@ AOP Pipeline Script
   --chemdata assayWithChemData.json \
   --chemlist chemicalToDsstox.json
 """
-import json
 import argparse
+import json
 import sys
 
 
@@ -96,7 +96,7 @@ def chem_summary(filtered_mapping_file, assay_chem_data_file, original_mapping_f
         if counts:
             max_count = max(counts.values())
             best = [c for c, cnt in counts.items() if cnt == max_count]
-            key = f"{max_count}/{events_with}/{total_kes}"
+            key = f"{max_count}/{total_kes}"
             summary[aop] = {key: best}
         else:
             summary[aop] = {}
@@ -113,7 +113,7 @@ def replace_ids(test_file, chemical_file, output_file):
     lookup = {e['dsstox_substance_id']: e['chnm'] for e in chem_list if e.get('dsstox_substance_id') and e.get('chnm')}
     for aop, kes in data.items():
         for ke, ids in kes.items():
-            data[aop][ke] = [lookup.get('DTXSID'+cid, 'DTXSID'+cid) for cid in ids]
+            data[aop][ke] = [lookup.get('DTXSID' + cid, 'DTXSID' + cid) for cid in ids]
     with open(output_file, 'w') as f:
         json.dump(data, f, indent=4)
     print(f"Replaced IDs: {output_file}")
