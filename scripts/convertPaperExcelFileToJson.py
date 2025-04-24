@@ -1,12 +1,14 @@
-import pandas as pd
-import mygene
 import json
 import re
+
+import mygene
+import pandas as pd
 from tqdm import tqdm
+
 
 def main():
     df = pd.read_excel("GenesToKe.xlsx")
-    
+
     mg = mygene.MyGeneInfo()
 
     # Get the list of unique Ensembl IDs from the DataFrame first 3 rows
@@ -24,7 +26,7 @@ def main():
     ke_to_symbols = {}
 
     for _, row in tqdm(df.iterrows(), total=df.shape[0], desc="Processing rows"):
-        ke_raw = row["KE"] 
+        ke_raw = row["KE"]
         ensembl_id = row["Gene"]
 
         # Convert "Event:10" -> "KE10"
@@ -55,14 +57,15 @@ def minify_json(input_filepath, output_filepath):
     """
     with open(input_filepath, 'r') as infile:
         data = json.load(infile)
-    
+
     with open(output_filepath, 'w') as outfile:
         json.dump(data, outfile, separators=(',', ':'))
-    
+
     print(f"Minified JSON has been saved to {output_filepath}")
 
+
 if __name__ == "__main__":
-    #firsdt run main() to create the JSON file
+    # firsdt run main() to create the JSON file
     # then run minify_json() to create the minified version
-    main() #This can take a while to run
-    #minify_json("GenesToKe.json", "GenesToKe_minified.json")
+    main()  # This can take a while to run
+    # minify_json("GenesToKe.json", "GenesToKe_minified.json")
