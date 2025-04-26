@@ -54,10 +54,55 @@
                     <a class="nav-link {% if request.path == '/page1' %}active{% endif %}" href="/page1">Data
                         Extractor</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link " href="#" id="howToCiteLink">How to cite</a>
+                </li>
             </ul>
         </div>
     </div>
+    <a class="nav-icon" href="https://www.fhi.no/en">
+        <img src="/static/images/niph.svg" alt="Norwegian Institute of Public Health">
+    </a>
+    <a class="nav-icon" href="https://www.uio.no/english/index.html">
+        <img src="/static/images/uio.svg" alt="University of Oslo">
+    </a>
+    <a class="nav-icon" href="https://www.eu-parc.eu/">
+        <img src="/static/images/parc.svg" alt="Partnership for the Assessment of Risks from Chemicals">
+    </a>
 </nav>
+<div class="modal fade" id="howToCiteModal" tabindex="-1" role="dialog" aria-labelledby="howToCiteModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog custom-width" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="howToCiteModalLabel">How to Cite</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Please cite our tool if you used it to progress your work.</strong></p>
+                <p>
+                    <b>Igor Momcilovic, Sara Dugalic, Nurettin Yarar, Marvin Martens, Torbjørn Rognes, Jan Lavender,
+                        Hubert Dirven, Karine Audouze and
+                        Marcin W. Wojewodzic#</b>
+                    "AOP-networkFinder - A versatile tool for FAIR reconstruction of Adverse Outcome Pathway networks
+                    from AOP-Wiki"</p>
+                <p>#Please address your correspondence to <strong>"maww@fhi.no."</strong></p>
+                <p><strong>Distribution of the AOP-networkFinder:</strong></p>
+                <ul>
+                    <li>GitHub repository can be found: <a
+                            href="https://github.com/igormomc/AOPnetworkFinder_v2" target="_blank">https://github.com/igormomc/AOPnetworkFinder_v2</a>
+                    </li>
+                    <li>Docker image can be found: <a href="https://hub.docker.com/r/nurre123/aop_network_finder"
+                                                      target="_blank">https://hub.docker.com/r/nurre123/aop_network_finder</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 <!-- Main Content -->
 <div class="container mt-4">
@@ -66,3 +111,17 @@
 
 </body>
 </html>
+
+
+<script>
+    $(document).ready(function () {
+        $('#howToCiteLink').on('click', function (e) {
+            e.preventDefault();
+            $('#howToCiteModal').modal('show');
+        });
+
+        $('#closeModalButton').on('click', function () {
+            $('#howToCiteModal').modal('hide');
+        });
+    });
+</script>

@@ -103,13 +103,20 @@
         <div class="dropdown-container3">
             <div class="search-group" id="searchGroupStressor">
                 <label for="stressorDropdown">Stressor:</label>
+                <span class="group-help4"
+                      title="Use Stressor to test an AOP with a chemical">?</span>
+
                 <select id="stressorDropdown">
                     <option></option>
                 </select>
+
+
             </div>
 
             <div class="search-group" id="searchGroupCells">
                 <label for="cellsDropdown">Cells:</label>
+                <span class="group-help5"
+                      title="Use the Cell filter to display only AOPs that include the selected cell. If no AOP contains it, none will be shown. When multiple cells are selected, any AOP containing at least one of them will be displayed.">?</span>
                 <select id="cellsDropdown" multiple="multiple"></select>
                 <option></option>
             </div>
@@ -234,13 +241,16 @@
             <section id="basicInformation">
                 <h3>Basic Information</h3>
                 <div class="input-group">
-                    <label for="dose">Dose</label>
-                    <input type="text" id="dose" placeholder="Enter Dose" required/>
-                </div>
-                <div class="input-group">
                     <label for="chemical">Chemical</label>
                     <input type="text" id="chemical" placeholder="Enter Chemical"/>
                     <small id="chemicalHelp" class="form-text text-muted"></small>
+                </div>
+                <div class="spacer">
+                </div>
+
+                <div class="input-group">
+                    <label for="dose">Dose (µm)</label>
+                    <input type="text" id="dose" placeholder="Enter Dose" required/>
                 </div>
             </section>
 

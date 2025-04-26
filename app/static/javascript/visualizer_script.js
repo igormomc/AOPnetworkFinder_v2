@@ -788,6 +788,10 @@ document.getElementById('downloadTemplateButton').addEventListener('click', func
 
 document.getElementById('openDoseResponseDialog').addEventListener('click', async function () {
     const modal = document.getElementById("doseResponseDialog");
+    document.getElementById('chemical').value = "";
+    document.getElementById('dose').value = "";
+
+
     modal.style.display = 'block'
 
     window.onclick = function (event) {
@@ -802,6 +806,7 @@ document.getElementById('openDoseResponseDialog').addEventListener('click', asyn
     }
     updateChemicalSuggestions();
 });
+
 
 function updateChemicalSuggestions() {
     if (typeof chemicalSuggestions !== 'undefined' && chemicalSuggestions.length > 0) {
@@ -871,12 +876,10 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function highlightNodesById(idToHighlight) {
-    // Mark all nodes as non-highlighted initially
     cy.nodes().forEach(node => {
         node.removeClass('highlighted').addClass('non-highlighted');
     });
 
-    // Then, find and highlight the matching nodes
     cy.nodes().filter(node => {
         return node.data('relatedIds') && node.data('relatedIds').includes(idToHighlight);
     }).forEach(node => {
@@ -885,64 +888,57 @@ function highlightNodesById(idToHighlight) {
 }
 
 
-//Logic for merging nodes
-// Global array to store the paths
 let manualKEPaths = {};
 let hasNodesBeenAddedManually = false;
 
 
-// Manuel merge process
 function mergeNodes(keepNodeId, loseNodeId) {
-    let keepNode = cy.getElementById(keepNodeId);
-    let loseNode = cy.getElementById(loseNodeId);
+    const keepNode = cy.getElementById(keepNodeId);
+    const loseNode = cy.getElementById(loseNodeId);
 
-    // Transfer edges from loseNode to keepNode
     loseNode.connectedEdges().forEach(edge => {
-        let sourceId = edge.source().id();
-        let targetId = edge.target().id();
+        const sourceId = edge.source().id();
+        const targetId = edge.target().id();
 
-        // Determine the new source and target for the edge
-        let newSourceId = sourceId === loseNodeId ? keepNodeId : sourceId;
-        let newTargetId = targetId === loseNodeId ? keepNodeId : targetId;
+        const newSourceId = sourceId === loseNodeId ? keepNodeId : sourceId;
+        const newTargetId = targetId === loseNodeId ? keepNodeId : targetId;
 
-        // Check if an equivalent edge already exists
-        let existingEdge = cy.edges().some(e => {
-            return (e.source().id() === newSourceId && e.target().id() === newTargetId) ||
-                (e.source().id() === newTargetId && e.target().id() === newSourceId);
+        const exists = cy.edges().some(e => {
+            const a = e.source().id();
+            const b = e.target().id();
+            return (a === newSourceId && b === newTargetId) ||
+                (a === newTargetId && b === newSourceId);
         });
 
-        // Add a new edge if no equivalent edge exists
-        if (!existingEdge) {
-            const newEdge = {
-                group: "edges",
+        if (!exists) {
+            cy.add({
+                group: 'edges',
                 data: {
-                    source: sourceId,
-                    target: targetId,
+                    source: newSourceId,
+                    target: newTargetId,
                     type: 'manual'
                 },
                 classes: 'manual-edge'
-            };
-            cy.add([newEdge]);
+            });
         }
     });
 
-
-    // Remove the loseNode and update dropdown
     loseNode.remove();
     removeButtonPairs(keepNodeId, loseNodeId);
 
-    // Update globalMergeJson
-    globalMergeJson = globalMergeJson.filter(([source, target]) => source !== loseNodeId && target !== loseNodeId);
-
-    globalGraphJson.nodes = globalGraphJson.nodes.filter(node => node.data.name !== loseNodeId);
+    globalMergeJson = globalMergeJson.filter(([src, tgt]) =>
+        src !== loseNodeId && tgt !== loseNodeId
+    );
+    globalGraphJson.nodes = globalGraphJson.nodes.filter(n =>
+        n.data.name !== loseNodeId
+    );
 
     const destinationDropdown = document.getElementById('keepNodeDropDown');
     const sourceDropdown = document.getElementById('loseNodeDropDown');
     populateMergeOptionsDropDown(destinationDropdown, sourceDropdown, globalGraphJson);
-
-    // Regenerate the updated buttons
     createMergeButtons(globalMergeJson);
 }
+
 
 function createMergeButtons(mergeOptions) {
     const container = document.getElementById('dynamicButtons');
@@ -1850,58 +1846,50 @@ async function gatherAndProcessDoseResponse(kePaths) {
     let keToAssaysMap = {};
 
     // Build up the KE->Assay map
+    // Build up the KE->Assay map
     kePaths.forEach(path => {
         graph.forEach(node => {
             if (node.data('label') === path) {
-                const connectedKEs = node.connectedEdges();
-                let foundAssay = false;
+                const keNumber = node.data('label').replace("KE ", "");
+                // 1) ensure an array exists
+                keToAssaysMap[keNumber] = keToAssaysMap[keNumber] || [];
 
-                for (let edge of connectedKEs) {
-                    const sourceIsAssayGene =
-                        (edge.source().data('ke_type') === 'genes') &&
-                        assayGenesDict &&
-                        assayGenesDict[edge.source().data('name')];
-
-                    if (sourceIsAssayGene) {
-                        sourceIsAssayGene.forEach(assay => {
-                            const keNumber = node.data('label').replace("KE ", "");
-                            if (!keToAssaysMap[keNumber]) {
-                                keToAssaysMap[keNumber] = [];
-                            }
+                // 2) pull in any assays from the graph
+                const connectedEdges = node.connectedEdges();
+                connectedEdges.forEach(edge => {
+                    const src = edge.source();
+                    const isAssayGene = src.data('ke_type') === 'genes' &&
+                        assayGenesDict?.[src.data('name')];
+                    if (isAssayGene) {
+                        assayGenesDict[src.data('name')].forEach(assay => {
                             keToAssaysMap[keNumber].push(assay.assayComponentName);
                         });
-
-                        foundAssay = true;
                     }
+                });
+
+                // 3) always check the Excel file and add if present
+                const excelAssayData = checkUploadedFileForAssay(node.data('label'));
+                if (excelAssayData) {
+                    keToAssaysMap[keNumber].push({
+                        gene: excelAssayData.gene,
+                        ac50: excelAssayData.ac50,
+                        chemical: excelAssayData.chemical
+                    });
                 }
 
-                if (!foundAssay) {
-
-                    const excelAssayData = checkUploadedFileForAssay(node.data('label'));
-
-                    if (excelAssayData) {
-                        const keNumber = node.data('label').replace("KE ", "");
-                        if (!keToAssaysMap[keNumber]) {
-                            keToAssaysMap[keNumber] = [];
-                        }
-                        keToAssaysMap[keNumber].push({
-                            gene: excelAssayData.gene,
-                            ac50: excelAssayData.ac50,
-                            chemical: excelAssayData.chemical
-                        });
-                    } else {
-                        keToAssaysMap[node.data('label').replace("KE ", "")] = null;
-                    }
+                // 4) if nothing was found at all, mark as null
+                if (keToAssaysMap[keNumber].length === 0) {
+                    keToAssaysMap[keNumber] = null;
                 }
             }
         });
     });
+
     addGradientBarToGraph()
 
     //get value of checkbox-enrichment
     const checkboxEnrichment = document.getElementById("enrichmentMode");
     const selectedMode = document.querySelector("input[name='mode']:checked").value;
-
     if (selectedMode === "EnrichmentMode") {
         let keList = []
         for (const key in keToAssaysMap) {
@@ -1946,41 +1934,50 @@ async function gatherAndProcessDoseResponse(kePaths) {
     let taxonomies = $('#taxonomiDropdown').val() ? $('#taxonomiDropdown').val()[0] : null;
 
     let filteredAssaysMap = {};
-
-
     const isCheckedExplorative = document.getElementById('toggleFiltersCheckbox').checked;
+
     Object.keys(keToAssaysMap).forEach(key => {
         const assaysList = keToAssaysMap[key];
+
         if (!assaysList) {
             filteredAssaysMap[key] = null;
             return;
         }
 
-        // Filter assays based on selected organ, life stage, and sex.
-        if (!isCheckedExplorative) {
-            const filteredAssays = assaysList.filter(assay => {
-                const assayData = domainDataAssays.find(data => data.assayComponentEndpointName === assay);
-                if (!assayData) return false;
-
-                if (selectedOrgan && assayData.organ !== selectedOrgan) return false;
-
-                if (selectedLifeStage && assayData.lifeStage !== selectedLifeStage) return false;
-
-                if (selectedSex && assayData.sex !== selectedSex) return false;
-
-                if (taxonomies && assayData.organismName !== taxonomies) return false;
-
-                return true;
-            });
-
-            filteredAssaysMap[key] = filteredAssays.length > 0 ? filteredAssays : null;
+        if (isCheckedExplorative) {
+            filteredAssaysMap[key] = assaysList;
+            return;
         }
+
+        const filteredAssays = assaysList.filter(assay => {
+            if (assay && typeof assay === 'object') {
+                return true;
+            }
+
+            const assayData = domainDataAssays.find(data =>
+                data.assayComponentEndpointName === assay
+            );
+            if (!assayData) return false;
+
+            if (selectedOrgan && assayData.organ !== selectedOrgan) return false;
+            if (selectedLifeStage && assayData.lifeStage !== selectedLifeStage) return false;
+            if (selectedSex && assayData.sex !== selectedSex) return false;
+            if (taxonomies && assayData.organismName !== taxonomies) return false;
+
+            return true;
+        });
+
+        filteredAssaysMap[key] = filteredAssays.length > 0
+            ? filteredAssays
+            : null;
     });
 
-    let keAssayListToSend = isCheckedExplorative ? jsonIfy : JSON.stringify(filteredAssaysMap);
-    console.log("filteredAssaysMap", filteredAssaysMap)
-    console.log("filteredAssaysMap22", keToAssaysMap)
-    console.log("manuallyAddedEdgeogaboga", manualKEPaths)
+    const keAssayListToSend = JSON.stringify(
+        isCheckedExplorative
+            ? keToAssaysMap
+            : filteredAssaysMap
+    );
+
     const serializedManualPaths = Object.fromEntries(
         Object.entries(manualKEPaths).map(([source, targets]) => [source, Array.from(targets)])
     );
