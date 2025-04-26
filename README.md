@@ -17,7 +17,7 @@ Tool version v1 is also on Zenono at Computational Toxicology at Norwegian Insti
 https://zenodo.org/records/11068434
 
 
-1. Finds the status of all AOPs in the webpage AOPWiki.org/aops (OECD Status)
+1. Find the status of all AOPs in the webpage AOPWiki.org/aops (OECD Status)
 
 
 The Current GUI of the AOP_Visualizer webpage:
@@ -28,7 +28,7 @@ The Current GUI of the AOP_Visualizer webpage:
 2. How to run the application locally using Docker
 
 ## Prerequisites
-Docker installed on your system.
+Docker is installed on your system.
 
 ## Running the project locally
 1. Clone the repository
@@ -40,12 +40,12 @@ EPA_API_KEY=****
 ```
 4. Run the following command to build the Docker image:
 ```
- docker-compose up --build     
+ docker compose up --build     
  ```
-5. The application should be running on port 8000. If you change something in the the code should reload automatically. Just refresh the page in your browser and it should be updated.
+5. The application should be running on port 8000. If you change something in the code, it should reload automatically. Just refresh the page in your browser, and it should be updated.
 6. To stop the application, run the following command:
 ```
-docker-compose down
+docker compose down
 ```
 
 
