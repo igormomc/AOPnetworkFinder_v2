@@ -4,25 +4,21 @@ The arrows illustrate the direction of Key Events Relationships (KERs). Blue cir
 Notice that this representation is in form a Directed Acyclic Graph (DAG) with no directed cycles.
 
 
-## Web-Application AOP-networkFinder is available under:
+## Web-Application AOP-networkFinder v2 is available under:
 ## https://aop-networkfinder.no/
 
 Please cite the AOP-networkFinder:
-BIORXIV/2024/591733  "AOP-networkFinder - A versatile and user-friendly tool for FAIR reconstruction of Adverse Outcome Pathway networks from the AOP-Wiki"
-Authors: Nurettin Yarar, Marvin Martens, Torbjørn Rognes, Jan Lavender, Hubert Dirven, Karine Audouze and Marcin W. Wojewodzic#
+BIORXIV/2024/591733  "AOP-networkFinder v2- A versatile and user-friendly tool for FAIR reconstruction of Adverse Outcome Pathway networks from the AOP-Wiki"
+Authors: Igor Momcilovic, Sara Dugalic, Nurettin Yarar, Marvin Martens, Torbjørn Rognes, Jan Lavender, Hubert Dirven, Karine Audouze and Marcin W. Wojewodzic#
 
 Corresponding author: Marcin W. Wojewodzic (Email: maww [at] fhi.no)
 
-Tool version v1 is also on Zenono at Computational Toxicology at Norwegian Institute of Public Health:
-https://zenodo.org/records/11068434
-
-
 1. Find the status of all AOPs in the webpage AOPWiki.org/aops (OECD Status)
-
 
 The Current GUI of the AOP_Visualizer webpage:
 
-![main window](/images/Figures_AOP-network-finder_02032024-Figure1_Jan.jpg)
+![main window]![MixCollage-30-Apr-2025-01-45-PM-9326](https://github.com/user-attachments/assets/67fe1a2a-3e5d-4d01-8ff2-91882a056574)
+
 
 
 2. How to run the application locally using Docker
@@ -53,5 +49,15 @@ To access the application locally:
 http://localhost:8000
 
 You should see a window similar to this:
+![main window](https://github.com/user-attachments/assets/6f0ef637-f6e9-4ff9-bca5-24796c8d45f3)
 
-![main window](/images/AOPnetworkFinder_main_page.png)
+
+3. App architecture
+   ![Arch overview](https://github.com/user-attachments/assets/424e287b-ddff-4af1-a892-68b98930c42f)
+
+4. Flow diagram of main flow
+   ![smartflowdiagramAOP](https://github.com/user-attachments/assets/a870fe79-06a9-4e3a-8b0e-60dbf9e2d62e)
+
+
+   
+
