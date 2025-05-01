@@ -2319,7 +2319,7 @@ function addGradientBarToGraph() {
 }
 
 document.getElementById('runAllKeyEvents').addEventListener('click', async function () {
-    const kePaths = cy?.nodes('[ke_type = "Key Event"], [ke_type = "Molecular Initiating Event"]').map(node => node.data('label'));
+    const kePaths = cy?.nodes('[ke_type = "Key Event"], [ke_type = "Molecular Initiating Event"], [ke_type = "Adverse Outcome"]').map(node => node.data('label'));
     console.log("the hole KE path after manually adding edges to the graph: ", cy?.nodes)
     const aopIds = document.getElementById("searchFieldAOP").value.split(",").map(id => id.trim());
     if (!kePaths) {
@@ -2411,7 +2411,7 @@ function updateSexDropdown(sexList) {
 }
 
 function updateGraphAfterAddingEdges() {
-    const kePaths = cy?.nodes('[ke_type = "Key Event"], [ke_type = "Molecular Initiating Event"]').map(node => node.data('label'));
+    const kePaths = cy?.nodes('[ke_type = "Key Event"], [ke_type = "Molecular Initiating Event"], [ke_type = "Adverse Outcome"]').map(node => node.data('label'));
     console.log("the hole KE path after manually adding edges to the graph123: ", cy?.nodes)
     if (kePaths) {
         const kePathString = kePaths.join(", ");
