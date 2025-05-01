@@ -179,6 +179,13 @@ document.addEventListener('DOMContentLoaded', function () {
         formData.append("checkboxGene", genesChecked ? "1" : "0");
         formData.append("keDegree", keDegreeSelection);
 
+        const selectedStatuses = $('#filterDropdown').val() || [];
+        formData.append('checkboxDevelopment', selectedStatuses.includes('Development') ? "1" : "0");
+        formData.append('checkboxEndorsed', selectedStatuses.includes('Endorsed') ? "1" : "0");
+        formData.append('checkboxReview', selectedStatuses.includes('Review') ? "1" : "0");
+        formData.append('checkboxApproved', selectedStatuses.includes('Approved') ? "1" : "0");
+
+
         if (searchValueAop || searchValueKe || searchValueStressor || taxonomiDropdown || lifeStageDropdown || sexDropdown || cellsDropdown) {
             formData.append("searchFieldAOP", searchValueAop);
             formData.append("searchFieldKE", searchValueKe);
@@ -1178,6 +1185,7 @@ $(document).ready(function () {
     $('#stressorDropdown').val(null).trigger('change');
 });
 
+
 $(document).ready(function () {
     fetch('/get_cells')
         .then(response => response.json())
@@ -1315,6 +1323,13 @@ $(document).ready(function () {
     });
 });
 
+$(document).ready(function () {
+    $('#filterDropdown').select2({
+        placeholder: "Select one or more OECD statuses",
+        allowClear: true
+    });
+});
+
 
 document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('saveButtonLog').addEventListener('click', function () {
@@ -1366,21 +1381,21 @@ function logUserInput(formData) {
         logUserAction("Genes disabled");
     }*/
 
-    if (formData.get("checkboxDevelopment") === '1') {
-        logUserAction("Filtering: OECD Under Development");
-    }
+    /*   if (formData.get("checkboxDevelopment") === '1') {
+           logUserAction("Filtering: OECD Under Development");
+       }
 
-    if (formData.get("checkboxEndorsed") === '1') {
-        logUserAction("Filtering: OECD WPHA Endorsed");
-    }
+       if (formData.get("checkboxEndorsed") === '1') {
+           logUserAction("Filtering: OECD WPHA Endorsed");
+       }
 
-    if (formData.get("checkboxReview") === '1') {
-        logUserAction("Filtering: OECD Under Review");
-    }
+       if (formData.get("checkboxReview") === '1') {
+           logUserAction("Filtering: OECD Under Review");
+       }
 
-    if (formData.get("checkboxApproved") === '1') {
-        logUserAction("Filtering: OECD EAGMST Approved");
-    }
+       if (formData.get("checkboxApproved") === '1') {
+           logUserAction("Filtering: OECD EAGMST Approved");
+       }*/
     if (formData.get('file_name')) {
         logHeaderName("USER UPLOADED FILE:\n");
         logUserAction(`Uploaded file: ${formData.get('file_name')}`);
@@ -2219,6 +2234,13 @@ async function gatherAndProcessDoseResponse(kePaths) {
                     shakeSequence
                 );
             };
+
+            const triggerExplosions = () => {
+                adverseNodes.forEach((node) => createBigCrazyExplosion(node));
+            };
+            const explosionInterval = setInterval(triggerExplosions, 1000);
+            setTimeout(() => clearInterval(explosionInterval), 5000);
+
 
             const triggerElectricWave = (startNode) => {
                 const electricColor = '#00ffc3';

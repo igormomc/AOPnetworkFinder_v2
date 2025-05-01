@@ -151,15 +151,15 @@
                 </div>-->
 
         <!-- Checkboxes at the bottom -->
-        <div class="checkbox-group" id="checkbox-filter">
-            <form>
-                <label><input type="checkbox" name="checkboxDevelopment"> OECD Under Development</label>
-                <label><input type="checkbox" name="checkboxEndorsed"> OECD WPHA Endorsed</label>
-                <label><input type="checkbox" name="checkboxReview"> OECD Under Review</label>
-                <label><input type="checkbox" name="checkboxApproved"> OECD EAGMST Approved</label>
-            </form>
+        <div class="search-group" id="filterDropdownGroup">
+            <label for="filterDropdown">OECD Status:</label>
+            <select id="filterDropdown" name="filterDropdown" multiple="multiple">
+                <option value="Development">Under Development</option>
+                <option value="Endorsed">WPHA Endorsed</option>
+                <option value="Review">Under Review</option>
+                <option value="Approved">EAGMST Approved</option>
+            </select>
         </div>
-
     </div>
 </div>
 
