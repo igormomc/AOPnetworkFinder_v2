@@ -13,6 +13,9 @@ Authors: Igor Momcilovic, Sara Dugalic, Nurettin Yarar, Marvin Martens, Torbjør
 
 Corresponding author: Marcin W. Wojewodzic (Email: maww [at] fhi.no)
 
+Data Declaration:
+All assay data and dose–response calculations are sourced from ToxCast (https://api-ccte.epa.gov/docs/index.html). The manually curated dataset is obtained from Saarimäki, L. A., Fratello, M., Pavel, A. et al. (2023) (https://doi.org/10.1038/s41597-023-02321-w).
+
 1. Find the status of all AOPs in the webpage AOPWiki.org/aops (OECD Status)
 
 The Current GUI of the AOP_Visualizer webpage:
