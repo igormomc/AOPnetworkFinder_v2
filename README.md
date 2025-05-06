@@ -9,7 +9,7 @@ Notice that this representation is in form a Directed Acyclic Graph (DAG) with n
 
 Please cite the AOP-networkFinder:
 BIORXIV/2024/591733  "AOP-networkFinder v2- A versatile and user-friendly tool for FAIR reconstruction of Adverse Outcome Pathway networks from the AOP-Wiki"
-Authors: Igor Momcilovic, Sara Dugalic, Nurettin Yarar, Marvin Martens, Torbjørn Rognes, Jan Lavender, Hubert Dirven, Karine Audouze and Marcin W. Wojewodzic#
+Authors: Igor Momcilovic, Sara Dugalic, Arup Ghosh, Thomas Drelangue, Nurettin Yarar, Marvin Martens, Torbjørn Rognes, Jan Lavender, Karine Audouze and Marcin W. Wojewodzic#
 
 Corresponding author: Marcin W. Wojewodzic (Email: maww [at] fhi.no)
 
