@@ -5,7 +5,7 @@ FROM debian:bookworm-slim
 WORKDIR /app
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install -qq -y --no-install-recommends \
     python3 \
     python3-pip \
     python3-venv \
@@ -14,20 +14,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libfreetype6-dev \
     libpng-dev \
     libjpeg-dev \
+    && apt-get clean all \
     && rm -rf /var/lib/apt/lists/*
 
 # Create and activate virtual environment inside a named volume path
 RUN python3 -m venv /venv
 
 # Upgrade pip and setuptools to secure versions
-RUN /venv/bin/python -m pip install --upgrade pip "setuptools>=65.5.1"
+RUN /venv/bin/python -m pip install --upgrade pip "setuptools>=65.5.1" --no-cache-dir
 
 # Install Python dependencies
 COPY requirements.txt .
 RUN /venv/bin/python -m pip install --no-cache-dir -r requirements.txt
 
 # Install watchdog
-RUN /venv/bin/python -m pip install watchdog
+RUN /venv/bin/python -m pip install watchdog --no-cache-dir
 
 # Add a non-root user and switch to it
 RUN useradd -m myuser

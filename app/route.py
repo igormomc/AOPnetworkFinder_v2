@@ -434,15 +434,19 @@ def fetch_bioactivity_assays():
         'Accept': 'application/hal+json',
         'x-api-key': os.getenv('EPA_API_KEY')
     }
-    try:
-        response = requests.get(EPA_API_URL, headers=HEADERS)
-        response.raise_for_status()  # Raise an exception for bad status codes
-        data = response.json()
-        ASSAY_CACHE = data
-        return jsonify(data)  # Serve the data as JSON
-    except requests.exceptions.RequestException as e:
-        return jsonify({'error': str(e)}), 500  # Return error message with 500 status code
 
+    #stop if an api key is not specified
+    if os.getenv('EPA_API_KEY'):
+        try:
+            response = requests.get(EPA_API_URL, headers=HEADERS)
+            response.raise_for_status()  # Raise an exception for bad status codes
+            data = response.json()
+            ASSAY_CACHE = data
+            return jsonify(data)  # Serve the data as JSON
+        except requests.exceptions.RequestException as e:
+            return jsonify({'error': str(e)}), 401  # Return error message with 500 status code
+    else:
+        return jsonify({'error': 'ToxCast API key not specified.'}), 401
 
 @app.route('/api/dose_response', methods=['POST'])
 def dose_response():
