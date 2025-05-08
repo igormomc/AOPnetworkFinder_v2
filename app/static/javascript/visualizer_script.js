@@ -464,7 +464,7 @@ function render_graph(url_string, formData) {
                             }).join(', '); // Join all urls
 
                             const processKEs = (keArray) => {
-                                if (!keArray || !Array.isArray(keArray)) {
+                                if (!keArray || !Array.isArray(keArray) || (keArray.length === 1 && keArray[0] === 'N/A')) {
                                     return 'N/A';
                                 }
 
