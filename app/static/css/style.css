@@ -13,6 +13,54 @@
     background-repeat: no-repeat;
     background-size: cover;
 }*/
+/* Buttons General Reset */
+button,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+.file-button,
+.openDose-button,
+.search-button {
+    -webkit-appearance: none; /* Removes default Safari styles */
+    appearance: none; /* Standard property for future-proofing */
+    border: none;
+    outline: none;
+    background-color: #007BFF;
+    color: #fff;
+    cursor: pointer;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-family: inherit;
+    border-radius: 10px;
+    transition: background-color 0.3s ease;
+}
+button:hover,
+input[type="button"]:hover,
+input[type="submit"]:hover,
+input[type="reset"]:hover,
+.file-button:hover,
+.openDose-button:hover,
+.search-button:hover {
+    background-color: #0056B3;
+}
+/* Ensure Safari compatibility for dropdown selects as well */
+select {
+    -webkit-appearance: none;
+    appearance: none;
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    background-color: white;
+    font-size: 14px;
+    cursor: pointer;
+}
+/* Add a small icon for selects (optional but improves UI) */
+select {
+    background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="gray"><polygon points="0,0 20,0 10,10"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 10px top 50%;
+    background-size: 10px;
+}
 
 html, body {
     background-image: url('../images/minimalistic_background_blue_white.webp');
