@@ -1,8 +1,10 @@
 import json
-import requests
 import sys
 
-API_KEY = '8657de54-453e-4575-a341-e9c63c9f28ef'
+import requests
+
+API_KEY = ''
+
 
 def get_all_assay():
     url = 'https://api-ccte.epa.gov/bioactivity/assay/'
@@ -15,11 +17,13 @@ def get_all_assay():
         return None
     return r.json()
 
+
 def write_assays_to_file(filename):
     """Write a list of assay dicts to a JSON file."""
     assays = get_all_assay()
     with open(filename, 'w') as out:
         json.dump(assays, out, indent=4)
+
 
 def group_assays(assays):
     """Group a list of assay dicts by geneSymbol."""
@@ -36,6 +40,7 @@ def group_assays(assays):
         grouped.setdefault(symbol, []).append(a)
     return grouped
 
+
 def process_assays():
     """Fetch all assays, group them by geneSymbol, and write to JSON."""
     assays = get_all_assay()
@@ -50,7 +55,7 @@ def process_assays():
 
     print(f"Saved {len(grouped)} geneSymbol groups to grouped_assays.json")
 
-if __name__ == '__main__':
-    #write_assays_to_file('all_assays.json')
-    process_assays()
 
+if __name__ == '__main__':
+    # write_assays_to_file('all_assays.json')
+    process_assays()

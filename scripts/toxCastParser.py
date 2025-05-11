@@ -1,7 +1,9 @@
 import json
+
 import requests
 
-API_KEY = '8657de54-453e-4575-a341-e9c63c9f28ef'
+API_KEY = ''
+
 
 def get_all_assay():
     url = 'https://api-ccte.epa.gov/bioactivity/assay/'
@@ -17,6 +19,7 @@ def get_all_assay():
         print('Error fetching assays:', e)
         return None
 
+
 def get_aied_data(aeid):
     url = f'https://api-ccte.epa.gov/bioactivity/data/search/by-aeid/{aeid}'
     headers = {'Content-Type': 'application/json', 'X-Api-Key': API_KEY}
@@ -31,6 +34,7 @@ def get_aied_data(aeid):
     except requests.exceptions.RequestException as e:
         print(f"Request exception for aeid {aeid}: {e}")
         return None
+
 
 def main():
     all_assays = get_all_assay()
@@ -93,6 +97,7 @@ def main():
         print(f"Successfully wrote {len(result)} assays to assayDataForChem.json")
     except IOError as e:
         print(f"An error occurred while writing to assayDataForChem.json: {e}")
+
 
 if __name__ == "__main__":
     main()

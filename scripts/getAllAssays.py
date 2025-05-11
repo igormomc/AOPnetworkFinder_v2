@@ -2,7 +2,7 @@ import json
 
 import requests
 
-API_KEY = '8657de54-453e-4575-a341-e9c63c9f28ef'
+API_KEY = ''
 
 
 def get_all_assay():
