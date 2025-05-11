@@ -21,7 +21,7 @@ Version 2 will be released soon.<br />
 > **AOP-networkFinder v2**  
 > _A versatile and user-friendly tool for FAIR reconstruction of Adverse Outcome Pathway networks from the AOP-Wiki_  
 > **bioRxiv/2024/591733** (v1)
-> > **Zenodo DOI:** [10.5281/zenodo.1234567](https://doi.org/10.5281/zenodo.1234567) (v1)
+> > **Zenodo DOI:** [10.5281/zenodo.15384273]  ](https://doi.org/10.5281/zenodo.15384273) (v2)
 
 
 **Authors:**  
