@@ -104,7 +104,14 @@ document.getElementById('saveCsvBtn').addEventListener('click', function() {
 
             // Iterate over each column in the row
             cols.forEach(function(col) {
-                row.push(col.innerText);
+                let cellTextElement = col.querySelector('.cell-text');
+                let cellValue = cellTextElement ? cellTextElement.innerText : col.innerText;
+
+                // Escape double quotes in cell value
+                cellValue = cellValue.replace(/"/g, '""');
+
+                // Wrap cell value in double quotes
+                row.push(`"${cellValue}"`);
             });
 
             csvContent += row.join(",") + "\r\n";
@@ -129,7 +136,11 @@ document.getElementById('saveExcelBtn').addEventListener('click', function() {
 
         // Iterate over each column in the row
         cols.forEach(function(col) {
-            row_data.push(col.innerText);
+
+            let cellTextElement = col.querySelector('.cell-text');
+            let cellValue = cellTextElement ? cellTextElement.innerText : col.innerText;
+
+            row_data.push(cellValue);
         });
 
         worksheet_data.push(row_data);
