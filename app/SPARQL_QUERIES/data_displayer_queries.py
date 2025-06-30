@@ -173,7 +173,7 @@ def aop_mie() -> str:
 
 
 def aop_ao() -> str:
-    ao_string = """ ?aop aopo:has_molecular_initiating_event ?ao .
+    ao_string = """ ?aop aopo:has_adverse_outcome ?ao .
     ?ao rdfs:label ?ao_id ;
          dc:title ?ao_name . """
     return ao_string
